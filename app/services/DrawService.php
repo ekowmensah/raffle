@@ -248,13 +248,36 @@ class DrawService
         ];
 
         try {
+            // Log the data being inserted
+            error_log("Creating draw with data: " . json_encode($data));
+            
             $drawId = $this->drawModel->create($data);
-            return $drawId;
+            
+            if ($drawId) {
+                error_log("Draw created successfully with ID: {$drawId}");
+                return $drawId;
+            } else {
+                error_log("Draw creation returned false/null");
+                return [
+                    'error' => true,
+                    'message' => 'Failed to create draw record. Please try again.'
+                ];
+            }
         } catch (\PDOException $e) {
-            // Handle any database errors
+            // Log the actual error
+            error_log("PDO Exception in scheduleDraw: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
+            
             return [
                 'error' => true,
-                'message' => 'Failed to schedule draw. Please try again.'
+                'message' => 'Database error: ' . $e->getMessage()
+            ];
+        } catch (\Exception $e) {
+            error_log("Exception in scheduleDraw: " . $e->getMessage());
+            
+            return [
+                'error' => true,
+                'message' => 'Failed to schedule draw: ' . $e->getMessage()
             ];
         }
     }

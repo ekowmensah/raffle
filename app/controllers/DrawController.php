@@ -85,10 +85,13 @@ class DrawController extends Controller
             } else {
                 // Single draw scheduling
                 $stationId = $_POST['station_id'] ?? null;
-                $programmeId = $_POST['programme_id'] ?? null;
+                $programmeId = !empty($_POST['programme_id']) ? $_POST['programme_id'] : null;
                 $drawType = $_POST['draw_type'];
                 $drawDate = $_POST['draw_date'];
                 $winnerCount = intval($_POST['winner_count'] ?? 1);
+
+                // Debug logging
+                error_log("Schedule Draw - Station: {$stationId}, Programme: " . ($programmeId ?? 'NULL') . ", Campaign: {$campaignId}");
 
                 $result = $this->drawService->scheduleDraw($campaignId, $drawType, $drawDate, false, $winnerCount, $stationId, $programmeId);
 
