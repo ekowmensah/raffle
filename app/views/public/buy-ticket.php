@@ -2,125 +2,300 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Buy Tickets | Raffle System</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="<?= vendor('fontawesome-free/css/all.min.css') ?>">
     <link rel="stylesheet" href="<?= vendor('adminlte/css/adminlte.min.css') ?>">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8f9fa;
             min-height: 100vh;
+            padding-bottom: 80px;
         }
+        
+        /* Mobile-first navbar */
         .navbar-custom {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 12px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #667eea !important;
+        }
+        
+        /* Container */
         .buy-ticket-card {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin-top: 100px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            border-radius: 16px;
+            margin: 80px 16px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
+        
+        @media (min-width: 768px) {
+            .buy-ticket-card {
+                max-width: 600px;
+                margin: 100px auto 40px;
+            }
+        }
+        
+        /* Step indicator - mobile optimized */
         .step-indicator {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
+            padding: 20px 16px;
+            background: #f8f9fa;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
+        
         .step {
             flex: 1;
+            min-width: 60px;
             text-align: center;
-            padding: 15px;
-            border-radius: 10px;
-            background: #f8f9fa;
-            margin: 0 5px;
+            padding: 8px 4px;
             position: relative;
         }
-        .step.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin: 0 auto 4px;
+            display: block;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .step.active .step-number {
+            background: #667eea;
             color: white;
         }
-        .step.completed {
+        
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .step.completed .step-number {
             background: #28a745;
             color: white;
         }
-        .step-number {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            border-radius: 50%;
-            background: white;
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .step.active .step-number {
-            background: white;
-            color: #667eea;
-        }
-        .step.completed .step-number {
-            background: white;
+        
+        .step.completed .step-label {
             color: #28a745;
         }
+        
+        /* Content area */
+        .step-content {
+            padding: 24px 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .step-content {
+                padding: 32px 40px;
+            }
+        }
+        
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 20px;
+        }
+        
+        /* Campaign options - card style */
         .campaign-option {
             border: 2px solid #e9ecef;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            background: white;
         }
+        
+        .campaign-option:active {
+            transform: scale(0.98);
+        }
+        
         .campaign-option:hover {
             border-color: #667eea;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
         }
+        
         .campaign-option.selected {
             border-color: #667eea;
             background: #f0f3ff;
         }
+        
+        /* Badges */
         .campaign-type-badge {
             display: inline-block;
-            padding: 5px 15px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
+            margin-bottom: 8px;
         }
+        
         .badge-station-wide {
             background: #667eea;
             color: white;
         }
+        
         .badge-programme {
             background: #f093fb;
             color: white;
         }
+        
+        /* Form elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-control-lg {
+            height: 48px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+        }
+        
+        .form-control-lg:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Buttons - mobile optimized */
+        .btn-next, .btn-back, .btn-success {
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        @media (min-width: 768px) {
+            .btn-next, .btn-back, .btn-success {
+                width: auto;
+                min-width: 140px;
+            }
+        }
+        
         .btn-next {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
             color: white;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            font-weight: 600;
         }
+        
+        .btn-next:active {
+            transform: scale(0.98);
+        }
+        
         .btn-back {
             background: #6c757d;
-            border: none;
             color: white;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            font-weight: 600;
         }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        /* Toggle buttons */
+        .btn-group-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-group-toggle label {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .btn-group-toggle label.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* Alert boxes */
+        .alert {
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .alert-info {
+            background: #e7f3ff;
+            color: #004085;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        /* Utility */
         .hidden {
             display: none;
+        }
+        
+        .text-muted {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        /* Loading state */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -158,19 +333,19 @@
         <div class="step-indicator">
             <div class="step active" id="step1-indicator">
                 <div class="step-number">1</div>
-                <div>Select Station</div>
+                <div class="step-label">Station</div>
             </div>
             <div class="step" id="step2-indicator">
                 <div class="step-number">2</div>
-                <div>Choose Campaign</div>
+                <div class="step-label">Campaign</div>
             </div>
             <div class="step" id="step3-indicator">
                 <div class="step-number">3</div>
-                <div>Enter Details</div>
+                <div class="step-label">Details</div>
             </div>
             <div class="step" id="step4-indicator">
                 <div class="step-number">4</div>
-                <div>Payment</div>
+                <div class="step-label">Payment</div>
             </div>
         </div>
 
