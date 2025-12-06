@@ -20,7 +20,7 @@ logs/
 # Temporary files
 tmp/
 temp/
-cache/
+#cache/
 
 # Uploaded files (if any)
 uploads/
