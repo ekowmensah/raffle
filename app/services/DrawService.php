@@ -95,7 +95,17 @@ class DrawService
         
         // Save winners
         foreach ($winners as $winner) {
-            $winnerId = $this->winnerModel->create($winner);
+            // Separate DB data from metadata
+            $dbData = [
+                'draw_id' => $winner['draw_id'],
+                'ticket_id' => $winner['ticket_id'],
+                'player_id' => $winner['player_id'],
+                'prize_amount' => $winner['prize_amount'],
+                'prize_rank' => $winner['prize_rank'],
+                'prize_paid_status' => $winner['prize_paid_status']
+            ];
+            
+            $winnerId = $this->winnerModel->create($dbData);
             
             // Log winner details with time-decay info if available
             $logMsg = "Winner #{$winner['prize_rank']}: Ticket #{$winner['ticket_id']}, Prize: GHS {$winner['prize_amount']}";
