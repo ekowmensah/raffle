@@ -487,7 +487,7 @@
                     <button type="button" class="btn btn-back" onclick="goToStep(3)">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
-                    <button type="submit" class="btn btn-success btn-lg float-right">
+                    <button type="submit" class="btn btn-success btn-lg float-right" onclick="return validateForm()">
                         <i class="fas fa-check-circle"></i> Complete Purchase
                     </button>
                 </div>
@@ -731,6 +731,40 @@ function updateTotalAmount() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('ticket_count').addEventListener('input', updateTotalAmount);
 });
+
+// Validate form before submission
+function validateForm() {
+    const stationId = document.getElementById('station_id').value;
+    const campaignId = document.getElementById('campaign_id').value;
+    const phone = document.getElementById('phone').value;
+    const ticketCount = document.getElementById('ticket_count').value;
+    
+    if (!stationId) {
+        alert('Please select a station');
+        goToStep(1);
+        return false;
+    }
+    
+    if (!campaignId) {
+        alert('Please select a campaign');
+        goToStep(2);
+        return false;
+    }
+    
+    if (!phone) {
+        alert('Please enter your phone number');
+        goToStep(3);
+        return false;
+    }
+    
+    if (!ticketCount || ticketCount < 1) {
+        alert('Please enter a valid number of tickets');
+        goToStep(3);
+        return false;
+    }
+    
+    return true;
+}
 </script>
 
 </body>
