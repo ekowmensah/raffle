@@ -58,15 +58,28 @@ class Player extends Model
     public function getWithStats()
     {
         $this->db->query("SELECT p.*, 
-                         COUNT(DISTINCT t.id) as total_tickets,
-                         COALESCE(SUM(pay.amount), 0) as total_spent,
-                         COUNT(DISTINCT dw.id) as total_wins,
+                         COALESCE(t.total_tickets, 0) as total_tickets,
+                         COALESCE(pay.total_spent, 0) as total_spent,
+                         COALESCE(dw.total_wins, 0) as total_wins,
+                         COALESCE(dw.total_winnings, 0) as total_winnings,
                          COALESCE(p.loyalty_level, 'bronze') as loyalty_level
                          FROM {$this->table} p
-                         LEFT JOIN tickets t ON p.id = t.player_id
-                         LEFT JOIN payments pay ON p.id = pay.player_id AND pay.status = 'success'
-                         LEFT JOIN draw_winners dw ON p.id = dw.player_id
-                         GROUP BY p.id
+                         LEFT JOIN (
+                             SELECT player_id, COUNT(*) as total_tickets
+                             FROM tickets
+                             GROUP BY player_id
+                         ) t ON p.id = t.player_id
+                         LEFT JOIN (
+                             SELECT player_id, SUM(amount) as total_spent
+                             FROM payments
+                             WHERE status = 'success'
+                             GROUP BY player_id
+                         ) pay ON p.id = pay.player_id
+                         LEFT JOIN (
+                             SELECT player_id, COUNT(*) as total_wins, SUM(prize_amount) as total_winnings
+                             FROM draw_winners
+                             GROUP BY player_id
+                         ) dw ON p.id = dw.player_id
                          ORDER BY p.created_at DESC");
         return $this->db->resultSet();
     }
