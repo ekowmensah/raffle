@@ -8,6 +8,46 @@ class Payment extends Model
 {
     protected $table = 'payments';
 
+    /**
+     * Get revenue trend data
+     */
+    public function getRevenueTrend($days = 30)
+    {
+        $this->db->query("
+            SELECT DATE(created_at) as date, 
+                   SUM(amount) as revenue,
+                   COUNT(*) as transaction_count
+            FROM {$this->table}
+            WHERE status = 'success'
+            AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $this->db->bind(':days', $days);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get hourly sales pattern
+     */
+    public function getHourlySalesPattern($days = 7)
+    {
+        $this->db->query("
+            SELECT HOUR(created_at) as hour,
+                   COUNT(*) as transaction_count,
+                   SUM(amount) as total_amount
+            FROM {$this->table}
+            WHERE status = 'success'
+            AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+            GROUP BY HOUR(created_at)
+            ORDER BY hour ASC
+        ");
+        
+        $this->db->bind(':days', $days);
+        return $this->db->resultSet();
+    }
+
     public function findByReference($reference)
     {
         $this->db->query("SELECT * FROM {$this->table} WHERE internal_reference = :ref1 OR gateway_reference = :ref2");

@@ -8,6 +8,25 @@ class Ticket extends Model
 {
     protected $table = 'tickets';
 
+    /**
+     * Get ticket sales trend
+     */
+    public function getSalesTrend($days = 30)
+    {
+        $this->db->query("
+            SELECT DATE(created_at) as date, 
+                   COUNT(*) as ticket_count,
+                   COALESCE(SUM(quantity), 0) as total_quantity
+            FROM {$this->table}
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $this->db->bind(':days', $days);
+        return $this->db->resultSet();
+    }
+
     public function findByCode($ticketCode)
     {
         $this->db->query("SELECT t.*, c.name as campaign_name, p.phone as player_phone

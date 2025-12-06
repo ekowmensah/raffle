@@ -9,6 +9,46 @@ class Player extends Model
     protected $table = 'players';
     
     /**
+     * Get loyalty level distribution
+     */
+    public function getLoyaltyDistribution()
+    {
+        $this->db->query("
+            SELECT COALESCE(loyalty_level, 'bronze') as loyalty_level, COUNT(*) as count
+            FROM {$this->table}
+            GROUP BY loyalty_level
+            ORDER BY 
+                CASE loyalty_level
+                    WHEN 'bronze' THEN 1
+                    WHEN 'silver' THEN 2
+                    WHEN 'gold' THEN 3
+                    WHEN 'platinum' THEN 4
+                    ELSE 1
+                END
+        ");
+        
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get player growth data
+     */
+    public function getPlayerGrowth($days = 30)
+    {
+        $this->db->query("
+            SELECT DATE(created_at) as date, 
+                   COUNT(*) as new_players
+            FROM {$this->table}
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $this->db->bind(':days', $days);
+        return $this->db->resultSet();
+    }
+    
+    /**
      * Normalize phone number to standard format
      * Converts 0545644749 or 233545644749 to 233545644749
      */

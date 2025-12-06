@@ -46,21 +46,8 @@ class AnalyticsController extends Controller
         header('Content-Type: application/json');
         
         try {
-            $days = $_GET['days'] ?? 30;
-            
-            $this->paymentModel->db->query("
-                SELECT DATE(created_at) as date, 
-                       SUM(amount) as revenue,
-                       COUNT(*) as transaction_count
-                FROM payments
-                WHERE status = 'success'
-                AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-                GROUP BY DATE(created_at)
-                ORDER BY date ASC
-            ");
-            
-            $this->paymentModel->db->bind(':days', $days);
-            $data = $this->paymentModel->db->resultSet();
+            $days = (int)($_GET['days'] ?? 30);
+            $data = $this->paymentModel->getRevenueTrend($days);
             
             $result = [
                 'labels' => array_map(function($item) {
@@ -85,20 +72,8 @@ class AnalyticsController extends Controller
         header('Content-Type: application/json');
         
         try {
-            $days = $_GET['days'] ?? 30;
-            
-            $this->ticketModel->db->query("
-                SELECT DATE(created_at) as date, 
-                       COUNT(*) as ticket_count,
-                       COALESCE(SUM(quantity), 0) as total_quantity
-                FROM tickets
-                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-                GROUP BY DATE(created_at)
-                ORDER BY date ASC
-            ");
-            
-            $this->ticketModel->db->bind(':days', $days);
-            $data = $this->ticketModel->db->resultSet();
+            $days = (int)($_GET['days'] ?? 30);
+            $data = $this->ticketModel->getSalesTrend($days);
             
             echo json_encode([
                 'labels' => array_map(function($item) {
@@ -121,18 +96,7 @@ class AnalyticsController extends Controller
         
         try {
             $days = (int)($_GET['days'] ?? 30);
-            
-            $this->playerModel->db->query("
-                SELECT DATE(created_at) as date, 
-                       COUNT(*) as new_players
-                FROM players
-                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-                GROUP BY DATE(created_at)
-                ORDER BY date ASC
-            ");
-            
-            $this->playerModel->db->bind(':days', $days);
-            $data = $this->playerModel->db->resultSet();
+            $data = $this->playerModel->getPlayerGrowth($days);
             
             // Calculate cumulative
             $cumulative = 0;
@@ -199,18 +163,7 @@ class AnalyticsController extends Controller
         header('Content-Type: application/json');
         
         try {
-            $this->paymentModel->db->query("
-                SELECT HOUR(created_at) as hour,
-                       COUNT(*) as transaction_count,
-                       SUM(amount) as total_amount
-                FROM payments
-                WHERE status = 'success'
-                AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                GROUP BY HOUR(created_at)
-                ORDER BY hour ASC
-            ");
-            
-            $data = $this->paymentModel->db->resultSet();
+            $data = $this->paymentModel->getHourlySalesPattern(7);
             
             // Fill in missing hours with 0
             $hourlyData = array_fill(0, 24, 0);
@@ -236,21 +189,7 @@ class AnalyticsController extends Controller
         header('Content-Type: application/json');
         
         try {
-            $this->playerModel->db->query("
-                SELECT COALESCE(loyalty_level, 'bronze') as loyalty_level, COUNT(*) as count
-                FROM players
-                GROUP BY loyalty_level
-                ORDER BY 
-                    CASE loyalty_level
-                        WHEN 'bronze' THEN 1
-                        WHEN 'silver' THEN 2
-                        WHEN 'gold' THEN 3
-                        WHEN 'platinum' THEN 4
-                        ELSE 1
-                    END
-            ");
-            
-            $data = $this->playerModel->db->resultSet();
+            $data = $this->playerModel->getLoyaltyDistribution();
             
             echo json_encode([
                 'labels' => array_map(function($item) {
