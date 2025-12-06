@@ -203,7 +203,7 @@
                                                     <small><?= htmlspecialchars($log->ip_address ?? '-') ?></small>
                                                 </td>
                                                 <td>
-                                                    <a href="<?= url('audit/view/' . $log->id) ?>" class="btn btn-sm btn-info">
+                                                    <a href="<?= url('audit/show/' . $log->id) ?>" class="btn btn-sm btn-info">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                 </td>

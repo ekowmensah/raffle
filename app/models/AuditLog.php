@@ -33,7 +33,7 @@ class AuditLog extends Model
      */
     public function getWithFilters($filters = [])
     {
-        $sql = "SELECT al.*, u.username, u.email 
+        $sql = "SELECT al.*, u.name as username, u.email 
                 FROM {$this->table} al
                 LEFT JOIN users u ON al.user_id = u.id
                 WHERE 1=1";
@@ -102,7 +102,7 @@ class AuditLog extends Model
      */
     public function getByEntity($entityType, $entityId)
     {
-        $this->db->query("SELECT al.*, u.username 
+        $this->db->query("SELECT al.*, u.name as username 
                          FROM {$this->table} al
                          LEFT JOIN users u ON al.user_id = u.id
                          WHERE al.entity_type = :entity_type 
@@ -168,7 +168,7 @@ class AuditLog extends Model
      */
     public function getUserActivityStats($limit = 10)
     {
-        $this->db->query("SELECT u.username, u.email, COUNT(*) as action_count,
+        $this->db->query("SELECT u.name as username, u.email, COUNT(*) as action_count,
                          MAX(al.created_at) as last_activity
                          FROM {$this->table} al
                          LEFT JOIN users u ON al.user_id = u.id
@@ -192,7 +192,7 @@ class AuditLog extends Model
         
         $placeholders = implode(',', array_fill(0, count($criticalActions), '?'));
         
-        $this->db->query("SELECT al.*, u.username 
+        $this->db->query("SELECT al.*, u.name as username 
                          FROM {$this->table} al
                          LEFT JOIN users u ON al.user_id = u.id
                          WHERE al.action IN ($placeholders)

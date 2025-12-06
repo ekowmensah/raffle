@@ -195,7 +195,7 @@
                                             <small><?= htmlspecialchars($log->ip_address ?? '-') ?></small>
                                         </td>
                                         <td>
-                                            <a href="<?= url('audit/view/' . $log->id) ?>" class="btn btn-sm btn-info" title="View Details">
+                                            <a href="<?= url('audit/show/' . $log->id) ?>" class="btn btn-sm btn-info" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                         </td>

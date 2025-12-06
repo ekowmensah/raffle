@@ -73,7 +73,7 @@ class AuditController extends Controller
     /**
      * View specific log details
      */
-    public function view($id)
+    public function show($id)
     {
         $this->requireAuth();
 
@@ -96,7 +96,7 @@ class AuditController extends Controller
             'user' => $user
         ];
 
-        $this->view('audit/view', $data);
+        parent::view('audit/view', $data);
     }
 
     /**
@@ -180,7 +180,7 @@ class AuditController extends Controller
         foreach ($logs as $log) {
             fputcsv($output, [
                 $log->id,
-                $log->username ?? 'System',
+                $log->username ?? ($log->email ?? 'System'),
                 $log->action,
                 $log->entity_type ?? '',
                 $log->entity_id ?? '',
