@@ -221,6 +221,12 @@
                     <?php if (can('*') || hasRole('super_admin')): ?>
                     <li class="nav-header">SECURITY</li>
                     <li class="nav-item">
+                        <a href="<?= url('security') ?>" class="nav-link <?= isActive('security') ?>">
+                            <i class="nav-icon fas fa-shield-alt"></i>
+                            <p>Security Dashboard</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="<?= url('audit') ?>" class="nav-link <?= isActive('audit') ?>">
                             <i class="nav-icon fas fa-clipboard-list"></i>
                             <p>Audit Logs</p>

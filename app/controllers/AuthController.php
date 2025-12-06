@@ -4,16 +4,19 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Services\AuditService;
+use App\Services\SecurityService;
 
 class AuthController extends Controller
 {
     private $userModel;
     private $auditService;
+    private $securityService;
 
     public function __construct()
     {
         $this->userModel = $this->model('User');
         $this->auditService = new AuditService();
+        $this->securityService = new SecurityService();
     }
 
     public function login()
@@ -25,9 +28,19 @@ class AuthController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = sanitize($_POST['email']);
             $password = $_POST['password'];
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 
             if (empty($email) || empty($password)) {
                 flash('error', 'Please fill in all fields');
+                $this->redirect('auth/login');
+            }
+
+            // Check if login is allowed (rate limiting & blocking)
+            $canLogin = $this->securityService->canAttemptLogin($email, $ipAddress);
+            
+            if (!$canLogin['allowed']) {
+                flash('error', $canLogin['reason']);
                 $this->redirect('auth/login');
             }
 
@@ -51,9 +64,21 @@ class AuthController extends Controller
                 flash('success', 'Welcome back, ' . $user->name);
                 $this->redirect('home');
             } else {
+                // Record failed login attempt
+                $this->securityService->recordFailedLogin($email, $ipAddress, $userAgent);
+                
                 // Log failed login attempt
                 $this->auditService->log('user_login_failed', 'user', null, ['email' => $email]);
-                flash('error', 'Invalid email or password');
+                
+                // Get remaining attempts
+                $remainingAttempts = $canLogin['remaining_attempts'] ?? 0;
+                $message = 'Invalid email or password.';
+                
+                if ($remainingAttempts > 0 && $remainingAttempts <= 3) {
+                    $message .= " You have {$remainingAttempts} attempt(s) remaining.";
+                }
+                
+                flash('error', $message);
                 $this->redirect('auth/login');
             }
         }
