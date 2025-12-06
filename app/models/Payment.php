@@ -57,18 +57,17 @@ class Payment extends Model
     {
         error_log("Updating payment {$id} status to: {$status}");
         
-        $data = [
-            'status' => $status,
-            'paid_at' => ($status === 'success') ? date('Y-m-d H:i:s') : null
-        ];
+        // Build update data with only existing columns
+        $data = ['status' => $status];
+        
+        // Add timestamp if successful
+        if ($status === 'success') {
+            $data['paid_at'] = date('Y-m-d H:i:s');
+        }
 
-        if ($gatewayResponse) {
-            $data['gateway_response'] = json_encode($gatewayResponse);
-            
-            // Also update gateway reference if available
-            if (isset($gatewayResponse['transaction_id'])) {
-                $data['gateway_reference'] = $gatewayResponse['transaction_id'];
-            }
+        // Try to add gateway reference if available
+        if ($gatewayResponse && isset($gatewayResponse['transaction_id'])) {
+            $data['gateway_reference'] = $gatewayResponse['transaction_id'];
         }
 
         $result = $this->update($id, $data);
