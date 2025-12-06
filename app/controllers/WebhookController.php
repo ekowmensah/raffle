@@ -112,8 +112,17 @@ class WebhookController extends Controller
         error_log("Updating payment {$payment->id} to status: {$webhookData['status']}");
 
         if ($webhookData['status'] === 'success') {
+            error_log("Payment successful - updating status");
+            
             // Update payment status
-            $this->paymentModel->updateStatus($payment->id, 'success', $webhookData);
+            $updateResult = $this->paymentModel->updateStatus($payment->id, 'success', $webhookData);
+            
+            if (!$updateResult) {
+                error_log("ERROR: Failed to update payment status!");
+                return;
+            }
+            
+            error_log("Payment status updated successfully - generating tickets");
 
             // Generate tickets
             $paymentData = [
@@ -125,28 +134,39 @@ class WebhookController extends Controller
                 'amount' => $payment->amount
             ];
 
-            $ticketResult = $this->ticketService->generateTickets($paymentData);
+            try {
+                $ticketResult = $this->ticketService->generateTickets($paymentData);
+                error_log("Tickets generated: " . ($ticketResult ? 'YES' : 'NO'));
 
-            if ($ticketResult) {
-                // Allocate revenue
-                $this->revenueService->allocate($paymentData);
+                if ($ticketResult) {
+                    // Allocate revenue
+                    error_log("Allocating revenue");
+                    $this->revenueService->allocate($paymentData);
 
-                // Update player loyalty
-                $playerModel = $this->model('Player');
-                $playerModel->updateLoyaltyLevel($payment->player_id);
+                    // Update player loyalty
+                    error_log("Updating player loyalty");
+                    $playerModel = $this->model('Player');
+                    $playerModel->updateLoyaltyLevel($payment->player_id);
 
-                // Send SMS
-                $campaignModel = $this->model('Campaign');
-                $campaign = $campaignModel->findById($payment->campaign_id);
-                $player = $playerModel->findById($payment->player_id);
-                
-                $this->smsService->sendTicketNotification(
-                    $player->phone,
-                    $ticketResult['tickets'],
-                    $campaign->name
-                );
+                    // Send SMS
+                    error_log("Sending SMS notification");
+                    $campaignModel = $this->model('Campaign');
+                    $campaign = $campaignModel->findById($payment->campaign_id);
+                    $player = $playerModel->findById($payment->player_id);
+                    
+                    $this->smsService->sendTicketNotification(
+                        $player->phone,
+                        $ticketResult['tickets'],
+                        $campaign->name
+                    );
+                    
+                    error_log("Webhook processing completed successfully");
+                }
+            } catch (\Exception $e) {
+                error_log("ERROR in ticket generation: " . $e->getMessage());
             }
         } else {
+            error_log("Payment failed - updating status to failed");
             // Payment failed
             $this->paymentModel->updateStatus($payment->id, 'failed', $webhookData);
         }

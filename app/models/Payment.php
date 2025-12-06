@@ -54,16 +54,26 @@ class Payment extends Model
 
     public function updateStatus($id, $status, $gatewayResponse = null)
     {
+        error_log("Updating payment {$id} status to: {$status}");
+        
         $data = [
             'status' => $status,
-            'payment_completed_at' => ($status === 'success') ? date('Y-m-d H:i:s') : null
+            'paid_at' => ($status === 'success') ? date('Y-m-d H:i:s') : null
         ];
 
         if ($gatewayResponse) {
-            $data['gateway_response_json'] = json_encode($gatewayResponse);
+            $data['gateway_response'] = json_encode($gatewayResponse);
+            
+            // Also update gateway reference if available
+            if (isset($gatewayResponse['transaction_id'])) {
+                $data['gateway_reference'] = $gatewayResponse['transaction_id'];
+            }
         }
 
-        return $this->update($id, $data);
+        $result = $this->update($id, $data);
+        error_log("Payment update result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        
+        return $result;
     }
 
     public function getSuccessfulPayments($campaignId = null)
