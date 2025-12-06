@@ -12,6 +12,8 @@ class AnalyticsController extends Controller
     private $drawModel;
     private $campaignModel;
 
+    private $cache;
+
     public function __construct()
     {
         $this->paymentModel = $this->model('Payment');
@@ -19,6 +21,7 @@ class AnalyticsController extends Controller
         $this->playerModel = $this->model('Player');
         $this->drawModel = $this->model('Draw');
         $this->campaignModel = $this->model('Campaign');
+        $this->cache = new \App\Services\CacheService();
     }
 
     /**
@@ -43,28 +46,33 @@ class AnalyticsController extends Controller
         header('Content-Type: application/json');
         
         $days = $_GET['days'] ?? 30;
+        $cacheKey = "revenue_trend_{$days}";
         
-        $this->paymentModel->db->query("
-            SELECT DATE(created_at) as date, 
-                   SUM(amount) as revenue,
-                   COUNT(*) as transaction_count
-            FROM payments
-            WHERE status = 'success'
-            AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC
-        ");
+        $result = $this->cache->remember($cacheKey, function() use ($days) {
+            $this->paymentModel->db->query("
+                SELECT DATE(created_at) as date, 
+                       SUM(amount) as revenue,
+                       COUNT(*) as transaction_count
+                FROM payments
+                WHERE status = 'success'
+                AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC
+            ");
+            
+            $this->paymentModel->db->bind(':days', $days);
+            $data = $this->paymentModel->db->resultSet();
+            
+            return [
+                'labels' => array_map(function($item) {
+                    return date('M d', strtotime($item->date));
+                }, $data),
+                'revenue' => array_column($data, 'revenue'),
+                'transactions' => array_column($data, 'transaction_count')
+            ];
+        }, 300); // 5 minutes cache
         
-        $this->paymentModel->db->bind(':days', $days);
-        $data = $this->paymentModel->db->resultSet();
-        
-        echo json_encode([
-            'labels' => array_map(function($item) {
-                return date('M d', strtotime($item->date));
-            }, $data),
-            'revenue' => array_column($data, 'revenue'),
-            'transactions' => array_column($data, 'transaction_count')
-        ]);
+        echo json_encode($result);
         exit;
     }
 

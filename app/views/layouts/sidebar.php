@@ -238,6 +238,12 @@
                             <p>Audit Statistics</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= url('cache') ?>" class="nav-link <?= isActive('cache') ?>">
+                            <i class="nav-icon fas fa-database"></i>
+                            <p>Cache Management</p>
+                        </a>
+                    </li>
                     <?php endif; ?>
 
                 </ul>
