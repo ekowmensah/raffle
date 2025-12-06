@@ -205,6 +205,12 @@
                     <!-- Reports & Analytics -->
                     <li class="nav-header">ANALYTICS</li>
                     <li class="nav-item">
+                        <a href="<?= url('analytics') ?>" class="nav-link <?= isActive('analytics') ?>">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <p>Analytics Dashboard</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="<?= url('draw/analytics') ?>" class="nav-link <?= isActive('draw/analytics') ?>">
                             <i class="nav-icon fas fa-chart-bar"></i>
                             <p>Draw Analytics</p>

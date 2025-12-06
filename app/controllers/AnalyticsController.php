@@ -22,6 +22,20 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Analytics dashboard page
+     */
+    public function index()
+    {
+        $this->requireAuth();
+
+        $data = [
+            'title' => 'Analytics Dashboard'
+        ];
+
+        $this->view('analytics/dashboard', $data);
+    }
+
+    /**
      * Get revenue trend data for charts
      */
     public function getRevenueTrend()
@@ -245,6 +259,113 @@ class AnalyticsController extends Controller
             }, $data),
             'counts' => array_column($data, 'count'),
             'amounts' => array_column($data, 'total_amount')
+        ]);
+        exit;
+    }
+
+    /**
+     * Get station performance comparison
+     */
+    public function getStationPerformance()
+    {
+        header('Content-Type: application/json');
+        
+        $stationModel = $this->model('Station');
+        
+        $stationModel->db->query("
+            SELECT s.name,
+                   COUNT(DISTINCT t.id) as total_tickets,
+                   COALESCE(SUM(p.amount), 0) as total_revenue,
+                   COUNT(DISTINCT t.player_id) as unique_players,
+                   COUNT(DISTINCT c.id) as active_campaigns
+            FROM stations s
+            LEFT JOIN programmes prog ON s.id = prog.station_id
+            LEFT JOIN raffle_campaigns c ON s.id = c.station_id
+            LEFT JOIN tickets t ON c.id = t.campaign_id
+            LEFT JOIN payments p ON t.payment_id = p.id AND p.status = 'success'
+            WHERE s.is_active = 1
+            GROUP BY s.id
+            ORDER BY total_revenue DESC
+        ");
+        
+        $data = $stationModel->db->resultSet();
+        
+        echo json_encode([
+            'labels' => array_column($data, 'name'),
+            'tickets' => array_column($data, 'total_tickets'),
+            'revenue' => array_column($data, 'total_revenue'),
+            'players' => array_column($data, 'unique_players'),
+            'campaigns' => array_column($data, 'active_campaigns')
+        ]);
+        exit;
+    }
+
+    /**
+     * Get draw success rate
+     */
+    public function getDrawSuccessRate()
+    {
+        header('Content-Type: application/json');
+        
+        $this->drawModel->db->query("
+            SELECT 
+                DATE(draw_date) as date,
+                COUNT(*) as total_draws,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_draws,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_draws
+            FROM draws
+            WHERE draw_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(draw_date)
+            ORDER BY date ASC
+        ");
+        
+        $data = $this->drawModel->db->resultSet();
+        
+        echo json_encode([
+            'labels' => array_map(function($item) {
+                return date('M d', strtotime($item->date));
+            }, $data),
+            'completed' => array_column($data, 'completed_draws'),
+            'pending' => array_column($data, 'pending_draws'),
+            'total' => array_column($data, 'total_draws')
+        ]);
+        exit;
+    }
+
+    /**
+     * Get top players by spending
+     */
+    public function getTopPlayers()
+    {
+        header('Content-Type: application/json');
+        
+        $limit = $_GET['limit'] ?? 10;
+        
+        $this->playerModel->db->query("
+            SELECT p.phone,
+                   COUNT(DISTINCT t.id) as total_tickets,
+                   COALESCE(SUM(pay.amount), 0) as total_spent,
+                   COUNT(DISTINCT dw.id) as total_wins,
+                   p.loyalty_level
+            FROM players p
+            LEFT JOIN tickets t ON p.id = t.player_id
+            LEFT JOIN payments pay ON p.id = pay.player_id AND pay.status = 'success'
+            LEFT JOIN draw_winners dw ON p.id = dw.player_id
+            GROUP BY p.id
+            ORDER BY total_spent DESC
+            LIMIT :limit
+        ");
+        
+        $this->playerModel->db->bind(':limit', (int)$limit);
+        $data = $this->playerModel->db->resultSet();
+        
+        echo json_encode([
+            'labels' => array_map(function($item) {
+                return substr($item->phone, -4);
+            }, $data),
+            'spent' => array_column($data, 'total_spent'),
+            'tickets' => array_column($data, 'total_tickets'),
+            'wins' => array_column($data, 'total_wins')
         ]);
         exit;
     }
