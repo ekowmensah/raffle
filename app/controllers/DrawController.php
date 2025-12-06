@@ -141,36 +141,47 @@ class DrawController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
 
-            $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
-
             // Return JSON for AJAX requests
             if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
                 header('Content-Type: application/json');
                 
-                if ($result['success']) {
-                    // Get winners with ticket details
-                    $winners = $this->winnerModel->getByDraw($id);
-                    $ticketModel = $this->model('Ticket');
+                try {
+                    $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
                     
-                    $winnersData = array_map(function($winner) use ($ticketModel) {
-                        $ticket = $ticketModel->findById($winner->ticket_id);
-                        return [
-                            'prize_rank' => $winner->prize_rank,
-                            'ticket_code' => $ticket->ticket_code ?? 'N/A',
-                            'prize_amount' => $winner->prize_amount
-                        ];
-                    }, $winners);
-                    
+                    if ($result['success']) {
+                        // Get winners with ticket details
+                        $winners = $this->winnerModel->getByDraw($id);
+                        $ticketModel = $this->model('Ticket');
+                        
+                        $winnersData = array_map(function($winner) use ($ticketModel) {
+                            $ticket = $ticketModel->findById($winner->ticket_id);
+                            return [
+                                'prize_rank' => $winner->prize_rank,
+                                'ticket_code' => $ticket->ticket_code ?? 'N/A',
+                                'prize_amount' => $winner->prize_amount
+                            ];
+                        }, $winners);
+                        
+                        echo json_encode([
+                            'success' => true,
+                            'message' => $result['message'],
+                            'winners' => $winnersData
+                        ]);
+                    } else {
+                        echo json_encode($result);
+                    }
+                } catch (\Exception $e) {
+                    error_log("Draw conduct error: " . $e->getMessage());
                     echo json_encode([
-                        'success' => true,
-                        'message' => $result['message'],
-                        'winners' => $winnersData
+                        'success' => false,
+                        'message' => 'Draw failed: ' . $e->getMessage()
                     ]);
-                } else {
-                    echo json_encode($result);
                 }
                 exit;
             }
+            
+            // Non-AJAX request (standard form submission)
+            $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
 
             if ($result['success']) {
                 flash('success', $result['message'] . ' - ' . $result['winner_count'] . ' winner(s) selected');

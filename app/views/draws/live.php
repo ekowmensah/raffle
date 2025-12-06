@@ -381,9 +381,18 @@ if (!$draw || !$campaign) {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: 'csrf_token=<?= csrf_token() ?>'
                 });
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Server returned HTML instead of JSON. Check error logs.');
+                }
                 
                 const result = await response.json();
                 
