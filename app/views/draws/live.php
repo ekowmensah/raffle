@@ -5,9 +5,12 @@ $draw = $data['draw'] ?? null;
 $campaign = $data['campaign'] ?? null;
 
 if (!$draw || !$campaign) {
-    echo "Draw not found";
+    header('Location: ' . url('draw'));
     exit;
 }
+
+// Check if draw is already completed
+$drawAlreadyCompleted = ($draw->status !== 'pending');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -289,13 +292,23 @@ if (!$draw || !$campaign) {
                     <p><?= ucfirst($draw->draw_type) ?> Draw - <?= date('F j, Y', strtotime($draw->draw_date)) ?></p>
                 </div>
 
+                <?php if ($drawAlreadyCompleted): ?>
+                <div class="status-bar" style="background: rgba(239, 68, 68, 0.12); border-color: #ef4444;">
+                    <div class="status-indicator">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                        <span id="status-text" style="color: #ef4444;">Draw Already Completed</span>
+                    </div>
+                    <div id="timer">--:--</div>
+                </div>
+                <?php else: ?>
                 <div class="status-bar">
                     <div class="status-indicator">
                         <div class="pulse-dot"></div>
                         <span id="status-text">Ready to Draw</span>
                     </div>
-                    <div id="timer">00:30</div>
+                    <div id="timer">00:<?= str_pad(15, 2, '0', STR_PAD_LEFT) ?></div>
                 </div>
+                <?php endif; ?>
 
                 <div class="display-area">
                     <div id="rolling-display">
@@ -303,20 +316,17 @@ if (!$draw || !$campaign) {
                     </div>
                     <div id="winner-display" class="winner-display" style="display: none;">
                         <h2>🎉 Winner Selected!</h2>
+                        <div class="rolling-number" id="winner-phone-large" style="font-size: 4rem; margin: 1rem 0; color: var(--accent);">---</div>
                         <div class="winner-info">
-                            <div>Phone: <strong id="winner-phone">---</strong></div>
-                            <div>Ticket: <strong id="winner-ticket">---</strong></div>
-                            <div>Prize: <strong id="winner-prize">---</strong></div>
+                            <div style="font-size: 1.3rem;">Ticket: <strong id="winner-ticket">---</strong></div>
+                            <div style="font-size: 1.5rem; margin-top: 0.5rem;">Prize: <strong id="winner-prize" style="color: var(--accent);">---</strong></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="controls">
-                    <button class="btn btn-primary" id="start-btn" onclick="startDraw()">
-                        <i class="fas fa-play"></i> Start Draw
-                    </button>
-                    <button class="btn btn-secondary" id="reset-btn" onclick="resetDraw()" disabled>
-                        <i class="fas fa-redo"></i> Reset
+                    <button class="btn btn-primary" id="start-btn" onclick="startDraw()" <?= $drawAlreadyCompleted ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' ?>>
+                        <i class="fas fa-play"></i> <?= $drawAlreadyCompleted ? 'Draw Completed' : 'Start Draw' ?>
                     </button>
                     <button class="btn btn-secondary" onclick="window.location.href='<?= url('draw/show/' . $draw->id) ?>'">
                         <i class="fas fa-arrow-left"></i> Back
@@ -366,11 +376,21 @@ if (!$draw || !$campaign) {
         let currentWinnerIndex = 0;
         let winners = [];
 
+        let timerInterval = null;
+        let drawResult = null;
+        const COUNTDOWN_SECONDS = 15; // Configurable countdown duration
+        
         async function startDraw() {
             if (isDrawing) return;
             
             isDrawing = true;
-            document.getElementById('start-btn').disabled = true;
+            
+            // Disable button immediately and permanently
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.style.opacity = '0.5';
+            startBtn.style.cursor = 'not-allowed';
+            
             document.getElementById('status-text').textContent = 'Drawing in progress...';
             
             // Start rolling animation
@@ -392,26 +412,81 @@ if (!$draw || !$campaign) {
                 if (!contentType || !contentType.includes('application/json')) {
                     const text = await response.text();
                     console.error('Non-JSON response:', text);
-                    throw new Error('Server returned HTML instead of JSON. Check error logs.');
+                    stopRolling();
+                    showError('Server error occurred. The draw may have already been conducted.');
+                    return;
                 }
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Simulate rolling for 3 seconds
-                    setTimeout(() => {
-                        stopRolling();
-                        displayWinners(result.winners);
-                    }, 3000);
+                    // Store result and start countdown
+                    drawResult = result.winners;
+                    startTimer(COUNTDOWN_SECONDS);
                 } else {
-                    alert('Error: ' + result.message);
-                    resetDraw();
+                    stopRolling();
+                    showError(result.message || 'Failed to conduct draw');
                 }
             } catch (error) {
                 console.error('Draw error:', error);
-                alert('Failed to conduct draw. Please try again.');
-                resetDraw();
+                stopRolling();
+                showError('Network error. Please check your connection and try again.');
             }
+        }
+        
+        function showError(message) {
+            document.getElementById('status-text').textContent = 'Error!';
+            document.getElementById('status-text').style.color = '#ef4444';
+            
+            // Show error in display area
+            const displayArea = document.querySelector('.display-area');
+            displayArea.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 4rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                    <h2 style="color: #ef4444; margin-bottom: 1rem;">Draw Failed</h2>
+                    <p style="color: var(--text-muted); font-size: 1.1rem;">${message}</p>
+                    <button class="btn btn-secondary" onclick="window.location.href='<?= url('draw/show/' . $draw->id) ?>'" style="margin-top: 2rem;">
+                        <i class="fas fa-arrow-left"></i> Go Back
+                    </button>
+                </div>
+            `;
+        }
+        
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            const timerElement = document.getElementById('timer');
+            
+            // Update immediately
+            timerElement.textContent = formatTime(timeLeft);
+            
+            // Start countdown
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = formatTime(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    // Reveal winners when countdown ends
+                    stopRolling();
+                    if (drawResult) {
+                        displayWinners(drawResult);
+                    }
+                }
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('timer').textContent = '00:00';
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
         function startRolling() {
@@ -448,8 +523,8 @@ if (!$draw || !$campaign) {
                 
                 // Show first winner in main display
                 if (index === 0) {
-                    document.getElementById('rolling-number').textContent = winner.ticket_code;
-                    document.getElementById('winner-phone').textContent = winner.player_phone;
+                    document.getElementById('rolling-number').textContent = winner.player_phone;
+                    document.getElementById('winner-phone-large').textContent = winner.player_phone;
                     document.getElementById('winner-ticket').textContent = winner.ticket_code;
                     document.getElementById('winner-prize').textContent = 'GHS ' + parseFloat(winner.prize_amount).toFixed(2);
                     document.getElementById('winner-display').style.display = 'block';
@@ -457,7 +532,6 @@ if (!$draw || !$campaign) {
             });
             
             document.getElementById('status-text').textContent = 'Draw Completed!';
-            document.getElementById('reset-btn').disabled = false;
             isDrawing = false;
         }
 
@@ -468,20 +542,6 @@ if (!$draw || !$campaign) {
                 3: '🥉 3rd Prize'
             };
             return names[rank] || `${rank}th Prize`;
-        }
-
-        function resetDraw() {
-            document.getElementById('rolling-number').textContent = '---';
-            document.getElementById('winner-phone').textContent = '---';
-            document.getElementById('winner-ticket').textContent = '---';
-            document.getElementById('winner-prize').textContent = '---';
-            document.getElementById('winner-display').style.display = 'none';
-            document.getElementById('winners-list').innerHTML = '<p class="info-label" style="text-align: center;">No winners selected yet</p>';
-            document.getElementById('status-text').textContent = 'Ready to Draw';
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('reset-btn').disabled = true;
-            isDrawing = false;
-            winners = [];
         }
     </script>
 </body>
