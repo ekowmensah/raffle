@@ -190,19 +190,23 @@ class AuditLog extends Model
         $criticalActions = ['draw_conducted', 'winner_selected', 'payment_processed', 
                            'campaign_deleted', 'user_deleted', 'configuration_changed'];
         
-        $placeholders = implode(',', array_fill(0, count($criticalActions), '?'));
+        // Use named parameters instead of positional
+        $namedParams = [];
+        foreach ($criticalActions as $index => $action) {
+            $namedParams[] = ":action{$index}";
+        }
+        $placeholders = implode(',', $namedParams);
         
         $this->db->query("SELECT al.*, u.name as username 
                          FROM {$this->table} al
                          LEFT JOIN users u ON al.user_id = u.id
                          WHERE al.action IN ($placeholders)
                          ORDER BY al.created_at DESC
-                         LIMIT :limit");
+                         LIMIT {$limit}");
         
         foreach ($criticalActions as $index => $action) {
-            $this->db->bind($index + 1, $action);
+            $this->db->bind(":action{$index}", $action);
         }
-        $this->db->bind(':limit', $limit);
         
         return $this->db->resultSet();
     }
