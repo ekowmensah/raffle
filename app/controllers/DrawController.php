@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Services\AuditService;
 
 class DrawController extends Controller
 {
@@ -10,6 +11,7 @@ class DrawController extends Controller
     private $winnerModel;
     private $campaignModel;
     private $drawService;
+    private $auditService;
 
     public function __construct()
     {
@@ -19,6 +21,7 @@ class DrawController extends Controller
         
         require_once '../app/services/DrawService.php';
         $this->drawService = new \App\Services\DrawService();
+        $this->auditService = new AuditService();
     }
 
     public function index()
@@ -149,6 +152,15 @@ class DrawController extends Controller
                     $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
                     
                     if ($result['success']) {
+                        // Log draw conducted
+                        $draw = $this->drawModel->findById($id);
+                        $campaign = $this->campaignModel->findById($draw->campaign_id);
+                        $this->auditService->logDrawConducted(
+                            $_SESSION['user_id'],
+                            $id,
+                            $campaign->name ?? 'Unknown',
+                            $result['winner_count']
+                        );
                         // Get winners with ticket details
                         $winners = $this->winnerModel->getByDraw($id);
                         $ticketModel = $this->model('Ticket');
@@ -192,6 +204,15 @@ class DrawController extends Controller
             $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
 
             if ($result['success']) {
+                // Log draw conducted
+                $draw = $this->drawModel->findById($id);
+                $campaign = $this->campaignModel->findById($draw->campaign_id);
+                $this->auditService->logDrawConducted(
+                    $_SESSION['user_id'],
+                    $id,
+                    $campaign->name ?? 'Unknown',
+                    $result['winner_count']
+                );
                 flash('success', $result['message'] . ' - ' . $result['winner_count'] . ' winner(s) selected');
                 $this->redirect('draw/show/' . $id);
             } else {
@@ -282,6 +303,17 @@ class DrawController extends Controller
             ]);
 
             if ($result) {
+                // Log prize payment
+                $winner = $this->winnerModel->findById($winnerId);
+                $this->auditService->logPrizePayment(
+                    $_SESSION['user_id'],
+                    $winnerId,
+                    [
+                        'status' => $status,
+                        'prize_amount' => $winner->prize_amount ?? 0,
+                        'player_id' => $winner->player_id ?? null
+                    ]
+                );
                 // Send SMS notification
                 $winner = $this->winnerModel->findById($winnerId);
                 if ($winner && $status === 'paid') {

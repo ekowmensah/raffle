@@ -211,6 +211,23 @@
                         </a>
                     </li>
 
+                    <!-- Security & Audit -->
+                    <?php if (can('*') || hasRole('super_admin')): ?>
+                    <li class="nav-header">SECURITY</li>
+                    <li class="nav-item">
+                        <a href="<?= url('audit') ?>" class="nav-link <?= isActive('audit') ?>">
+                            <i class="nav-icon fas fa-clipboard-list"></i>
+                            <p>Audit Logs</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= url('audit/stats') ?>" class="nav-link <?= isActive('audit/stats') ?>">
+                            <i class="nav-icon fas fa-chart-pie"></i>
+                            <p>Audit Statistics</p>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+
                 </ul>
             </nav>
             <!-- /.sidebar-menu -->

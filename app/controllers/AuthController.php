@@ -3,14 +3,17 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Services\AuditService;
 
 class AuthController extends Controller
 {
     private $userModel;
+    private $auditService;
 
     public function __construct()
     {
         $this->userModel = $this->model('User');
+        $this->auditService = new AuditService();
     }
 
     public function login()
@@ -32,6 +35,8 @@ class AuthController extends Controller
 
             if ($user) {
                 if (!$user->is_active) {
+                    // Log failed login attempt (inactive account)
+                    $this->auditService->logLogin($user->id, false);
                     flash('error', 'Your account is inactive. Please contact administrator.');
                     $this->redirect('auth/login');
                 }
@@ -40,9 +45,14 @@ class AuthController extends Controller
                 $_SESSION['user'] = $user;
                 $_SESSION['user_id'] = $user->id;
 
+                // Log successful login
+                $this->auditService->logLogin($user->id, true);
+
                 flash('success', 'Welcome back, ' . $user->name);
                 $this->redirect('home');
             } else {
+                // Log failed login attempt
+                $this->auditService->log('user_login_failed', 'user', null, ['email' => $email]);
                 flash('error', 'Invalid email or password');
                 $this->redirect('auth/login');
             }
@@ -54,6 +64,11 @@ class AuthController extends Controller
 
     public function logout()
     {
+        // Log logout before destroying session
+        if (isset($_SESSION['user_id'])) {
+            $this->auditService->logLogout($_SESSION['user_id']);
+        }
+        
         session_unset();
         session_destroy();
         $this->redirect('auth/login');
