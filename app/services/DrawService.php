@@ -56,12 +56,24 @@ class DrawService
             return ['success' => false, 'message' => 'Insufficient prize pool'];
         }
 
-        // Generate random seed for transparency
+        // Generate random seed for transparency and verifiability
         $randomSeed = $this->generateRandomSeed();
         
-        // Update draw with seed and eligible count
+        // Create verification hash (tickets + seed + timestamp)
+        $verificationData = [
+            'seed' => $randomSeed,
+            'draw_id' => $drawId,
+            'ticket_count' => count($eligibleTickets),
+            'timestamp' => time(),
+            'ticket_ids' => array_map(function($t) { return $t->id; }, $eligibleTickets)
+        ];
+        $verificationHash = hash('sha256', json_encode($verificationData));
+        
+        // Update draw with seed, hash, and eligible count
         $this->drawModel->update($drawId, [
-            'total_prize_pool' => $prizePool
+            'total_prize_pool' => $prizePool,
+            'random_seed' => $randomSeed,
+            'verification_hash' => $verificationHash
         ]);
 
         // Select winners based on draw configuration
@@ -71,9 +83,26 @@ class DrawService
             return ['success' => false, 'message' => 'Failed to select winners'];
         }
 
+        // Log draw execution details for transparency
+        error_log("=== DRAW EXECUTION LOG ===");
+        error_log("Draw ID: {$drawId}");
+        error_log("Campaign: {$campaign->name}");
+        error_log("Random Seed: {$randomSeed}");
+        error_log("Verification Hash: {$verificationHash}");
+        error_log("Eligible Tickets: " . count($eligibleTickets));
+        error_log("Prize Pool: GHS {$prizePool}");
+        error_log("Winners Selected: " . count($winners));
+        
         // Save winners
         foreach ($winners as $winner) {
             $winnerId = $this->winnerModel->create($winner);
+            
+            // Log winner details with time-decay info if available
+            $logMsg = "Winner #{$winner['prize_rank']}: Ticket #{$winner['ticket_id']}, Prize: GHS {$winner['prize_amount']}";
+            if (isset($winner['ticket_age_days'])) {
+                $logMsg .= ", Ticket Age: {$winner['ticket_age_days']} days, Weight: {$winner['weight_multiplier']}x";
+            }
+            error_log($logMsg);
             
             // Mark ticket as winner (if column exists)
             // $this->ticketModel->markAsWinner(
@@ -98,6 +127,8 @@ class DrawService
                 );
             }
         }
+        
+        error_log("=== DRAW COMPLETED ===");
 
         // Update draw status
         $this->drawModel->updateStatus($drawId, 'completed');
@@ -113,57 +144,157 @@ class DrawService
     private function selectWinners($eligibleTickets, $draw, $prizePool, $seed)
     {
         $winners = [];
-        $winnerCount = $draw->winner_count ?? 1;
+        $winnerCount = 3; // Default to 3 winners (1st, 2nd, 3rd)
+        
+        if (empty($eligibleTickets)) {
+            return [];
+        }
         
         // Seed random number generator for reproducibility
         mt_srand(crc32($seed));
         
-        // Expand tickets by quantity for fair odds
-        // Each ticket with quantity=100 gets 100 entries in the pool
-        $expandedTickets = [];
-        foreach ($eligibleTickets as $ticket) {
-            $quantity = $ticket->quantity ?? 1;
-            for ($i = 0; $i < $quantity; $i++) {
-                $expandedTickets[] = $ticket;
-            }
+        // Apply time-decay weighting to older tickets
+        $weightedTickets = $this->applyTimeDecayWeighting($eligibleTickets, $draw->draw_date);
+        
+        // Calculate total weighted entries
+        $totalEntries = 0;
+        foreach ($weightedTickets as $ticket) {
+            $totalEntries += $ticket['weighted_quantity'];
         }
         
-        // Shuffle expanded ticket pool
-        shuffle($expandedTickets);
+        if ($totalEntries == 0) {
+            mt_srand();
+            return [];
+        }
+        
+        // Build cumulative probability ranges for weighted selection
+        // This avoids memory-intensive array expansion
+        $ranges = [];
+        $cumulative = 0;
+        foreach ($weightedTickets as $ticketData) {
+            $weightedQty = $ticketData['weighted_quantity'];
+            $ranges[] = [
+                'ticket' => $ticketData['ticket'],
+                'original_quantity' => $ticketData['original_quantity'],
+                'weighted_quantity' => $weightedQty,
+                'age_days' => $ticketData['age_days'],
+                'weight_multiplier' => $ticketData['weight_multiplier'],
+                'start' => $cumulative,
+                'end' => $cumulative + $weightedQty - 1
+            ];
+            $cumulative += $weightedQty;
+        }
         
         // Calculate prize distribution
         $prizeDistribution = $this->calculatePrizeDistribution($prizePool, $winnerCount);
         
-        // Select winners (ensuring unique tickets)
+        // Select winners using weighted random selection
         $selectedTicketIds = [];
         $winnerIndex = 0;
+        $maxAttempts = min($totalEntries * 2, 10000); // Prevent infinite loop
+        $attempts = 0;
         
-        for ($i = 0; $i < count($expandedTickets) && $winnerIndex < $winnerCount; $i++) {
-            $winningTicket = $expandedTickets[$i];
+        while ($winnerIndex < $winnerCount && $attempts < $maxAttempts) {
+            $attempts++;
             
-            // Skip if this ticket already won (one ticket can only win once)
-            if (in_array($winningTicket->id, $selectedTicketIds)) {
-                continue;
+            // Generate random number in range [0, totalEntries)
+            $randomNum = mt_rand(0, $totalEntries - 1);
+            
+            // Find which ticket this random number falls into
+            foreach ($ranges as $range) {
+                if ($randomNum >= $range['start'] && $randomNum <= $range['end']) {
+                    $winningTicket = $range['ticket'];
+                    
+                    // Skip if this ticket already won (one ticket wins once per draw)
+                    if (in_array($winningTicket->id, $selectedTicketIds)) {
+                        continue 2; // Continue outer while loop
+                    }
+                    
+                    $selectedTicketIds[] = $winningTicket->id;
+                    
+                    $winners[] = [
+                        'draw_id' => $draw->id,
+                        'ticket_id' => $winningTicket->id,
+                        'player_id' => $winningTicket->player_id,
+                        'prize_amount' => $prizeDistribution[$winnerIndex],
+                        'prize_rank' => $winnerIndex + 1,
+                        'prize_paid_status' => 'pending',
+                        // Metadata for transparency (not saved to DB, just for logging)
+                        'ticket_age_days' => $range['age_days'],
+                        'weight_multiplier' => $range['weight_multiplier'],
+                        'original_quantity' => $range['original_quantity'],
+                        'weighted_quantity' => $range['weighted_quantity']
+                    ];
+                    
+                    $winnerIndex++;
+                    break; // Break inner foreach, continue while loop
+                }
             }
-            
-            $selectedTicketIds[] = $winningTicket->id;
-            
-            $winners[] = [
-                'draw_id' => $draw->id,
-                'ticket_id' => $winningTicket->id,
-                'player_id' => $winningTicket->player_id,
-                'prize_amount' => $prizeDistribution[$winnerIndex],
-                'prize_rank' => $winnerIndex + 1,
-                'prize_paid_status' => 'pending'
-            ];
-            
-            $winnerIndex++;
         }
         
         // Reset random seed
         mt_srand();
         
+        // Log selection details
+        error_log("Winner selection completed: {$winnerIndex} winners from {$totalEntries} entries in {$attempts} attempts");
+        
         return $winners;
+    }
+
+    /**
+     * Apply time-decay weighting to tickets based on age
+     * Older tickets get reduced winning chances (70% reduction for tickets 3+ days old)
+     */
+    private function applyTimeDecayWeighting($eligibleTickets, $drawDate)
+    {
+        $weightedTickets = [];
+        
+        foreach ($eligibleTickets as $ticket) {
+            $ticketDate = date('Y-m-d', strtotime($ticket->created_at));
+            $drawDateFormatted = date('Y-m-d', strtotime($drawDate));
+            
+            // Calculate age in days
+            $ticketTimestamp = strtotime($ticketDate);
+            $drawTimestamp = strtotime($drawDateFormatted);
+            $ageDays = floor(($drawTimestamp - $ticketTimestamp) / 86400);
+            
+            // Apply time-decay multiplier
+            $weightMultiplier = $this->getTimeDecayMultiplier($ageDays);
+            
+            $originalQty = $ticket->quantity ?? 1;
+            $weightedQty = max(1, round($originalQty * $weightMultiplier)); // Minimum 1 entry
+            
+            $weightedTickets[] = [
+                'ticket' => $ticket,
+                'original_quantity' => $originalQty,
+                'weighted_quantity' => $weightedQty,
+                'age_days' => $ageDays,
+                'weight_multiplier' => $weightMultiplier
+            ];
+        }
+        
+        return $weightedTickets;
+    }
+    
+    /**
+     * Get time-decay multiplier based on ticket age
+     * 
+     * Age 0 days (today):     100% weight (1.0)
+     * Age 1 day:              85% weight (0.85)
+     * Age 2 days:             70% weight (0.70)
+     * Age 3+ days:            30% weight (0.30) - 70% reduction
+     */
+    private function getTimeDecayMultiplier($ageDays)
+    {
+        if ($ageDays == 0) {
+            return 1.0;  // Today's tickets: 100% weight
+        } elseif ($ageDays == 1) {
+            return 0.85; // Yesterday: 85% weight (15% reduction)
+        } elseif ($ageDays == 2) {
+            return 0.70; // 2 days ago: 70% weight (30% reduction)
+        } else {
+            return 0.30; // 3+ days ago: 30% weight (70% reduction)
+        }
     }
 
     private function calculatePrizeDistribution($totalPrize, $winnerCount)
