@@ -1,0 +1,39 @@
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment files
+#.env
+#.env.local
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# Uploaded files (if any)
+#uploads/
+#public/uploads/
+
+# Composer
+#vendor/
+#composer.lock
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+
+# Build files
+dist/
+build/

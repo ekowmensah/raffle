@@ -1,0 +1,124 @@
+/* Custom CSS for Raffle System */
+
+/* General Styles */
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Card Enhancements */
+.card {
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 3px;
+}
+
+/* Table Styles */
+.table {
+    font-size: 14px;
+}
+
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* Badge Styles */
+.badge {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 3px;
+    color: #fff !important;
+}
+
+.alert-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+.alert-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+
+.alert-warning {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.alert-info {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+    color: #fff !important;
+}
+
+.alert i.icon,
+.alert .icon {
+    color: inherit !important;
+}
+
+.alert .close {
+    color: inherit !important;
+    opacity: 0.8;
+}
+
+.alert .close:hover {
+    opacity: 1;
+}
+
+/* Form Styles */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Info Box Enhancements */
+.info-box {
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    border-radius: 3px;
+}
+
+/* Sidebar Styles */
+.sidebar-dark-primary .nav-sidebar>.nav-item>.nav-link.active {
+    background-color: #007bff;
+    color: #fff;
+}
+
+/* Custom Utilities */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Loading Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Responsive Tables */
+@media (max-width: 768px) {
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

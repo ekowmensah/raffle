@@ -1,0 +1,127 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    USSD FLOW - QUICK REFERENCE                       ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  SCENARIO 1: FASTEST PATH (Station-Wide Campaigns)                 │
+│  ═══════════════════════════════════════════════════════════════    │
+│                                                                      │
+│  *123# → Buy Ticket → Select Station → Select Campaign → Buy       │
+│                                                                      │
+│  Example:                                                            │
+│  1. Dial *123#                                                       │
+│  2. Select "1. Buy Ticket"                                          │
+│  3. Select "1. Peace FM"                                            │
+│  4. Select "1. Christmas Promo (GHS 5.00)"                          │
+│  5. Enter quantity: 2                                               │
+│  6. Confirm payment                                                  │
+│                                                                      │
+│  ✓ TOTAL STEPS: 5                                                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  SCENARIO 2: PROGRAMME-SPECIFIC PATH                                │
+│  ═══════════════════════════════════════════════════════════════    │
+│                                                                      │
+│  *123# → Buy → Station → Browse by Programme → Programme →         │
+│          Campaign → Buy                                              │
+│                                                                      │
+│  Example:                                                            │
+│  1. Dial *123#                                                       │
+│  2. Select "1. Buy Ticket"                                          │
+│  3. Select "1. Peace FM"                                            │
+│  4. Select "3. Browse by Programme"                                 │
+│  5. Select "1. Morning Show"                                        │
+│  6. Select "2. Morning Show Promo (GHS 3.00)"                       │
+│  7. Enter quantity: 1                                               │
+│  8. Confirm payment                                                  │
+│                                                                      │
+│  ✓ TOTAL STEPS: 7                                                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  CAMPAIGN TYPES                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────┬──────────────────────────────┐
+│  STATION-WIDE CAMPAIGNS              │  PROGRAMME-SPECIFIC          │
+├──────────────────────────────────────┼──────────────────────────────┤
+│  • Available to ALL programmes       │  • Only for specific         │
+│  • Shows immediately after station   │    programme                 │
+│  • Faster purchase (5 steps)         │  • Requires programme        │
+│  • Example: "Christmas Mega Raffle"  │    selection (7 steps)       │
+│                                      │  • Example: "Morning Show    │
+│                                      │    Exclusive"                │
+└──────────────────────────────────────┴──────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  WHAT USERS SEE                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+After selecting "Peace FM":
+┌─────────────────────────────────────────────────────────────────────┐
+│  CON Select Campaign:                                                │
+│  1. Christmas Promo (GHS 5.00)          ← Station-wide              │
+│  2. New Year Bonanza (GHS 10.00)        ← Station-wide              │
+│  3. Browse by Programme                  ← For programme-specific   │
+│  0. Back                                                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+If user selects "3. Browse by Programme" → "Morning Show":
+┌─────────────────────────────────────────────────────────────────────┐
+│  CON Select Campaign:                                                │
+│  1. Christmas Promo (GHS 5.00)          ← Station-wide (still here!)│
+│  2. New Year Bonanza (GHS 10.00)        ← Station-wide (still here!)│
+│  3. Morning Show Exclusive (GHS 3.00)   ← Programme-specific        │
+│  0. Back                                                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  KEY POINTS                                                          ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+✓ Station-wide campaigns are ALWAYS visible (no programme needed)
+✓ Programme-specific campaigns ONLY show when you select that programme
+✓ When you select a programme, you see BOTH types of campaigns
+✓ Station-wide campaigns appear FIRST in the list
+✓ Users can buy tickets faster with station-wide campaigns
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  BUSINESS LOGIC                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+Use STATION-WIDE for:
+  • General promotions
+  • Holiday campaigns
+  • Station anniversaries
+  • Cross-programme events
+  • Maximum reach campaigns
+
+Use PROGRAMME-SPECIFIC for:
+  • Programme anniversaries
+  • Host-specific promotions
+  • Niche audience targeting
+  • Exclusive listener rewards
+  • Programme loyalty campaigns
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  EXAMPLE SETUP                                                       ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+Peace FM Station:
+├── Station-Wide Campaigns:
+│   ├── Christmas Mega Raffle (GHS 10) - All listeners
+│   └── New Year Bonanza (GHS 5) - All listeners
+│
+└── Programmes:
+    ├── Morning Show
+    │   └── Wake Up & Win (GHS 3) - Morning Show listeners only
+    ├── Drive Time
+    │   └── Rush Hour Raffle (GHS 2) - Drive Time listeners only
+    └── Sports Hour
+        └── (Can access station-wide campaigns only)
+
+USSD Experience:
+• General listener: Sees 2 station-wide campaigns (fast!)
+• Morning Show fan: Sees 2 station-wide + 1 programme-specific (3 total)
+• Sports Hour fan: Sees 2 station-wide campaigns
