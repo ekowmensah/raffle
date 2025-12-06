@@ -18,7 +18,7 @@ class UssdMenuService
      */
     public function buildMainMenu()
     {
-        return "Welcome to Raffle System\n" .
+        return "CON Welcome to Raffle System\n" .
                "1. Buy Ticket\n" .
                "2. Check My Tickets\n" .
                "3. Check Winners\n" .
@@ -34,7 +34,7 @@ class UssdMenuService
         $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
         $stations = $this->db->resultSet();
         
-        $menu = "Select Station:\n";
+        $menu = "CON Select Station:\n";
         $index = 1;
         
         foreach ($stations as $station) {
@@ -59,10 +59,10 @@ class UssdMenuService
         $programmes = $this->db->resultSet();
         
         if (empty($programmes)) {
-            return "No active programmes available for this station.";
+            return "END No active programmes available for this station.";
         }
         
-        $menu = "Select Programme:\n";
+        $menu = "CON Select Programme:\n";
         $index = 1;
         
         foreach ($programmes as $programme) {
