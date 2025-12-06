@@ -48,16 +48,13 @@ class Campaign extends Model
             return [];
         }
         
-        // Get campaigns: station-wide OR programme-specific
+        // Get ONLY programme-specific campaigns (NOT station-wide)
         $this->db->query("SELECT DISTINCT c.id, c.name, c.code, c.ticket_price, c.currency, c.status, c.station_id
                          FROM {$this->table} c
-                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         INNER JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
                          WHERE c.status = 'active' 
                          AND c.station_id = :station_id
-                         AND (
-                             cpa.programme_id = :programme_id 
-                             OR cpa.programme_id IS NULL
-                         )
+                         AND cpa.programme_id = :programme_id
                          ORDER BY c.start_date DESC");
         $this->db->bind(':station_id', $programme->station_id);
         $this->db->bind(':programme_id', $programmeId);
