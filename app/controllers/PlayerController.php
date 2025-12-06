@@ -39,11 +39,36 @@ class PlayerController extends Controller
         }
 
         $tickets = $this->playerModel->getTickets($id);
+        
+        // Get player stats
+        $ticketModel = $this->model('Ticket');
+        $paymentModel = $this->model('Payment');
+        $winnerModel = $this->model('DrawWinner');
+        
+        $totalTickets = count($tickets);
+        
+        // Get total spent
+        $payments = $paymentModel->getByPlayer($id);
+        $totalSpent = array_sum(array_map(function($p) {
+            return $p->status === 'success' ? $p->amount : 0;
+        }, $payments));
+        
+        // Get wins
+        $wins = $winnerModel->getByPlayer($id);
+        $totalWins = count($wins);
+        $totalWinnings = array_sum(array_column($wins, 'prize_amount'));
 
         $data = [
             'title' => 'Player Details',
             'player' => $player,
-            'tickets' => $tickets
+            'tickets' => $tickets,
+            'wins' => $wins,
+            'stats' => [
+                'total_tickets' => $totalTickets,
+                'total_spent' => $totalSpent,
+                'total_wins' => $totalWins,
+                'total_winnings' => $totalWinnings
+            ]
         ];
 
         $this->view('players/view', $data);
