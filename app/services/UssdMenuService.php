@@ -18,7 +18,7 @@ class UssdMenuService
      */
     public function buildMainMenu()
     {
-        return "CON Welcome to Raffle System\n" .
+        return "Welcome to Raffle System\n" .
                "1. Buy Ticket\n" .
                "2. Check My Tickets\n" .
                "3. Check Winners\n" .
@@ -34,7 +34,7 @@ class UssdMenuService
         $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
         $stations = $this->db->resultSet();
         
-        $menu = "CON Select Station:\n";
+        $menu = "Select Station:\n";
         $index = 1;
         
         foreach ($stations as $station) {
@@ -59,7 +59,7 @@ class UssdMenuService
         $programmes = $this->db->resultSet();
         
         if (empty($programmes)) {
-            return "END No active programmes available for this station.";
+            return "No active programmes available for this station.";
         }
         
         $menu = "CON Select Programme:\n";
@@ -182,30 +182,59 @@ class UssdMenuService
     }
     
     /**
-     * Build ticket list for player
+     * Build ticket list for player with pagination
      */
-    public function buildTicketList($phoneNumber)
+    public function buildTicketList($phoneNumber, $page = 1)
     {
-        $this->db->query("SELECT t.ticket_code, rc.name as campaign_name, t.created_at
+        $perPage = 3;
+        $offset = ($page - 1) * $perPage;
+        
+        // Get total count
+        $this->db->query("SELECT COUNT(*) as total FROM tickets t
+                         INNER JOIN players p ON t.player_id = p.id
+                         WHERE p.phone = :phone");
+        $this->db->bind(':phone', $phoneNumber);
+        $countResult = $this->db->single();
+        $totalTickets = $countResult->total ?? 0;
+        
+        if ($totalTickets == 0) {
+            return "END You have no tickets yet.";
+        }
+        
+        // Get tickets with status and quantity
+        $this->db->query("SELECT t.ticket_code, t.quantity, rc.name as campaign_name, t.created_at,
+                         CASE 
+                             WHEN dw.id IS NOT NULL THEN 'Won'
+                             WHEN d.id IS NOT NULL AND d.draw_date < NOW() THEN 'Lost'
+                             ELSE 'Pending'
+                         END as status
                          FROM tickets t
                          INNER JOIN players p ON t.player_id = p.id
                          INNER JOIN raffle_campaigns rc ON t.campaign_id = rc.id
+                         LEFT JOIN draw_winners dw ON t.id = dw.ticket_id
+                         LEFT JOIN draws d ON rc.id = d.campaign_id
                          WHERE p.phone = :phone
                          ORDER BY t.created_at DESC
-                         LIMIT 5");
+                         LIMIT :limit OFFSET :offset");
         $this->db->bind(':phone', $phoneNumber);
+        $this->db->bind(':limit', $perPage);
+        $this->db->bind(':offset', $offset);
         $tickets = $this->db->resultSet();
         
-        if (empty($tickets)) {
-            return "You have no tickets yet.";
-        }
+        $totalPages = ceil($totalTickets / $perPage);
         
-        $menu = "Your Recent Tickets:\n\n";
+        $menu = "END Your Tickets (Page {$page}/{$totalPages}):\n\n";
         
         foreach ($tickets as $ticket) {
             $menu .= "Code: {$ticket->ticket_code}\n";
+            $menu .= "Qty: {$ticket->quantity} ticket(s)\n";
+            $menu .= "Status: {$ticket->status}\n";
             $menu .= "Campaign: {$ticket->campaign_name}\n";
             $menu .= "Date: " . date('d M Y', strtotime($ticket->created_at)) . "\n\n";
+        }
+        
+        if ($totalPages > 1) {
+            $menu .= "Total: {$totalTickets} tickets";
         }
         
         return $menu;
@@ -273,8 +302,7 @@ class UssdMenuService
         $this->db->bind(':player_id', $player->id);
         $winningData = $this->db->single();
         
-        $menu = "Account Balance:\n\n";
-        $menu .= "Name: {$player->name}\n";
+        $menu = "END Account Balance:\n\n";
         $menu .= "Phone: {$player->phone}\n";
         $menu .= "Total Tickets: {$ticketData->ticket_count}\n";
         $menu .= "Total Winnings: GHS " . number_format($winningData->total_winnings ?? 0, 2) . "\n";
