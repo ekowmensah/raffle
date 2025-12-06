@@ -143,7 +143,7 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($stations[$index])) {
-            return "CON Invalid selection. Please try again.\n" . $this->menuService->buildStationMenu();
+            return "Invalid selection. Please try again.\n" . $this->menuService->buildStationMenu();
         }
         
         $selectedStation = $stations[$index];
@@ -184,7 +184,7 @@ class UssdController extends Controller
         
         // User selected a station-wide campaign
         if (!isset($campaigns[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
+            return "Invalid selection. Please try again.\n" . 
                    $this->menuService->buildStationCampaignMenu($stationId);
         }
         
@@ -219,7 +219,7 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($programmes[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
+            return "Invalid selection. Please try again.\n" . 
                    $this->menuService->buildProgrammeMenu($stationId);
         }
         
@@ -249,7 +249,7 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($campaigns[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
+            return "Invalid selection. Please try again.\n" . 
                    $this->menuService->buildCampaignMenu(
                        $sessionData['station_id'],
                        $sessionData['programme_id']
@@ -300,9 +300,9 @@ class UssdController extends Controller
                 break;
             case '5':
                 $this->sessionService->updateSession($sessionId, 'enter_custom_quantity');
-                return "CON Enter number of tickets (1-10):";
+                return "Enter number of Entries (1-10):";
             default:
-                return "CON Invalid selection.\n" . 
+                return "Invalid selection.\n" . 
                        $this->menuService->buildQuantityMenu(
                            $sessionData['campaign_name'],
                            $ticketPrice
@@ -329,8 +329,8 @@ class UssdController extends Controller
     {
         $quantity = (int)$input;
         
-        if ($quantity < 1 || $quantity > 10) {
-            return "CON Invalid quantity. Enter 1-10:";
+        if ($quantity < 1 || $quantity > 100) {
+            return "Invalid quantity. Enter 1-100:";
         }
         
         $ticketPrice = $sessionData['ticket_price'];
@@ -363,7 +363,7 @@ class UssdController extends Controller
             return $this->menuService->buildPaymentMethodMenu();
         }
         
-        return "CON Invalid selection.\n" . 
+        return "Invalid selection.\n" . 
                $this->menuService->buildPaymentConfirmation(
                    $sessionData['quantity'],
                    $sessionData['total_amount'],
@@ -395,7 +395,7 @@ class UssdController extends Controller
                 $isManual = true;
                 break;
             default:
-                return "CON Invalid selection.\n" . $this->menuService->buildPaymentMethodMenu();
+                return "Invalid selection.\n" . $this->menuService->buildPaymentMethodMenu();
         }
         
         // Validate phone number

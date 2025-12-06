@@ -262,11 +262,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="player_name">Your Name</label>
-                    <input type="text" class="form-control form-control-lg" id="player_name" name="player_name" required>
-                </div>
-                
-                <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <input type="tel" class="form-control form-control-lg" id="phone" name="phone" placeholder="0241234567" required>
                     <small class="form-text text-muted">Enter your mobile money number</small>

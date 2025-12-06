@@ -62,7 +62,7 @@ class UssdMenuService
             return "No active programmes available for this station.";
         }
         
-        $menu = "CON Select Programme:\n";
+        $menu = "Select Programme:\n";
         $index = 1;
         
         foreach ($programmes as $programme) {
