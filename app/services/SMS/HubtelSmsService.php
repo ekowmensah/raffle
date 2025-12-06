@@ -14,9 +14,9 @@ class HubtelSmsService
     
     public function __construct()
     {
-        // Use same credentials as Hubtel Payment
-        $this->clientId = getenv('HUBTEL_CLIENT_ID') ?: 'nahmhxin';
-        $this->clientSecret = getenv('HUBTEL_CLIENT_SECRET') ?: 'hjwsajeq';
+        // SMS has separate credentials from payment gateway
+        $this->clientId = getenv('SMS_CLIENT_ID') ?: '';
+        $this->clientSecret = getenv('SMS_CLIENT_SECRET') ?: '';
         $this->senderId = getenv('SMS_SENDER_ID') ?: 'MENSWEB';
         $this->apiUrl = 'https://sms.hubtel.com/v1/messages/send';
         $this->db = new Database();
