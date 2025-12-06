@@ -93,6 +93,9 @@ class UssdController extends Controller
             case 'select_payment_method':
                 return $this->handlePaymentMethod($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
+            case 'view_tickets':
+                return $this->handleTicketNavigation($session->session_id, $userInput, $sessionData, $phoneNumber);
+                
             default:
                 return $this->menuService->buildMainMenu();
         }
@@ -109,8 +112,8 @@ class UssdController extends Controller
                 return $this->menuService->buildStationMenu();
                 
             case '2': // Check My Tickets
-                $this->sessionService->closeSession($sessionId);
-                return $this->menuService->buildTicketList($phoneNumber);
+                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => 1]);
+                return $this->menuService->buildTicketList($phoneNumber, 1);
                 
             case '3': // Check Winners
                 $this->sessionService->closeSession($sessionId);
@@ -565,6 +568,33 @@ class UssdController extends Controller
         }
         
         return $phone;
+    }
+    
+    /**
+     * Handle ticket list navigation (next/previous page)
+     */
+    private function handleTicketNavigation($sessionId, $input, $sessionData, $phoneNumber)
+    {
+        $currentPage = $sessionData['ticket_page'] ?? 1;
+        
+        switch ($input) {
+            case '1': // Next Page
+                $newPage = $currentPage + 1;
+                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => $newPage]);
+                return $this->menuService->buildTicketList($phoneNumber, $newPage);
+                
+            case '2': // Previous Page
+                $newPage = max(1, $currentPage - 1);
+                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => $newPage]);
+                return $this->menuService->buildTicketList($phoneNumber, $newPage);
+                
+            case '0': // Back to Main Menu
+                $this->sessionService->updateSession($sessionId, 'main_menu');
+                return $this->menuService->buildMainMenu();
+                
+            default:
+                return $this->menuService->buildTicketList($phoneNumber, $currentPage);
+        }
     }
     
     /**

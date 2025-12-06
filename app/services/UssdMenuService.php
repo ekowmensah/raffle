@@ -223,7 +223,9 @@ class UssdMenuService
         
         $totalPages = ceil($totalTickets / $perPage);
         
-        $menu = "END Your Tickets (Page {$page}/{$totalPages}):\n\n";
+        // Use CON if there are multiple pages, END if only one page
+        $prefix = ($totalPages > 1) ? "CON" : "END";
+        $menu = "{$prefix} Your Tickets (Page {$page}/{$totalPages}):\n\n";
         
         foreach ($tickets as $ticket) {
             $menu .= "Code: {$ticket->ticket_code}\n";
@@ -233,8 +235,18 @@ class UssdMenuService
             $menu .= "Date: " . date('d M Y', strtotime($ticket->created_at)) . "\n\n";
         }
         
+        // Add navigation options if multiple pages
         if ($totalPages > 1) {
-            $menu .= "Total: {$totalTickets} tickets";
+            $menu .= "---\n";
+            $menu .= "Total: {$totalTickets} tickets\n\n";
+            
+            if ($page < $totalPages) {
+                $menu .= "1. Next Page\n";
+            }
+            if ($page > 1) {
+                $menu .= "2. Previous Page\n";
+            }
+            $menu .= "0. Back to Main Menu";
         }
         
         return $menu;
@@ -302,7 +314,7 @@ class UssdMenuService
         $this->db->bind(':player_id', $player->id);
         $winningData = $this->db->single();
         
-        $menu = "END Account Balance:\n\n";
+        $menu = "Account Balance:\n\n";
         $menu .= "Phone: {$player->phone}\n";
         $menu .= "Total Tickets: {$ticketData->ticket_count}\n";
         $menu .= "Total Winnings: GHS " . number_format($winningData->total_winnings ?? 0, 2) . "\n";
