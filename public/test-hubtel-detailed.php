@@ -73,9 +73,12 @@
             ],
             CURLOPT_POSTFIELDS => json_encode([
                 'CustomerMsisdn' => '233241234567',
+                'CustomerName' => 'Test User',
+                'CustomerEmail' => 'test@example.com',
                 'Channel' => 'mtn-gh',
                 'Amount' => 1.00,
-                'Description' => 'Test',
+                'PrimaryCallbackUrl' => 'https://bon.mensweb.xyz/webhook/hubtel',
+                'Description' => 'Test Payment',
                 'ClientReference' => 'TEST' . time()
             ]),
             CURLOPT_TIMEOUT => 10,
