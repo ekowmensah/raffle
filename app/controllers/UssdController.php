@@ -112,7 +112,7 @@ class UssdController extends Controller
                 return $this->menuService->buildStationMenu();
                 
             case '2': // Check My Tickets
-                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => 1]);
+                $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => 1]);
                 return $this->menuService->buildTicketList($phoneNumber, 1);
                 
             case '3': // Check Winners
@@ -580,16 +580,16 @@ class UssdController extends Controller
         switch ($input) {
             case '1': // Next Page
                 $newPage = $currentPage + 1;
-                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => $newPage]);
+                $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => $newPage]);
                 return $this->menuService->buildTicketList($phoneNumber, $newPage);
                 
             case '2': // Previous Page
                 $newPage = max(1, $currentPage - 1);
-                $this->sessionService->updateSession($sessionId, ['step' => 'view_tickets', 'ticket_page' => $newPage]);
+                $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => $newPage]);
                 return $this->menuService->buildTicketList($phoneNumber, $newPage);
                 
             case '0': // Back to Main Menu
-                $this->sessionService->updateSession($sessionId, 'main_menu');
+                $this->sessionService->updateSession($sessionId, 'main_menu', []);
                 return $this->menuService->buildMainMenu();
                 
             default:
