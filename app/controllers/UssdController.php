@@ -470,11 +470,9 @@ class UssdController extends Controller
                 $this->sessionService->closeSession($sessionId);
                 
                 // Return success message
-                return "END Payment request sent!\n" .
-                       "Amount: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
-                       "Quantity: {$sessionData['quantity']} ticket(s)\n\n" .
-                       $hubtelResponse['message'] . "\n\n" .
-                       "Reference: {$reference}";
+                return "Amt: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
+                       "Qty: {$sessionData['quantity']} ticket(s)\n\n" .
+                       "Approve prompt on your phone.";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
