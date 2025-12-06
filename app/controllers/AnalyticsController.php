@@ -45,10 +45,9 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $days = $_GET['days'] ?? 30;
-        $cacheKey = "revenue_trend_{$days}";
-        
-        $result = $this->cache->remember($cacheKey, function() use ($days) {
+        try {
+            $days = $_GET['days'] ?? 30;
+            
             $this->paymentModel->db->query("
                 SELECT DATE(created_at) as date, 
                        SUM(amount) as revenue,
@@ -63,16 +62,18 @@ class AnalyticsController extends Controller
             $this->paymentModel->db->bind(':days', $days);
             $data = $this->paymentModel->db->resultSet();
             
-            return [
+            $result = [
                 'labels' => array_map(function($item) {
                     return date('M d', strtotime($item->date));
                 }, $data),
-                'revenue' => array_column($data, 'revenue'),
-                'transactions' => array_column($data, 'transaction_count')
+                'revenue' => array_map('floatval', array_column($data, 'revenue')),
+                'transactions' => array_map('intval', array_column($data, 'transaction_count'))
             ];
-        }, 300); // 5 minutes cache
-        
-        echo json_encode($result);
+            
+            echo json_encode($result);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'revenue' => [], 'transactions' => [], 'error' => $e->getMessage()]);
+        }
         exit;
     }
 
@@ -83,28 +84,31 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $days = $_GET['days'] ?? 30;
-        
-        $this->ticketModel->db->query("
-            SELECT DATE(created_at) as date, 
-                   COUNT(*) as ticket_count,
-                   SUM(quantity) as total_quantity
-            FROM tickets
-            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC
-        ");
-        
-        $this->ticketModel->db->bind(':days', $days);
-        $data = $this->ticketModel->db->resultSet();
-        
-        echo json_encode([
-            'labels' => array_map(function($item) {
-                return date('M d', strtotime($item->date));
-            }, $data),
-            'tickets' => array_column($data, 'ticket_count'),
-            'quantity' => array_column($data, 'total_quantity')
-        ]);
+        try {
+            $days = $_GET['days'] ?? 30;
+            
+            $this->ticketModel->db->query("
+                SELECT DATE(created_at) as date, 
+                       COUNT(*) as ticket_count,
+                       COALESCE(SUM(quantity), 0) as total_quantity
+                FROM tickets
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC
+            ");
+            
+            $this->ticketModel->db->bind(':days', $days);
+            $data = $this->ticketModel->db->resultSet();
+            
+            echo json_encode([
+                'labels' => array_map(function($item) {
+                    return date('M d', strtotime($item->date));
+                }, $data),
+                'tickets' => array_map('intval', array_column($data, 'total_quantity'))
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'tickets' => [], 'error' => $e->getMessage()]);
+        }
         exit;
     }
 
@@ -115,35 +119,39 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $days = $_GET['days'] ?? 30;
-        
-        $this->playerModel->db->query("
-            SELECT DATE(created_at) as date, 
-                   COUNT(*) as new_players
-            FROM players
-            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC
-        ");
-        
-        $this->playerModel->db->bind(':days', $days);
-        $data = $this->playerModel->db->resultSet();
-        
-        // Calculate cumulative
-        $cumulative = 0;
-        $cumulativeData = [];
-        foreach ($data as $item) {
-            $cumulative += $item->new_players;
-            $cumulativeData[] = $cumulative;
+        try {
+            $days = (int)($_GET['days'] ?? 30);
+            
+            $this->playerModel->db->query("
+                SELECT DATE(created_at) as date, 
+                       COUNT(*) as new_players
+                FROM players
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC
+            ");
+            
+            $this->playerModel->db->bind(':days', $days);
+            $data = $this->playerModel->db->resultSet();
+            
+            // Calculate cumulative
+            $cumulative = 0;
+            $cumulativeData = [];
+            foreach ($data as $item) {
+                $cumulative += $item->new_players;
+                $cumulativeData[] = $cumulative;
+            }
+            
+            echo json_encode([
+                'labels' => array_map(function($item) {
+                    return date('M d', strtotime($item->date));
+                }, $data),
+                'new_players' => array_column($data, 'new_players'),
+                'cumulative' => $cumulativeData
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'new_players' => [], 'cumulative' => [], 'error' => $e->getMessage()]);
         }
-        
-        echo json_encode([
-            'labels' => array_map(function($item) {
-                return date('M d', strtotime($item->date));
-            }, $data),
-            'new_players' => array_column($data, 'new_players'),
-            'cumulative' => $cumulativeData
-        ]);
         exit;
     }
 
@@ -154,28 +162,32 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $this->campaignModel->db->query("
-            SELECT c.name,
-                   COUNT(DISTINCT t.id) as total_tickets,
-                   COALESCE(SUM(p.amount), 0) as total_revenue,
-                   COUNT(DISTINCT t.player_id) as unique_players
-            FROM raffle_campaigns c
-            LEFT JOIN tickets t ON c.id = t.campaign_id
-            LEFT JOIN payments p ON t.payment_id = p.id AND p.status = 'success'
-            WHERE c.status = 'active'
-            GROUP BY c.id
-            ORDER BY total_revenue DESC
-            LIMIT 10
-        ");
-        
-        $data = $this->campaignModel->db->resultSet();
-        
-        echo json_encode([
-            'labels' => array_column($data, 'name'),
-            'tickets' => array_column($data, 'total_tickets'),
-            'revenue' => array_column($data, 'total_revenue'),
-            'players' => array_column($data, 'unique_players')
-        ]);
+        try {
+            $this->campaignModel->db->query("
+                SELECT c.name,
+                       COUNT(DISTINCT t.id) as total_tickets,
+                       COALESCE(SUM(p.amount), 0) as total_revenue,
+                       COUNT(DISTINCT t.player_id) as unique_players
+                FROM raffle_campaigns c
+                LEFT JOIN tickets t ON c.id = t.campaign_id
+                LEFT JOIN payments p ON t.payment_id = p.id AND p.status = 'success'
+                WHERE c.status = 'active'
+                GROUP BY c.id
+                ORDER BY total_revenue DESC
+                LIMIT 10
+            ");
+            
+            $data = $this->campaignModel->db->resultSet();
+            
+            echo json_encode([
+                'labels' => array_column($data, 'name'),
+                'tickets' => array_column($data, 'total_tickets'),
+                'revenue' => array_column($data, 'total_revenue'),
+                'players' => array_column($data, 'unique_players')
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'tickets' => [], 'revenue' => [], 'players' => [], 'error' => $e->getMessage()]);
+        }
         exit;
     }
 
@@ -186,35 +198,33 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $this->paymentModel->db->query("
-            SELECT HOUR(created_at) as hour,
-                   COUNT(*) as transaction_count,
-                   SUM(amount) as revenue
-            FROM payments
-            WHERE status = 'success'
-            AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            GROUP BY HOUR(created_at)
-            ORDER BY hour ASC
-        ");
-        
-        $data = $this->paymentModel->db->resultSet();
-        
-        // Fill in missing hours with 0
-        $hourlyData = array_fill(0, 24, 0);
-        $hourlyRevenue = array_fill(0, 24, 0);
-        
-        foreach ($data as $item) {
-            $hourlyData[$item->hour] = $item->transaction_count;
-            $hourlyRevenue[$item->hour] = $item->revenue;
+        try {
+            $this->paymentModel->db->query("
+                SELECT HOUR(created_at) as hour,
+                       COUNT(*) as transaction_count,
+                       SUM(amount) as total_amount
+                FROM payments
+                WHERE status = 'success'
+                AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY HOUR(created_at)
+                ORDER BY hour ASC
+            ");
+            
+            $data = $this->paymentModel->db->resultSet();
+            
+            // Fill in missing hours with 0
+            $hourlyData = array_fill(0, 24, 0);
+            foreach ($data as $row) {
+                $hourlyData[(int)$row->hour] = (int)$row->transaction_count;
+            }
+            
+            echo json_encode([
+                'labels' => array_map(function($h) { return sprintf('%02d:00', $h); }, range(0, 23)),
+                'transactions' => array_values($hourlyData)
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'transactions' => [], 'error' => $e->getMessage()]);
         }
-        
-        echo json_encode([
-            'labels' => array_map(function($h) {
-                return sprintf('%02d:00', $h);
-            }, range(0, 23)),
-            'transactions' => array_values($hourlyData),
-            'revenue' => array_values($hourlyRevenue)
-        ]);
         exit;
     }
 
@@ -225,21 +235,32 @@ class AnalyticsController extends Controller
     {
         header('Content-Type: application/json');
         
-        $this->playerModel->db->query("
-            SELECT loyalty_level, COUNT(*) as count
-            FROM players
-            GROUP BY loyalty_level
-            ORDER BY FIELD(loyalty_level, 'bronze', 'silver', 'gold', 'platinum')
-        ");
-        
-        $data = $this->playerModel->db->resultSet();
-        
-        echo json_encode([
-            'labels' => array_map(function($item) {
-                return ucfirst($item->loyalty_level);
-            }, $data),
-            'counts' => array_column($data, 'count')
-        ]);
+        try {
+            $this->playerModel->db->query("
+                SELECT COALESCE(loyalty_level, 'bronze') as loyalty_level, COUNT(*) as count
+                FROM players
+                GROUP BY loyalty_level
+                ORDER BY 
+                    CASE loyalty_level
+                        WHEN 'bronze' THEN 1
+                        WHEN 'silver' THEN 2
+                        WHEN 'gold' THEN 3
+                        WHEN 'platinum' THEN 4
+                        ELSE 1
+                    END
+            ");
+            
+            $data = $this->playerModel->db->resultSet();
+            
+            echo json_encode([
+                'labels' => array_map(function($item) {
+                    return ucfirst($item->loyalty_level ?? 'Bronze');
+                }, $data),
+                'counts' => array_map('intval', array_column($data, 'count'))
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['labels' => [], 'counts' => [], 'error' => $e->getMessage()]);
+        }
         exit;
     }
 

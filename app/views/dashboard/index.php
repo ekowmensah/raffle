@@ -342,8 +342,19 @@
 <script>
 // Revenue Trend Chart
 fetch('<?= url('analytics/getRevenueTrend') ?>')
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            console.error('Revenue API failed:', response.status);
+            return { labels: [], revenue: [] };
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Revenue data:', data);
+        if (!data.labels || data.labels.length === 0) {
+            document.getElementById('revenueTrendChart').parentElement.innerHTML = '<p class="text-center text-muted">No revenue data available</p>';
+            return;
+        }
         new Chart(document.getElementById('revenueTrendChart'), {
             type: 'line',
             data: {
@@ -378,12 +389,27 @@ fetch('<?= url('analytics/getRevenueTrend') ?>')
                 }
             }
         });
+    })
+    .catch(error => {
+        console.error('Revenue chart error:', error);
+        document.getElementById('revenueTrendChart').parentElement.innerHTML = '<p class="text-center text-danger">Error loading chart</p>';
     });
 
 // Ticket Sales Chart
 fetch('<?= url('analytics/getTicketSalesTrend') ?>')
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            console.error('Ticket Sales API failed:', response.status);
+            return { labels: [], tickets: [] };
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Ticket sales data:', data);
+        if (!data.labels || data.labels.length === 0) {
+            document.getElementById('ticketSalesChart').parentElement.innerHTML = '<p class="text-center text-muted">No ticket data available</p>';
+            return;
+        }
         new Chart(document.getElementById('ticketSalesChart'), {
             type: 'bar',
             data: {
