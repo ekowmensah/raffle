@@ -304,6 +304,7 @@ if (!$draw || !$campaign) {
                     <div id="winner-display" class="winner-display" style="display: none;">
                         <h2>🎉 Winner Selected!</h2>
                         <div class="winner-info">
+                            <div>Phone: <strong id="winner-phone">---</strong></div>
                             <div>Ticket: <strong id="winner-ticket">---</strong></div>
                             <div>Prize: <strong id="winner-prize">---</strong></div>
                         </div>
@@ -439,6 +440,7 @@ if (!$draw || !$campaign) {
                 item.className = 'winner-item';
                 item.innerHTML = `
                     <div class="winner-rank">${getRankName(winner.prize_rank)}</div>
+                    <div class="winner-ticket">${winner.player_phone}</div>
                     <div class="winner-ticket">${winner.ticket_code}</div>
                     <div class="winner-prize">GHS ${parseFloat(winner.prize_amount).toFixed(2)}</div>
                 `;
@@ -447,6 +449,7 @@ if (!$draw || !$campaign) {
                 // Show first winner in main display
                 if (index === 0) {
                     document.getElementById('rolling-number').textContent = winner.ticket_code;
+                    document.getElementById('winner-phone').textContent = winner.player_phone;
                     document.getElementById('winner-ticket').textContent = winner.ticket_code;
                     document.getElementById('winner-prize').textContent = 'GHS ' + parseFloat(winner.prize_amount).toFixed(2);
                     document.getElementById('winner-display').style.display = 'block';
@@ -469,6 +472,9 @@ if (!$draw || !$campaign) {
 
         function resetDraw() {
             document.getElementById('rolling-number').textContent = '---';
+            document.getElementById('winner-phone').textContent = '---';
+            document.getElementById('winner-ticket').textContent = '---';
+            document.getElementById('winner-prize').textContent = '---';
             document.getElementById('winner-display').style.display = 'none';
             document.getElementById('winners-list').innerHTML = '<p class="info-label" style="text-align: center;">No winners selected yet</p>';
             document.getElementById('status-text').textContent = 'Ready to Draw';

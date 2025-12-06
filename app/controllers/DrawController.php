@@ -155,10 +155,18 @@ class DrawController extends Controller
                         
                         $winnersData = array_map(function($winner) use ($ticketModel) {
                             $ticket = $ticketModel->findById($winner->ticket_id);
+                            $playerModel = $this->model('Player');
+                            $player = $playerModel->findById($winner->player_id);
+                            
+                            // Mask last 3 digits of phone number
+                            $phone = $player->phone ?? 'N/A';
+                            $maskedPhone = strlen($phone) > 3 ? substr($phone, 0, -3) . 'XXX' : $phone;
+                            
                             return [
                                 'prize_rank' => $winner->prize_rank,
                                 'ticket_code' => $ticket->ticket_code ?? 'N/A',
-                                'prize_amount' => $winner->prize_amount
+                                'prize_amount' => $winner->prize_amount,
+                                'player_phone' => $maskedPhone
                             ];
                         }, $winners);
                         
