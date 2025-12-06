@@ -129,6 +129,27 @@
                 </div>
 
                 <div class="col-md-4">
+                    <?php if ($draw->status === 'pending'): ?>
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-play-circle"></i> Actions</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">This draw is ready to be conducted.</p>
+                            
+                            <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-lg btn-block mb-3">
+                                <i class="fas fa-tv"></i> Live Draw
+                                <br><small>Animated display with rolling numbers</small>
+                            </a>
+                            
+                            <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-lg btn-block">
+                                <i class="fas fa-play"></i> Conduct Draw
+                                <br><small>Standard draw execution</small>
+                            </a>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Statistics</h3>
@@ -151,6 +172,30 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <?php if ($draw->status === 'completed' && !empty($draw->random_seed)): ?>
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-shield-alt"></i> Transparency</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">This draw can be independently verified.</p>
+                            
+                            <a href="<?= url('draw/verify/' . $draw->id) ?>" class="btn btn-info btn-block" target="_blank">
+                                <i class="fas fa-check-circle"></i> Verify Draw Results
+                            </a>
+                            
+                            <hr>
+                            
+                            <small class="text-muted">
+                                <strong>Random Seed:</strong><br>
+                                <code style="font-size: 10px; word-break: break-all;">
+                                    <?= substr($draw->random_seed, 0, 32) ?>...
+                                </code>
+                            </small>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
