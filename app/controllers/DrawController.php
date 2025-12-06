@@ -143,6 +143,35 @@ class DrawController extends Controller
 
             $result = $this->drawService->conductDraw($id, $_SESSION['user_id']);
 
+            // Return JSON for AJAX requests
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                
+                if ($result['success']) {
+                    // Get winners with ticket details
+                    $winners = $this->winnerModel->getByDraw($id);
+                    $ticketModel = $this->model('Ticket');
+                    
+                    $winnersData = array_map(function($winner) use ($ticketModel) {
+                        $ticket = $ticketModel->findById($winner->ticket_id);
+                        return [
+                            'prize_rank' => $winner->prize_rank,
+                            'ticket_code' => $ticket->ticket_code ?? 'N/A',
+                            'prize_amount' => $winner->prize_amount
+                        ];
+                    }, $winners);
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $result['message'],
+                        'winners' => $winnersData
+                    ]);
+                } else {
+                    echo json_encode($result);
+                }
+                exit;
+            }
+
             if ($result['success']) {
                 flash('success', $result['message'] . ' - ' . $result['winner_count'] . ' winner(s) selected');
                 $this->redirect('draw/show/' . $id);
@@ -158,6 +187,32 @@ class DrawController extends Controller
         ];
 
         $this->view('draws/conduct', $data);
+    }
+    
+    /**
+     * Live draw page with animated display
+     */
+    public function live($id)
+    {
+        $this->requireAuth();
+        $this->requireRole('super_admin');
+
+        $draw = $this->drawModel->findById($id);
+
+        if (!$draw) {
+            flash('error', 'Draw not found');
+            $this->redirect('draw');
+        }
+
+        $campaign = $this->campaignModel->findById($draw->campaign_id);
+
+        $data = [
+            'draw_id' => $id,
+            'draw' => $draw,
+            'campaign' => $campaign
+        ];
+
+        $this->view('draws/live', $data);
     }
 
     public function pending()
@@ -195,46 +250,68 @@ class DrawController extends Controller
     public function updatePrizeStatus($winnerId)
     {
         $this->requireAuth();
+        $this->requireRole('super_admin');
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
 
-            $status = $_POST['status'];
+            $status = $_POST['status'] ?? 'paid';
             
-            if ($this->winnerModel->updatePrizeStatus($winnerId, $status)) {
-                flash('success', 'Prize status updated');
-                
-                // Send SMS notification when prize is marked as paid
-                if ($status === 'paid') {
-                    $winner = $this->winnerModel->findById($winnerId);
+            $result = $this->winnerModel->update($winnerId, [
+                'prize_paid_status' => $status,
+                'prize_paid_at' => date('Y-m-d H:i:s')
+            ]);
+
+            if ($result) {
+                // Send SMS notification
+                $winner = $this->winnerModel->findById($winnerId);
+                if ($winner && $status === 'paid') {
+                    $ticketModel = $this->model('Ticket');
+                    $playerModel = $this->model('Player');
+                    $campaignModel = $this->model('Campaign');
                     
-                    if ($winner) {
-                        require_once '../app/services/SMS/HubtelSmsService.php';
-                        $smsService = new \App\Services\SMS\HubtelSmsService();
-                        
-                        $playerModel = $this->model('Player');
-                        $player = $playerModel->findById($winner->player_id);
-                        
-                        if ($player && $player->phone) {
-                            // Send prize payment confirmation SMS
-                            $message = "Congratulations! Your prize of GHS " . number_format($winner->prize_amount, 2) . " has been credited to your MoMo account. Thank you for playing!";
-                            $smsService->send($player->phone, $message, 'winner');
-                            
-                            error_log("Prize paid SMS sent to {$player->phone} for winner ID {$winnerId}");
-                        }
+                    $ticket = $ticketModel->findById($winner->ticket_id);
+                    $player = $playerModel->findById($winner->player_id);
+                    $draw = $this->drawModel->findById($winner->draw_id);
+                    $campaign = $campaignModel->findById($draw->campaign_id);
+                    
+                    if ($player && $ticket && $campaign) {
+                        $smsService = new \App\Services\HubtelSmsService();
+                        $smsService->sendPrizePaidNotification(
+                            $player->phone,
+                            $ticket->ticket_code,
+                            $winner->prize_amount,
+                            $campaign->name
+                        );
                     }
                 }
+                
+                flash('success', 'Prize status updated successfully');
             } else {
-                flash('error', 'Failed to update status');
+                flash('error', 'Failed to update prize status');
             }
-            
-            // Redirect back to the referring page
-            if (isset($_SERVER['HTTP_REFERER'])) {
-                header('Location: ' . $_SERVER['HTTP_REFERER']);
-                exit;
-            }
-        }
 
+            $this->redirect('draw/winners');
+        }
+    }
+    
+    /**
+     * Verify draw results using cryptographic seed
+     * Public endpoint for transparency
+     */
+    public function verify($drawId)
+    {
+        $verificationController = new \App\Controllers\DrawVerificationController();
+        $verificationController->verify($drawId);
+    }
+    
+    /**
+     * Show draw transparency page
+     */
+    public function transparency($drawId)
+    {
+        $verificationController = new \App\Controllers\DrawVerificationController();
+        $verificationController->transparency($drawId);
         $this->redirect('draw/winners');
     }
 

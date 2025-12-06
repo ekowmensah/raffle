@@ -119,8 +119,11 @@
                                         <td><?= formatDate($draw->draw_date, 'M d, Y') ?></td>
                                         <td><span class="badge badge-warning">Pending</span></td>
                                         <td>
-                                            <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-sm">
-                                                <i class="fas fa-play"></i> Conduct Draw
+                                            <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-sm" title="Live Draw with Animation">
+                                                <i class="fas fa-tv"></i> Live Draw
+                                            </a>
+                                            <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-sm" title="Standard Draw">
+                                                <i class="fas fa-play"></i> Conduct
                                             </a>
                                         </td>
                                     </tr>

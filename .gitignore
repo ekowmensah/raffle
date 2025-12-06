@@ -37,3 +37,5 @@ package-lock.json
 # Build files
 dist/
 build/
+
+app/config/config.php  

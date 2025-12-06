@@ -128,9 +128,21 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="winner_count">Number of Winners <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" id="winner_count" name="winner_count" 
-                                               min="1" max="100" value="1" required>
-                                        <small class="form-text text-muted">How many winners to select in this draw</small>
+                                        <select class="form-control" id="winner_count" name="winner_count" required onchange="updatePrizePreview()">
+                                            <option value="1">1 Winner</option>
+                                            <option value="2">2 Winners</option>
+                                            <option value="3" selected>3 Winners (Recommended)</option>
+                                            <option value="4">4 Winners</option>
+                                            <option value="5">5 Winners</option>
+                                            <option value="6">6 Winners</option>
+                                            <option value="7">7 Winners</option>
+                                            <option value="8">8 Winners</option>
+                                            <option value="9">9 Winners</option>
+                                            <option value="10">10 Winners</option>
+                                        </select>
+                                        <small class="form-text text-muted" id="prize_preview">
+                                            Prize split: 50% / 30% / 20%
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -323,6 +335,22 @@ function updateScheduleType() {
         toggleScheduleFields();
     } else {
         document.getElementById('schedule_auto').disabled = false;
+    }
+}
+
+// Update prize distribution preview
+function updatePrizePreview() {
+    const winnerCount = parseInt($('#winner_count').val());
+    const preview = $('#prize_preview');
+    
+    if (winnerCount === 1) {
+        preview.text('Prize split: 100% (Winner takes all)');
+    } else if (winnerCount === 2) {
+        preview.text('Prize split: 60% / 40%');
+    } else if (winnerCount === 3) {
+        preview.text('Prize split: 50% / 30% / 20%');
+    } else {
+        preview.text(`Prize split: Equal distribution (${(100/winnerCount).toFixed(1)}% each)`);
     }
 }
 

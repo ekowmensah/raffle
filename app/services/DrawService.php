@@ -144,7 +144,7 @@ class DrawService
     private function selectWinners($eligibleTickets, $draw, $prizePool, $seed)
     {
         $winners = [];
-        $winnerCount = 3; // Default to 3 winners (1st, 2nd, 3rd)
+        $winnerCount = $draw->winner_count ?? 3; // Use draw's winner count or default to 3
         
         if (empty($eligibleTickets)) {
             return [];
@@ -374,7 +374,8 @@ class DrawService
             'draw_date' => $drawDate,
             'status' => 'pending',
             'started_by_user_id' => $_SESSION['user_id'] ?? 1,
-            'total_prize_pool' => $availablePrizePool
+            'total_prize_pool' => $availablePrizePool,
+            'winner_count' => $winnerCount
         ];
 
         try {
