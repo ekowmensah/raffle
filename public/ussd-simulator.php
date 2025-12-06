@@ -1,7 +1,7 @@
 <?php
 /**
  * USSD Simulator for Testing - Enhanced Version
- * Access via: http://localhost/raffle/public/ussd-simulator.php
+ * Access via: /ussd-simulator.php (works on both localhost and production)
  */
 
 session_start();
@@ -91,7 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Function to make USSD request
 function makeUssdRequest($sessionId, $phoneNumber, $text) {
-    $url = 'http://localhost/raffle/public/index.php?url=ussd';
+    // Build absolute URL for cURL
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+    
+    // Construct full URL
+    $url = "{$protocol}://{$host}{$scriptPath}/index.php?url=ussd";
+    
+    // Debug: log the URL being used
+    error_log("USSD Simulator calling: " . $url);
     
     $data = [
         'sessionId' => $sessionId,
@@ -659,7 +668,7 @@ $sessionDuration = isset($_SESSION['ussd_session']['startTime']) ?
             <div class="payment-action" style="margin-bottom: 15px;">
                 <h4>💳 Complete Payment</h4>
                 <p style="margin-bottom: 15px;">Payment ID: <?= $paymentId ?></p>
-                <form method="POST" action="http://localhost/raffle/public/index.php?url=payment/manual" target="_blank">
+                <form method="POST" action="index.php?url=payment/manual" target="_blank">
                     <input type="hidden" name="payment_id" value="<?= $paymentId ?>">
                     <button type="submit" class="complete-payment-btn">
                         ✅ Complete Payment & Generate Tickets

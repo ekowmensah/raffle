@@ -14,8 +14,8 @@ desktop.ini
 logs/
 
 # Environment files
-#.env
-#.env.local
+.env
+.env.local
 
 # Temporary files
 tmp/
@@ -23,12 +23,12 @@ temp/
 cache/
 
 # Uploaded files (if any)
-#uploads/
-#public/uploads/
+uploads/
+public/uploads/
 
 # Composer
-#vendor/
-#composer.lock
+vendor/
+composer.lock
 
 # Node modules (if using npm)
 node_modules/
