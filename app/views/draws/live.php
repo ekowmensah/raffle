@@ -294,7 +294,7 @@ if (!$draw || !$campaign) {
                         <div class="pulse-dot"></div>
                         <span id="status-text">Ready to Draw</span>
                     </div>
-                    <div id="timer">00:00</div>
+                    <div id="timer">00:30</div>
                 </div>
 
                 <div class="display-area">
