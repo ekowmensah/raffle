@@ -61,7 +61,7 @@ class HubtelSmsService
             $codesList .= '...';
         }
         
-        $message = "Payment successful! GHS " . number_format($totalAmount, 2) . "\n";
+        $message = "Successful! GHS " . number_format($totalAmount, 2) . "\n";
         $message .= "Campaign: {$campaignName}\n";
         $message .= "Tickets ({$ticketCount}): {$codesList}\n";
         $message .= "Good luck!";
@@ -78,7 +78,7 @@ class HubtelSmsService
         $message .= "You WON in {$campaignName}!\n";
         $message .= "Ticket: {$ticketCode}\n";
         $message .= "Prize: GHS " . number_format($prizeAmount, 2) . " ({$prizeRank})\n";
-        $message .= "Contact us to claim your prize!";
+        $message .= "Your Prize will be Credited to your Momo Account Soon!";
         
         return $this->send($phoneNumber, $message, 'winner');
     }
@@ -135,7 +135,7 @@ class HubtelSmsService
      */
     public function sendOTP($phoneNumber, $otp, $expiryMinutes = 10)
     {
-        $message = "Your Raffle verification code is: {$otp}\n";
+        $message = "Your verification code is: {$otp}\n";
         $message .= "Valid for {$expiryMinutes} minutes.\n";
         $message .= "Do not share this code.";
         

@@ -48,7 +48,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="station_id">Station <span class="text-danger">*</span></label>
-                            <select class="form-control" id="station_id" name="station_id" required onchange="loadProgrammes()">
+                            <select class="form-control" id="station_id" name="station_id" required onchange="onStationChange()">
                                 <option value="">Select Station</option>
                                 <?php
                                 $stationModel = new \App\Models\Station();
@@ -61,8 +61,22 @@
                         </div>
 
                         <div class="form-group">
+                            <label>Campaign Type</label>
+                            <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                                <label class="btn btn-outline-primary active" id="station-wide-btn">
+                                    <input type="radio" name="campaign_type" value="station" checked onchange="toggleCampaignType()"> 
+                                    <i class="fas fa-broadcast-tower"></i> Station-Wide
+                                </label>
+                                <label class="btn btn-outline-primary" id="programme-btn">
+                                    <input type="radio" name="campaign_type" value="programme" onchange="toggleCampaignType()"> 
+                                    <i class="fas fa-microphone"></i> Programme-Specific
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="programme_field" style="display: none;">
                             <label for="programme_id">Programme <span class="text-danger">*</span></label>
-                            <select class="form-control" id="programme_id" name="programme_id" required disabled onchange="loadCampaigns()">
+                            <select class="form-control" id="programme_id" name="programme_id" disabled onchange="loadCampaigns()">
                                 <option value="">First select a station...</option>
                             </select>
                         </div>
@@ -70,7 +84,7 @@
                         <div class="form-group">
                             <label for="campaign_id">Campaign <span class="text-danger">*</span></label>
                             <select class="form-control" id="campaign_id" name="campaign_id" required disabled onchange="updateScheduleType()">
-                                <option value="">First select a programme...</option>
+                                <option value="">First select a station...</option>
                             </select>
                         </div>
 
@@ -146,6 +160,72 @@
 
 <script src="<?= vendor('jquery/jquery.min.js') ?>"></script>
 <script>
+// Handle station selection
+function onStationChange() {
+    const campaignType = $('input[name="campaign_type"]:checked').val();
+    
+    if (campaignType === 'station') {
+        loadStationWideCampaigns();
+    } else {
+        loadProgrammes();
+    }
+}
+
+// Toggle between station-wide and programme-specific campaigns
+function toggleCampaignType() {
+    const campaignType = $('input[name="campaign_type"]:checked').val();
+    const programmeField = $('#programme_field');
+    const programmeSelect = $('#programme_id');
+    const stationId = $('#station_id').val();
+    
+    if (campaignType === 'programme') {
+        programmeField.show();
+        programmeSelect.prop('required', true);
+        if (stationId) {
+            loadProgrammes();
+        }
+    } else {
+        programmeField.hide();
+        programmeSelect.prop('required', false);
+        programmeSelect.val('');
+        if (stationId) {
+            loadStationWideCampaigns();
+        }
+    }
+}
+
+// Load station-wide campaigns
+function loadStationWideCampaigns() {
+    const stationId = $('#station_id').val();
+    const campaignSelect = $('#campaign_id');
+    
+    campaignSelect.html('<option value="">Loading...</option>').prop('disabled', true);
+    
+    if (!stationId) {
+        campaignSelect.html('<option value="">First select a station...</option>');
+        return;
+    }
+    
+    $.get('<?= url('public/getCampaignsByStation') ?>/' + stationId, function(response) {
+        if (response.success && response.campaigns.length > 0) {
+            campaignSelect.html('<option value="">Select a campaign...</option>');
+            response.campaigns.forEach(function(campaign) {
+                campaignSelect.append(
+                    $('<option></option>')
+                        .val(campaign.id)
+                        .text(campaign.name + ' (' + campaign.code + ')')
+                        .attr('data-daily-enabled', campaign.daily_draw_enabled || 0)
+                        .attr('data-start', campaign.start_date || '')
+                        .attr('data-end', campaign.end_date || '')
+                );
+            });
+            campaignSelect.prop('disabled', false);
+        } else {
+            campaignSelect.html('<option value="">No station-wide campaigns available</option>');
+        }
+    });
+}
+
 // Load programmes when station is selected
 function loadProgrammes() {
     const stationId = $('#station_id').val();
