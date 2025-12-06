@@ -30,16 +30,25 @@ class Model
         $columns = implode(', ', array_keys($data));
         $placeholders = ':' . implode(', :', array_keys($data));
 
-        $this->db->query("INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})");
+        $sql = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
+        
+        try {
+            $this->db->query($sql);
 
-        foreach ($data as $key => $value) {
-            $this->db->bind(':' . $key, $value);
-        }
+            foreach ($data as $key => $value) {
+                $this->db->bind(':' . $key, $value);
+            }
 
-        if ($this->db->execute()) {
-            return $this->db->lastInsertId();
+            if ($this->db->execute()) {
+                return $this->db->lastInsertId();
+            }
+            return false;
+        } catch (\PDOException $e) {
+            error_log("Model create error in table {$this->table}: " . $e->getMessage());
+            error_log("SQL: " . $sql);
+            error_log("Data: " . json_encode($data));
+            throw $e; // Re-throw to be caught by controller
         }
-        return false;
     }
 
     public function update($id, $data)

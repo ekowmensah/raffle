@@ -485,7 +485,7 @@ class UssdController extends Controller
                 // Close session
                 $this->sessionService->closeSession($sessionId);
                 
-                return "END Payment failed.\n" .
+                return "Payment failed.\n" .
                        $hubtelResponse['message'] . "\n\n" .
                        "Please try again or contact support.\n" .
                        "Reference: {$reference}";
@@ -535,21 +535,21 @@ class UssdController extends Controller
                     return is_array($t) ? $t['ticket_code'] : $t->ticket_code; 
                 }, $ticketResult['tickets']);
                 
-                return "END Payment Successful!\n" .
+                return "Payment Successful!\n" .
                        "Amount: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Quantity: {$sessionData['quantity']} ticket(s)\n" .
                        "Code: " . implode(', ', $ticketCodes) . "\n\n" .
                        "Good luck!";
             }
             
-            return "END Payment processed but ticket generation failed.\n" .
+            return "Payment processed but ticket generation failed.\n" .
                    "Please contact support.\n" .
                    "Reference: PAY{$paymentId}";
         }
         
         // This should not be reached anymore (all cases handled above)
         $this->sessionService->closeSession($sessionId);
-        return "END Payment processing error. Please try again.";
+        return "Payment processing error. Please try again.";
     }
     
     /**

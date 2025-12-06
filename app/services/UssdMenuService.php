@@ -198,7 +198,7 @@ class UssdMenuService
         $totalTickets = $countResult->total ?? 0;
         
         if ($totalTickets == 0) {
-            return "END You have no tickets yet.";
+            return "You have no tickets yet.";
         }
         
         // Get tickets with status and quantity

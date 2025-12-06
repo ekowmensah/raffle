@@ -381,6 +381,7 @@ class DrawService
         try {
             // Log the data being inserted
             error_log("Creating draw with data: " . json_encode($data));
+            error_log("Data keys: " . implode(', ', array_keys($data)));
             
             $drawId = $this->drawModel->create($data);
             
