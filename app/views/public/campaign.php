@@ -2,55 +2,276 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title><?= htmlspecialchars($campaign->name) ?> | Raffle System</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="<?= vendor('fontawesome-free/css/all.min.css') ?>">
     <link rel="stylesheet" href="<?= vendor('adminlte/css/adminlte.min.css') ?>">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8f9fa;
             min-height: 100vh;
+            padding-bottom: 80px;
         }
+        
+        /* Mobile-first navbar */
         .navbar-custom {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 12px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #667eea !important;
+        }
+        
+        /* Campaign hero section */
         .campaign-hero {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin-top: 100px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: 0;
+            margin-top: 60px;
+            padding: 24px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
+        
+        @media (min-width: 768px) {
+            .campaign-hero {
+                border-radius: 16px;
+                margin: 80px 16px 20px;
+                padding: 40px;
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .campaign-hero {
+                margin: 100px auto 40px;
+                max-width: 1200px;
+            }
+        }
+        
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #212529;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .lead {
+            font-size: 1rem;
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        /* Price tag */
         .price-tag {
-            font-size: 3rem;
-            font-weight: 700;
+            font-size: 2.5rem;
+            font-weight: 800;
             color: #667eea;
+            margin: 20px 0;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
         }
-        .btn-buy {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border: none;
-            color: white;
-            padding: 20px 50px;
-            font-size: 1.3rem;
-            border-radius: 50px;
+        
+        @media (min-width: 768px) {
+            .price-tag {
+                font-size: 3.5rem;
+            }
+        }
+        
+        .price-tag small {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        /* Info section */
+        .campaign-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        
+        .campaign-info p {
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            color: #495057;
+        }
+        
+        .campaign-info strong {
+            color: #212529;
             font-weight: 600;
         }
+        
+        /* Buy button */
+        .btn-buy {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            font-size: 1.125rem;
+            border-radius: 12px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-buy:active {
+            transform: scale(0.98);
+        }
+        
+        @media (min-width: 768px) {
+            .btn-buy {
+                width: auto;
+                min-width: 240px;
+            }
+        }
+        
+        /* Stat cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+        }
+        
         .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 20px;
             text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        /* Modal improvements */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+        }
+        
+        .modal-header {
+            border-radius: 16px 16px 0 0;
+            padding: 20px 24px;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        /* Form elements */
+        .form-group {
             margin-bottom: 20px;
         }
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-control-lg {
+            height: 48px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+        }
+        
+        .form-control-lg:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Toggle buttons */
+        .btn-group-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-group-toggle label {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .btn-group-toggle label.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* Alert */
+        .alert {
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        /* Utility */
+        .text-muted {
+            color: #6c757d;
+            font-size: 0.875rem;
         }
     </style>
 </head>
@@ -82,15 +303,15 @@
     <div class="campaign-hero">
         <div class="row">
             <div class="col-md-8">
-                <h1 class="display-4"><?= htmlspecialchars($campaign->name) ?></h1>
+                <h1><?= htmlspecialchars($campaign->name) ?></h1>
                 <p class="lead"><?= nl2br(htmlspecialchars($campaign->description ?? '')) ?></p>
                 
-                <div class="price-tag my-4">
+                <div class="price-tag">
                     <?= $campaign->currency ?> <?= number_format($campaign->ticket_price, 2) ?>
-                    <small class="text-muted" style="font-size: 1rem;">per ticket</small>
+                    <small>per ticket</small>
                 </div>
 
-                <div class="mb-4">
+                <div class="campaign-info">
                     <p><strong>Campaign Period:</strong> <?= formatDate($campaign->start_date, 'M d, Y') ?> - <?= formatDate($campaign->end_date, 'M d, Y') ?></p>
                     <p><strong>Prize Pool:</strong> <?= $campaign->prize_pool_percent ?>% of total revenue</p>
                     <?php if ($campaign->daily_draw_enabled): ?>
@@ -98,28 +319,50 @@
                     <?php endif; ?>
                 </div>
 
-                <button class="btn btn-buy btn-lg" onclick="showPaymentOptions()">
+                <button class="btn btn-buy" onclick="showPaymentOptions()">
                     <i class="fas fa-shopping-cart"></i> Buy Tickets Now
                 </button>
+                
+                <!-- Stats Grid - Mobile -->
+                <div class="stats-grid d-md-none">
+                    <div class="stat-card">
+                        <i class="fas fa-ticket-alt"></i>
+                        <div class="stat-number"><?= number_format($stats->total_tickets ?? 0) ?></div>
+                        <div class="stat-label">Tickets Sold</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-number"><?= number_format($stats->total_players ?? 0) ?></div>
+                        <div class="stat-label">Players</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-trophy"></i>
+                        <div class="stat-number"><?= $campaign->currency ?> <?= number_format($stats->total_prize_pool ?? 0, 2) ?></div>
+                        <div class="stat-label">Prize Pool</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-4">
+            <!-- Stats Grid - Desktop -->
+            <div class="col-md-4 d-none d-md-block">
                 <div class="stat-card">
-                    <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                    <i class="fas fa-ticket-alt"></i>
                     <div class="stat-number"><?= number_format($stats->total_tickets ?? 0) ?></div>
-                    <div>Tickets Sold</div>
+                    <div class="stat-label">Tickets Sold</div>
                 </div>
 
-                <div class="stat-card">
-                    <i class="fas fa-users fa-3x mb-3"></i>
+                <div class="stat-card" style="margin-top: 16px;">
+                    <i class="fas fa-users"></i>
                     <div class="stat-number"><?= number_format($stats->total_players ?? 0) ?></div>
-                    <div>Players</div>
+                    <div class="stat-label">Players</div>
                 </div>
 
-                <div class="stat-card">
-                    <i class="fas fa-trophy fa-3x mb-3"></i>
+                <div class="stat-card" style="margin-top: 16px;">
+                    <i class="fas fa-trophy"></i>
                     <div class="stat-number"><?= $campaign->currency ?> <?= number_format($stats->total_prize_pool ?? 0, 2) ?></div>
-                    <div>Prize Pool</div>
+                    <div class="stat-label">Prize Pool</div>
                 </div>
             </div>
         </div>
