@@ -10,7 +10,7 @@ session_start();
 if (!isset($_SESSION['ussd_session'])) {
     $_SESSION['ussd_session'] = [
         'sessionId' => 'SIM' . time() . rand(1000, 9999),
-        'phoneNumber' => '233241234567',
+        'phoneNumber' => '', // Will be set by user in the form
         'text' => '',
         'history' => [],
         'startTime' => time()
@@ -593,21 +593,38 @@ $sessionDuration = isset($_SESSION['ussd_session']['startTime']) ?
                 </div>
                 
                 <div class="phone-display <?= $sessionEnded ? 'ended' : '' ?>">
-                    <span class="response-type <?= strpos($lastResponse, 'CON') === 0 ? 'response-con' : 'response-end' ?>">
-                        <?= strpos($lastResponse, 'CON') === 0 ? 'CONTINUE' : 'END SESSION' ?>
-                    </span>
+                    <?php if (empty($phoneNumber)): ?>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px;">📱 Enter Your Phone Number</h3>
+                            <p style="color: #7f8c8d; margin-bottom: 30px;">Enter your mobile number to start USSD session</p>
+                            <form method="POST" style="max-width: 300px; margin: 0 auto;">
+                                <input type="tel" 
+                                       name="phone" 
+                                       class="phone-input" 
+                                       placeholder="e.g. 0241234567" 
+                                       required
+                                       autofocus
+                                       pattern="[0-9]{10,12}"
+                                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #3498db; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+                                <button type="submit" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                                    Start USSD Session ▶️
+                                </button>
+                            </form>
+                        </div>
+                    <?php else: ?>
+                        <span class="response-type <?= strpos($lastResponse, 'CON') === 0 ? 'response-con' : 'response-end' ?>">
+                            <?= strpos($lastResponse, 'CON') === 0 ? 'CONTINUE' : 'END SESSION' ?>
+                        </span>
 <?= htmlspecialchars($lastResponse) ?>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="phone-keypad">
+                    <?php if (!empty($phoneNumber)): ?>
                     <form method="POST" id="ussdForm">
-                        <input type="text" 
+                        <input type="hidden" 
                                name="phone" 
-                               class="phone-input" 
-                               placeholder="Phone Number" 
-                               value="<?= htmlspecialchars($phoneNumber) ?>"
-                               pattern="[0-9]+"
-                               title="Numbers only">
+                               value="<?= htmlspecialchars($phoneNumber) ?>">
                         
                         <div class="keypad-row">
                             <button type="button" class="key" onclick="sendInput('1')">1</button>
@@ -638,6 +655,11 @@ $sessionDuration = isset($_SESSION['ussd_session']['startTime']) ?
                                 🔄 Reset
                             </button>
                         </div>
+                    <?php else: ?>
+                        <div style="text-align: center; padding: 20px; color: #95a5a6;">
+                            <p>👆 Enter your phone number above to start</p>
+                        </div>
+                    <?php endif; ?>
                         
                         <input type="hidden" name="input" id="inputField">
                     </form>
