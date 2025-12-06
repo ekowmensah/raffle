@@ -40,7 +40,7 @@ class AuditController extends Controller
         $logs = $this->auditLog->getWithFilters($filters);
 
         // Get all users for filter dropdown
-        $users = $this->userModel->all();
+        $users = $this->userModel->getAllWithRoles();
 
         // Get action types
         $actionTypes = [
