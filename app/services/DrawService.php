@@ -241,7 +241,6 @@ class DrawService
             'programme_id' => $programmeId,
             'draw_type' => $drawType,
             'draw_date' => $drawDate,
-            'winner_count' => max(1, intval($winnerCount)),
             'status' => 'pending',
             'started_by_user_id' => $_SESSION['user_id'] ?? 1,
             'total_prize_pool' => $availablePrizePool
