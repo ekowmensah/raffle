@@ -16,11 +16,24 @@ require_once '../app/helpers/functions.php';
 
 // Autoloader
 spl_autoload_register(function ($class) {
+    // Convert namespace to file path
     $class = str_replace('\\', '/', $class);
     $class = str_replace('App/', '../app/', $class);
     
-    if (file_exists($class . '.php')) {
-        require_once $class . '.php';
+    // Convert to lowercase for directory names (case-sensitive on Linux)
+    $parts = explode('/', $class);
+    if (count($parts) > 2) {
+        // Keep the class name as-is, but lowercase the directory names
+        $className = array_pop($parts);
+        $parts = array_map('strtolower', $parts);
+        $parts[] = $className;
+        $class = implode('/', $parts);
+    }
+    
+    $file = $class . '.php';
+    
+    if (file_exists($file)) {
+        require_once $file;
     }
 });
 
