@@ -35,9 +35,9 @@
                 <div class="card-body">
                     <form method="GET" action="<?= url('draw/pending') ?>" id="filterForm">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label>Station</label>
-                                <select name="station" id="stationFilter" class="form-control" onchange="loadProgrammesFilter()">
+                                <select name="station" id="stationFilter" class="form-control" onchange="onStationChangeFilter()">
                                     <option value="">All Stations</option>
                                     <?php
                                     $stationModel = new \App\Models\Station();
@@ -48,16 +48,24 @@
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label>Campaign Type</label>
+                                <select name="campaign_type" id="campaignTypeFilter" class="form-control" onchange="toggleCampaignTypeFilter()">
+                                    <option value="">All Types</option>
+                                    <option value="station">Station-Wide</option>
+                                    <option value="programme">Programme-Specific</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="programmeFilterField">
                                 <label>Programme</label>
                                 <select name="programme" id="programmeFilter" class="form-control" disabled onchange="loadCampaignsFilter()">
                                     <option value="">Select station first...</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label>Campaign</label>
                                 <select name="campaign" id="campaignFilter" class="form-control" disabled onchange="this.form.submit()">
-                                    <option value="">Select programme first...</option>
+                                    <option value="">Select station first...</option>
                                 </select>
                             </div>
                         </div>
@@ -132,6 +140,106 @@
 
 <script src="<?= vendor('jquery/jquery.min.js') ?>"></script>
 <script>
+// Handle station selection
+function onStationChangeFilter() {
+    const campaignType = $('#campaignTypeFilter').val();
+    const stationId = $('#stationFilter').val();
+    
+    if (!stationId) {
+        $('#programmeFilter').html('<option value="">All Programmes</option>').prop('disabled', false);
+        $('#campaignFilter').html('<option value="">All Campaigns</option>').prop('disabled', false);
+        return;
+    }
+    
+    if (campaignType === 'station') {
+        loadStationWideCampaignsFilter();
+    } else if (campaignType === 'programme') {
+        loadProgrammesFilter();
+    } else {
+        // All types - load both
+        loadAllCampaignsFilter();
+    }
+}
+
+// Toggle campaign type filter
+function toggleCampaignTypeFilter() {
+    const campaignType = $('#campaignTypeFilter').val();
+    const programmeField = $('#programmeFilterField');
+    const stationId = $('#stationFilter').val();
+    
+    if (campaignType === 'programme') {
+        programmeField.show();
+        if (stationId) {
+            loadProgrammesFilter();
+        }
+    } else if (campaignType === 'station') {
+        programmeField.hide();
+        $('#programmeFilter').val('');
+        if (stationId) {
+            loadStationWideCampaignsFilter();
+        }
+    } else {
+        // All types
+        programmeField.show();
+        if (stationId) {
+            loadAllCampaignsFilter();
+        }
+    }
+}
+
+// Load all campaigns (station-wide + programme-specific)
+function loadAllCampaignsFilter() {
+    const stationId = $('#stationFilter').val();
+    const campaignSelect = $('#campaignFilter');
+    const programmeSelect = $('#programmeFilter');
+    
+    programmeSelect.html('<option value="">All Programmes</option>').prop('disabled', false);
+    campaignSelect.html('<option value="">Loading...</option>').prop('disabled', true);
+    
+    if (!stationId) {
+        campaignSelect.html('<option value="">All Campaigns</option>').prop('disabled', false);
+        return;
+    }
+    
+    // Load all campaigns for the station
+    $.get('<?= url('public/getCampaignsByStation') ?>/' + stationId, function(response) {
+        if (response.success && response.campaigns.length > 0) {
+            campaignSelect.html('<option value="">All Campaigns</option>');
+            response.campaigns.forEach(function(campaign) {
+                campaignSelect.append($('<option></option>').val(campaign.id).text(campaign.name));
+            });
+            campaignSelect.prop('disabled', false);
+        } else {
+            campaignSelect.html('<option value="">No campaigns</option>');
+        }
+    });
+}
+
+// Load station-wide campaigns only
+function loadStationWideCampaignsFilter() {
+    const stationId = $('#stationFilter').val();
+    const campaignSelect = $('#campaignFilter');
+    
+    campaignSelect.html('<option value="">Loading...</option>').prop('disabled', true);
+    
+    if (!stationId) {
+        campaignSelect.html('<option value="">All Campaigns</option>').prop('disabled', false);
+        return;
+    }
+    
+    $.get('<?= url('public/getCampaignsByStation') ?>/' + stationId, function(response) {
+        if (response.success && response.campaigns.length > 0) {
+            campaignSelect.html('<option value="">All Station-Wide</option>');
+            response.campaigns.forEach(function(campaign) {
+                campaignSelect.append($('<option></option>').val(campaign.id).text(campaign.name));
+            });
+            campaignSelect.prop('disabled', false);
+        } else {
+            campaignSelect.html('<option value="">No station-wide campaigns</option>');
+        }
+    });
+}
+
 function loadProgrammesFilter() {
     const stationId = $('#stationFilter').val();
     const programmeSelect = $('#programmeFilter');
@@ -171,7 +279,7 @@ function loadCampaignsFilter() {
     
     $.get('<?= url('public/getCampaignsByProgramme') ?>/' + programmeId, function(response) {
         if (response.success && response.campaigns.length > 0) {
-            campaignSelect.html('<option value="">All Campaigns</option>');
+            campaignSelect.html('<option value="">All Programme Campaigns</option>');
             response.campaigns.forEach(function(campaign) {
                 campaignSelect.append($('<option></option>').val(campaign.id).text(campaign.name));
             });
