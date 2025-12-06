@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Raffle Draw – Live Random Picker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome (optional, for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-1ycn6Ica999x..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #020617, #0f172a, #1e293b);
+            --accent: #22c55e;
+            --accent-soft: rgba(34, 197, 94, 0.12);
+            --danger: #ef4444;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --card-bg: rgba(15, 23, 42, 0.9);
+            --border-soft: rgba(148, 163, 184, 0.3);
+            --shadow-soft: 0 24px 70px rgba(15, 23, 42, 0.9);
+            --winner-glow: 0 0 25px rgba(34, 197, 94, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 35%, #000 100%);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.17;
+            mix-blend-mode: soft-light;
+            background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .brand-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .brand-title i {
+            color: var(--accent);
+            font-size: 1.4rem;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .session-pill {
+            border-radius: 999px;
+            padding: 0.35rem 0.85rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            font-size: 0.76rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.25), transparent 60%);
+        }
+
+        .session-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--accent);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), transparent 55%),
+                        var(--card-bg);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+            padding: 1.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(34, 197, 94, 0.08),
+                rgba(96, 165, 250, 0.03),
+                rgba(148, 163, 184, 0.02)
+            );
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--accent);
+        }
+
+        .card-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .rolling-display {
+            margin-top: 1.25rem;
+            margin-bottom: 1.75rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+            padding: 1rem;
+            box-shadow: inset 0 0 30px rgba(15, 23, 42, 0.9);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rolling-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-muted);
+            margin-bottom: 0.45rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rolling-label span:nth-child(2) {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .ticker-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 1px;
+            background: radial-gradient(circle, rgba(148, 163, 184, 0.7), transparent 60%);
+            opacity: 0.3;
+        }
+
+        .number-container {
+            position: relative;
+            overflow: hidden;
+            height: 4.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .number-text {
+            font-family: "Poppins", monospace;
+            font-size: clamp(2.25rem, 4vw, 2.8rem);
+            font-weight: 700;
+            letter-spacing: 0.21em;
+            color: #e5e7eb;
+            padding: 0.4rem 1rem;
+            border-radius: 0.75rem;
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.7));
+            box-shadow:
+                0 0 0 1px rgba(148, 163, 184, 0.6),
+                0 0 20px rgba(15, 23, 42, 0.8);
+            text-align: center;
+            white-space: nowrap;
+            min-width: min(100%, 22rem);
+            animation: idlePulse 2.5s ease-in-out infinite;
+        }
+
+        .number-text.rolling {
+            animation: rollingPulse 0.65s ease-in-out infinite;
+        }
+
+        .number-text.winner {
+            color: #bbf7d0;
+            border-color: var(--accent);
+            box-shadow: var(--winner-glow);
+            animation: winnerFlash 0.18s ease-in-out 8;
+        }
+
+        @keyframes idlePulse {
+            0%, 100% {
+                box-shadow:
+                    0 0 0 1px rgba(148, 163, 184, 0.5),
+                    0 0 12px rgba(15, 23, 42, 0.8);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 1px rgba(148, 163, 184, 0.9),
+                    0 0 16px rgba(15, 23, 42, 0.9);
+            }
+        }
+
+        @keyframes rollingPulse {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                box-shadow:
+                    0 0 0 1px rgba(34, 197, 94, 0.5),
+                    0 0 22px rgba(34, 197, 94, 0.35);
+            }
+            50% {
+                transform: translateY(-2px) scale(1.01);
+                box-shadow:
+                    0 0 0 1px rgba(52, 211, 153, 0.7),
+                    0 0 30px rgba(34, 197, 94, 0.7);
+            }
+        }
+
+        @keyframes winnerFlash {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: var(--winner-glow);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow:
+                    0 0 40px rgba(34, 197, 94, 1),
+                    0 0 80px rgba(34, 197, 94, 0.7);
+            }
+        }
+
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .chip {
+            font-size: 0.74rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-muted);
+        }
+
+        .chip i {
+            font-size: 0.8rem;
+        }
+
+        .chip.live {
+            border-color: rgba(34, 197, 94, 0.6);
+            background: var(--accent-soft);
+            color: #bbf7d0;
+        }
+
+        .chip-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 0.65rem 1.5rem;
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.18s ease-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: radial-gradient(circle at top left, #22c55e, #16a34a);
+            color: #022c22;
+            box-shadow:
+                0 12px 30px rgba(34, 197, 94, 0.5),
+                0 0 20px rgba(22, 163, 74, 0.5);
+        }
+
+        .btn-primary:hover:enabled {
+            transform: translateY(-1px);
+            box-shadow:
+                0 18px 40px rgba(34, 197, 94, 0.7),
+                0 0 25px rgba(22, 163, 74, 0.7);
+            filter: brightness(1.03);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid rgba(148, 163, 184, 0.6);
+        }
+
+        .btn-outline:hover:enabled {
+            background: rgba(15, 23, 42, 0.7);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(248, 113, 113, 0.6);
+            color: #fecaca;
+        }
+
+        .btn-danger:hover:enabled {
+            background: rgba(127, 29, 29, 0.65);
+            color: #fee2e2;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            opacity: 0.85;
+        }
+
+        .side-panel {
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .metric-card {
+            border-radius: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            padding: 0.75rem 0.85rem;
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.15rem;
+        }
+
+        .metric-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .metric-sub {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .timeline {
+            margin-top: 0.4rem;
+            border-radius: 1rem;
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            padding: 0.8rem 0.9rem;
+            background: radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.18), transparent 55%);
+        }
+
+        .timeline-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .timeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .timeline-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-badge {
+            width: 1.1rem;
+            height: 1.1rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .steps-hint {
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .recent-winner {
+            margin-top: 0.5rem;
+            border-radius: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(22, 163, 74, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
+        }
+
+        .recent-winner strong {
+            color: #bbf7d0;
+        }
+
+        .recent-winner small {
+            color: var(--text-muted);
+        }
+
+        .recent-winner i {
+            color: var(--accent);
+        }
+
+        .pill-green {
+            font-size: 0.68rem;
+            border-radius: 999px;
+            padding: 0.15rem 0.55rem;
+            background: rgba(22, 163, 74, 0.25);
+            border: 1px solid rgba(34, 197, 94, 0.7);
+            color: #bbf7d0;
+        }
+
+        .pill-red {
+            font-size: 0.68rem;
+            border-radius: 999px;
+            padding: 0.15rem 0.55rem;
+            background: rgba(127, 29, 29, 0.55);
+            border: 1px solid rgba(248, 113, 113, 0.7);
+            color: #fecaca;
+        }
+    </style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+
+<div class="wrapper">
+    <header class="header">
+        <div class="brand">
+            <div class="brand-title">
+                <i class="fa-solid fa-ticket"></i>
+                Hope FM Mega Raffle
+            </div>
+            <div class="brand-subtitle">
+                Live studio draw · Powered by your USSD campaigns
+            </div>
+        </div>
+
+        <div class="session-pill">
+            <span class="session-dot"></span>
+            <span id="sessionName">Promo Session #12</span>
+        </div>
+    </header>
+
+    <main class="layout">
+        <!-- LEFT: Live draw area -->
+        <section class="card">
+            <div class="card-content">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fa-solid fa-bolt"></i>
+                            Live Raffle Draw
+                        </div>
+                        <div class="card-subtitle">
+                            Rolling all eligible phone numbers based on tickets purchased.
+                        </div>
+                    </div>
+                    <div class="hint">
+                        Draw engine: weighted by tickets · 15 seconds rolling
+                    </div>
+                </div>
+
+                <div class="rolling-display">
+                    <div class="rolling-label">
+                        <span>Current Number</span>
+                        <span id="ticketsInfo">Tickets loaded: 0</span>
+                    </div>
+
+                    <div class="ticker-line"></div>
+
+                    <div class="number-container">
+                        <div id="numberDisplay" class="number-text">
+                            055 *** **** 
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-row">
+                    <div class="chip live" id="statusChip">
+                        <span class="chip-dot"></span>
+                        <span id="statusText">Idle · Ready to draw</span>
+                    </div>
+                    <div class="chip">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="timerLabel">Rolling time: 0s</span>
+                    </div>
+                    <div class="chip">
+                        <i class="fa-solid fa-coins"></i>
+                        <span id="payoutHint">Max daily payout: GHS 5,000</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">
+                        <i class="fa-solid fa-play"></i>
+                        Start Draw
+                    </button>
+
+                    <button id="forceStopBtn" class="btn btn-danger" disabled>
+                        <i class="fa-solid fa-stop"></i>
+                        Force Stop
+                    </button>
+
+                    <button id="reshuffleBtn" class="btn btn-outline" disabled>
+                        <i class="fa-solid fa-shuffle"></i>
+                        Re-roll (Same Pool)
+                    </button>
+
+                    <span class="hint">
+                        Once the winner is confirmed, announce on-air before starting the next draw.
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: Stats & info -->
+        <aside class="side-panel">
+            <section class="card">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <i class="fa-solid fa-gauge-high"></i>
+                                Session Overview
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Total Entries</div>
+                            <div class="metric-value" id="totalEntries">0</div>
+                            <div class="metric-sub">
+                                Unique players: <span id="uniquePlayers">0</span>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Total Pot (GHS)</div>
+                            <div class="metric-value" id="totalPot">0.00</div>
+                            <div class="metric-sub">
+                                Prize cap: GHS <span id="maxPrize">5000.00</span>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Eligible for Draw</div>
+                            <div class="metric-value" id="eligibilityStatus">
+                                <span class="pill-red">Not Ready</span>
+                            </div>
+                            <div class="metric-sub" id="eligibilityReason">
+                                Waiting for minimum threshold.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-winner" id="recentWinnerBox" style="display:none;">
+                        <div>
+                            <div>
+                                <i class="fa-solid fa-crown"></i>
+                                <strong>Last Winner:</strong>
+                                <span id="lastWinnerPhone">—</span>
+                            </div>
+                            <small id="lastWinnerTime">Drawn just now</small>
+                        </div>
+                        <div>
+                            <span class="pill-green" id="lastWinnerPrize">GHS 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-content">
+                    <div class="timeline-heading">Studio flow</div>
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="step-badge">1</div>
+                            <div>
+                                Verify that today’s campaign payments have synced and
+                                the <strong>threshold for draw</strong> has been reached.
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">2</div>
+                            <div>
+                                On-air host announces draw and confirms the
+                                <strong>max prize for the day</strong>.
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">3</div>
+                            <div>
+                                Hit <strong>Start Draw</strong> and allow the numbers to roll
+                                for the configured duration (e.g. 15 seconds).
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">4</div>
+                            <div>
+                                System auto-selects a <strong>weighted winner</strong> based on tickets.
+                                Host announces winner and confirms payment process.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="steps-hint">
+                        * All draws are logged with time, operator, and winner details for audit and reporting.
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </main>
+</div>
+
+<script>
+    // -----------------------------
+    // DEMO DATA (replace with API)
+    // -----------------------------
+    // In production, you’ll fetch this from your backend:
+    // - A list of phone numbers
+    // - Each with ticket_count and maybe amount contributed
+    const players = [
+        { phone: "0241234567", tickets: 5 },
+        { phone: "0559876543", tickets: 2 },
+        { phone: "0204445566", tickets: 8 },
+        { phone: "0273322110", tickets: 1 },
+        { phone: "0597788990", tickets: 4 },
+        { phone: "0501239876", tickets: 3 },
+        { phone: "0549090909", tickets: 10 },
+        { phone: "0266001122", tickets: 6 },
+    ];
+
+    const ticketPrice = 5;          // GHS per ticket (example)
+    const maxDailyPrize = 5000;     // GHS
+    const minPotForDraw = 200;      // Example threshold to allow draw
+    const rollDurationMs = 15000;   // 15 seconds rolling
+
+    // Build weighted pool (each ticket = 1 entry)
+    function buildWeightedPool(players) {
+        const pool = [];
+        players.forEach(p => {
+            for (let i = 0; i < p.tickets; i++) {
+                pool.push(p.phone);
+            }
+        });
+        return pool;
+    }
+
+    const weightedPool = buildWeightedPool(players);
+
+    // -----------------------------
+    // ELEMENTS
+    // -----------------------------
+    const numberDisplay = document.getElementById('numberDisplay');
+    const ticketsInfo = document.getElementById('ticketsInfo');
+    const statusChip = document.getElementById('statusChip');
+    const statusText = document.getElementById('statusText');
+    const timerLabel = document.getElementById('timerLabel');
+    const payoutHint = document.getElementById('payoutHint');
+
+    const totalEntriesEl = document.getElementById('totalEntries');
+    const uniquePlayersEl = document.getElementById('uniquePlayers');
+    const totalPotEl = document.getElementById('totalPot');
+    const maxPrizeEl = document.getElementById('maxPrize');
+    const eligibilityStatusEl = document.getElementById('eligibilityStatus');
+    const eligibilityReasonEl = document.getElementById('eligibilityReason');
+
+    const startBtn = document.getElementById('startBtn');
+    const forceStopBtn = document.getElementById('forceStopBtn');
+    const reshuffleBtn = document.getElementById('reshuffleBtn');
+
+    const recentWinnerBox = document.getElementById('recentWinnerBox');
+    const lastWinnerPhoneEl = document.getElementById('lastWinnerPhone');
+    const lastWinnerTimeEl = document.getElementById('lastWinnerTime');
+    const lastWinnerPrizeEl = document.getElementById('lastWinnerPrize');
+
+    // -----------------------------
+    // INITIAL SETUP
+    // -----------------------------
+    function formatAmount(amount) {
+        return amount.toFixed(2);
+    }
+
+    function maskPhone(phone) {
+        // Simple masking: 024***56 7
+        if (phone.length < 7) return phone;
+        return (
+            phone.slice(0, 3) +
+            "***" +
+            phone.slice(phone.length - 3)
+        );
+    }
+
+    function updateStats() {
+        const totalTickets = weightedPool.length;
+        const uniquePlayers = players.length;
+        const totalPot = totalTickets * ticketPrice;
+
+        ticketsInfo.textContent = `Tickets loaded: ${totalTickets.toLocaleString()}`;
+        totalEntriesEl.textContent = totalTickets.toLocaleString();
+        uniquePlayersEl.textContent = uniquePlayers.toLocaleString();
+        totalPotEl.textContent = formatAmount(totalPot);
+        maxPrizeEl.textContent = formatAmount(maxDailyPrize);
+        payoutHint.textContent = `Max daily payout: GHS ${formatAmount(maxDailyPrize)}`;
+
+        eligibilityStatusEl.innerHTML = '';
+        if (totalPot >= minPotForDraw) {
+            eligibilityStatusEl.innerHTML = '<span class="pill-green">Ready</span>';
+            eligibilityReasonEl.textContent = 'Minimum threshold reached. You can run the draw.';
+            startBtn.disabled = false;
+        } else {
+            eligibilityStatusEl.innerHTML = '<span class="pill-red">Not Ready</span>';
+            eligibilityReasonEl.textContent = `Need at least GHS ${formatAmount(minPotForDraw)} in pot to run draw.`;
+            startBtn.disabled = true;
+        }
+    }
+
+    updateStats();
+
+    // -----------------------------
+    // ROLLING LOGIC
+    // -----------------------------
+    let rollingInterval = null;
+    let rollingTimeout = null;
+    let rollingStartTime = null;
+    let timerInterval = null;
+    let isRolling = false;
+
+    function setStatus(text, mode) {
+        statusText.textContent = text;
+        // mode: idle | rolling | winner
+        statusChip.classList.remove('live');
+        if (mode === 'rolling') {
+            statusChip.classList.add('live');
+        }
+    }
+
+    function updateTimer() {
+        if (!rollingStartTime) {
+            timerLabel.textContent = 'Rolling time: 0s';
+            return;
+        }
+        const elapsed = Math.floor((Date.now() - rollingStartTime) / 1000);
+        timerLabel.textContent = `Rolling time: ${elapsed}s`;
+    }
+
+    function pickRandomFromPool() {
+        if (!weightedPool.length) return "No entries";
+        const idx = Math.floor(Math.random() * weightedPool.length);
+        return weightedPool[idx];
+    }
+
+    function showNumber(phone) {
+        numberDisplay.textContent = maskPhone(phone);
+    }
+
+    function startRolling() {
+        if (!weightedPool.length || isRolling) return;
+
+        isRolling = true;
+        rollingStartTime = Date.now();
+
+        numberDisplay.classList.remove('winner');
+        numberDisplay.classList.add('rolling');
+
+        startBtn.disabled = true;
+        forceStopBtn.disabled = false;
+        reshuffleBtn.disabled = true;
+
+        setStatus('Rolling numbers…', 'rolling');
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 300);
+
+        // Change phone every 70ms for fast rolling effect
+        rollingInterval = setInterval(() => {
+            const randomPhone = pickRandomFromPool();
+            showNumber(randomPhone);
+        }, 70);
+
+        // Automatically stop after rollDurationMs
+        rollingTimeout = setTimeout(() => {
+            stopRolling(true);
+        }, rollDurationMs);
+    }
+
+    function stopRolling(auto = false) {
+        if (!isRolling) return;
+
+        isRolling = false;
+        clearInterval(rollingInterval);
+        clearTimeout(rollingTimeout);
+        clearInterval(timerInterval);
+
+        rollingInterval = null;
+        rollingTimeout = null;
+        timerInterval = null;
+
+        // Pick final winner from weighted pool
+        const winnerPhone = pickRandomFromPool();
+        showNumber(winnerPhone);
+
+        numberDisplay.classList.remove('rolling');
+        numberDisplay.classList.add('winner');
+
+        setStatus(auto ? 'Winner selected automatically.' : 'Winner selected (manual stop).', 'idle');
+
+        // In real system, call backend to log winner & payout
+        // e.g. fetch('/api/draw/complete', { method: 'POST', body: JSON.stringify({ winnerPhone }) })
+
+        startBtn.disabled = false;
+        forceStopBtn.disabled = true;
+        reshuffleBtn.disabled = false;
+
+        // Update "recent winner" box
+        recentWinnerBox.style.display = 'flex';
+        lastWinnerPhoneEl.textContent = maskPhone(winnerPhone);
+        lastWinnerTimeEl.textContent = 'Draw completed just now';
+        // Example prize calculation – in real system, compute based on rules:
+        const totalPot = weightedPool.length * ticketPrice;
+        const prize = Math.min(totalPot * 0.25, maxDailyPrize); // e.g. 25% of pot capped
+        lastWinnerPrizeEl.textContent = `GHS ${formatAmount(prize)}`;
+    }
+
+    function resetForNextRoll() {
+        numberDisplay.classList.remove('winner', 'rolling');
+        numberDisplay.textContent = '*** *** ****';
+        timerLabel.textContent = 'Rolling time: 0s';
+        setStatus('Idle · Ready for the next draw', 'idle');
+    }
+
+    // -----------------------------
+    // EVENTS
+    // -----------------------------
+    startBtn.addEventListener('click', () => {
+        resetForNextRoll();
+        startRolling();
+    });
+
+    forceStopBtn.addEventListener('click', () => {
+        stopRolling(false);
+    });
+
+    reshuffleBtn.addEventListener('click', () => {
+        resetForNextRoll();
+        startRolling();
+    });
+
+    // OPTIONAL: Show the first random number when page loads (if pool not empty)
+    if (weightedPool.length) {
+        showNumber(weightedPool[0]);
+    }
+</script>
+</body>
+</html>
