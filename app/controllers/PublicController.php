@@ -241,9 +241,67 @@ class PublicController extends Controller
                     $this->redirect('public/campaign/' . $campaignId);
                 }
             } else {
-                // Handle other payment gateways (MTN, Paystack, etc.)
-                flash('info', 'Payment gateway integration coming soon');
-                $this->redirect('public/campaign/' . $campaignId);
+                // Handle Hubtel mobile money payment
+                if ($paymentMethod === 'momo' || $paymentMethod === 'hubtel') {
+                    require_once '../app/services/PaymentGateway/HubtelService.php';
+                    $hubtelService = new \App\Services\PaymentGateway\HubtelService();
+                    
+                    // Create pending payment record
+                    $reference = 'WEB-' . time() . '-' . rand(1000, 9999);
+                    
+                    $paymentData = [
+                        'campaign_id' => $campaignId,
+                        'player_id' => $player->id,
+                        'station_id' => $stationId,
+                        'programme_id' => $programmeId,
+                        'amount' => $amount,
+                        'currency' => 'GHS',
+                        'gateway' => 'hubtel',
+                        'internal_reference' => $reference,
+                        'status' => 'pending',
+                        'channel' => 'WEB'
+                    ];
+                    
+                    $paymentId = $paymentModel->create($paymentData);
+                    
+                    if (!$paymentId) {
+                        flash('error', 'Failed to create payment record');
+                        $this->redirect('public/campaign/' . $campaignId);
+                        return;
+                    }
+                    
+                    // Initiate Hubtel payment
+                    $result = $hubtelService->initiatePayment([
+                        'amount' => $amount,
+                        'phone' => $phone,
+                        'reference' => $reference,
+                        'description' => "Tickets for {$campaign->name}",
+                        'customer_name' => $player->name ?? 'Player',
+                        'customer_email' => $player->email ?? null
+                    ]);
+                    
+                    if ($result['success']) {
+                        // Update payment with gateway reference
+                        $paymentModel->update($paymentId, [
+                            'gateway_reference' => $result['transaction_id'] ?? null
+                        ]);
+                        
+                        flash('success', 'Payment initiated! Please approve the mobile money prompt on your phone.');
+                        $this->redirect('public/paymentPending/' . $paymentId);
+                    } else {
+                        // Update payment status to failed
+                        $paymentModel->update($paymentId, [
+                            'status' => 'failed',
+                            'gateway_response' => json_encode($result)
+                        ]);
+                        
+                        flash('error', 'Payment failed: ' . ($result['message'] ?? 'Unknown error'));
+                        $this->redirect('public/campaign/' . $campaignId);
+                    }
+                } else {
+                    flash('info', 'Payment method not supported yet');
+                    $this->redirect('public/campaign/' . $campaignId);
+                }
             }
         } catch (\Exception $e) {
             // Log the error for debugging
@@ -253,6 +311,28 @@ class PublicController extends Controller
             flash('error', 'Payment processing failed: ' . $e->getMessage());
             $this->redirect('public/campaign/' . ($_POST['campaign_id'] ?? ''));
         }
+    }
+
+    public function paymentPending($paymentId)
+    {
+        $paymentModel = $this->model('Payment');
+        $payment = $paymentModel->findById($paymentId);
+        
+        if (!$payment) {
+            flash('error', 'Payment not found');
+            $this->redirect('public');
+            return;
+        }
+
+        $campaign = $this->campaignModel->findById($payment->campaign_id);
+
+        $data = [
+            'title' => 'Payment Pending',
+            'payment' => $payment,
+            'campaign' => $campaign
+        ];
+
+        $this->view('public/payment-pending', $data);
     }
 
     public function paymentSuccess($paymentId)
@@ -265,6 +345,7 @@ class PublicController extends Controller
         if (!$payment) {
             flash('error', 'Payment not found');
             $this->redirect('public');
+            return;
         }
 
         $tickets = $ticketModel->getByPayment($paymentId);
@@ -278,5 +359,25 @@ class PublicController extends Controller
         ];
 
         $this->view('public/payment-success', $data);
+    }
+    
+    public function checkPaymentStatus($paymentId)
+    {
+        header('Content-Type: application/json');
+        
+        $paymentModel = $this->model('Payment');
+        $payment = $paymentModel->findById($paymentId);
+        
+        if (!$payment) {
+            echo json_encode(['success' => false, 'message' => 'Payment not found']);
+            exit;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'status' => $payment->status,
+            'payment_id' => $payment->id
+        ]);
+        exit;
     }
 }
