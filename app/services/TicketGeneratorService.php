@@ -53,15 +53,29 @@ class TicketGeneratorService
             $sequence
         );
 
+        // Handle programme_id - can be null for station-wide campaigns
+        $programmeId = !empty($paymentData['programme_id']) ? $paymentData['programme_id'] : null;
+        
+        if ($programmeId) {
+            error_log("TicketGenerator: Programme-specific campaign, programme_id: {$programmeId}");
+        } else {
+            error_log("TicketGenerator: Station-wide campaign, no programme_id");
+        }
+        
+        // Build ticket data - programme_id can be null for station-wide campaigns
         $ticketData = [
             'campaign_id' => $campaign->id,
             'player_id' => $paymentData['player_id'],
             'payment_id' => $paymentData['payment_id'],
             'station_id' => $station->id,
-            'programme_id' => !empty($paymentData['programme_id']) ? $paymentData['programme_id'] : null,
             'ticket_code' => $ticketCode,
             'quantity' => $ticketCount  // Store quantity instead of creating multiple tickets
         ];
+        
+        // Only add programme_id if it exists (for programme-specific campaigns)
+        if ($programmeId) {
+            $ticketData['programme_id'] = $programmeId;
+        }
 
         // Create single ticket
         error_log("TicketGenerator: Creating ticket with code: " . $ticketCode);
