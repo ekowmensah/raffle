@@ -21,17 +21,26 @@ class TicketGeneratorService
 
     public function generateTickets($paymentData)
     {
+        error_log("TicketGenerator: Starting ticket generation for payment " . ($paymentData['payment_id'] ?? 'unknown'));
+        error_log("TicketGenerator: Payment amount: " . ($paymentData['amount'] ?? 'N/A'));
+        
         $campaign = $this->campaignModel->findById($paymentData['campaign_id']);
         $station = $this->stationModel->findById($paymentData['station_id']);
         
         if (!$campaign || !$station) {
+            error_log("TicketGenerator: Campaign or station not found");
             return false;
         }
 
+        error_log("TicketGenerator: Campaign ticket price: " . $campaign->ticket_price);
+        
         // Calculate number of tickets based on amount and ticket price
         $ticketCount = floor($paymentData['amount'] / $campaign->ticket_price);
         
+        error_log("TicketGenerator: Calculated ticket count: " . $ticketCount);
+        
         if ($ticketCount < 1) {
+            error_log("TicketGenerator: Ticket count is less than 1, cannot generate tickets");
             return false;
         }
 
@@ -49,15 +58,17 @@ class TicketGeneratorService
             'player_id' => $paymentData['player_id'],
             'payment_id' => $paymentData['payment_id'],
             'station_id' => $station->id,
-            'programme_id' => $paymentData['programme_id'] ?? $station->id,
+            'programme_id' => !empty($paymentData['programme_id']) ? $paymentData['programme_id'] : null,
             'ticket_code' => $ticketCode,
             'quantity' => $ticketCount  // Store quantity instead of creating multiple tickets
         ];
 
         // Create single ticket
+        error_log("TicketGenerator: Creating ticket with code: " . $ticketCode);
         $ticketId = $this->ticketModel->create($ticketData);
         
         if ($ticketId) {
+            error_log("TicketGenerator: Ticket created successfully with ID: " . $ticketId);
             return [
                 'success' => true,
                 'ticket_count' => $ticketCount,
@@ -65,6 +76,7 @@ class TicketGeneratorService
             ];
         }
 
+        error_log("TicketGenerator: Failed to create ticket in database");
         return false;
     }
 
