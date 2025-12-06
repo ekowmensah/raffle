@@ -10,8 +10,20 @@ define('DB_NAME', 'raffle');
 define('APP_NAME', 'Raffle System');
 define('APP_VERSION', '1.0.0');
 
-// URL Configuration
-define('BASE_URL', 'http://localhost/raffle/public');
+// URL Configuration - Dynamic based on environment
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+// Determine base path
+if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+    // Localhost environment
+    $basePath = '/raffle/public';
+} else {
+    // Production environment (document root is public/)
+    $basePath = '';
+}
+
+define('BASE_URL', $protocol . '://' . $host . $basePath);
 
 // Session Configuration
 define('SESSION_LIFETIME', 3600); // 1 hour

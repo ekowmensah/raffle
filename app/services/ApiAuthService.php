@@ -147,9 +147,9 @@ class ApiAuthService
         $this->db->execute();
         
         // Send SMS
-        $smsService = new SmsGatewayService();
-        $message = "Your Raffle verification code is: {$otp}\nValid for 10 minutes.";
-        $smsService->send($phoneNumber, $message);
+        require_once '../app/services/SMS/HubtelSmsService.php';
+        $smsService = new \App\Services\SMS\HubtelSmsService();
+        $smsService->sendOTP($phoneNumber, $otp, 10);
         
         return true;
     }

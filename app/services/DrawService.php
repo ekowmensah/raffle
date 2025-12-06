@@ -16,13 +16,13 @@ class DrawService
         require_once '../app/models/Ticket.php';
         require_once '../app/models/DrawWinner.php';
         require_once '../app/models/Campaign.php';
-        require_once '../app/services/SmsNotificationService.php';
+        require_once '../app/services/SMS/HubtelSmsService.php';
         
         $this->drawModel = new \App\Models\Draw();
         $this->ticketModel = new \App\Models\Ticket();
         $this->winnerModel = new \App\Models\DrawWinner();
         $this->campaignModel = new \App\Models\Campaign();
-        $this->smsService = new \App\Services\SmsNotificationService();
+        $this->smsService = new \App\Services\SMS\HubtelSmsService();
     }
 
     public function conductDraw($drawId, $userId)
@@ -88,10 +88,12 @@ class DrawService
             $player = $playerModel->findById($winner['player_id']);
             
             if ($player) {
+                $prizeRank = $this->getPrizeRankName($winner['prize_rank']);
                 $this->smsService->sendWinnerNotification(
                     $player->phone,
                     $ticket->ticket_code,
                     $winner['prize_amount'],
+                    $prizeRank,
                     $campaign->name
                 );
             }
@@ -193,6 +195,17 @@ class DrawService
     private function generateRandomSeed()
     {
         return bin2hex(random_bytes(32));
+    }
+    
+    private function getPrizeRankName($rank)
+    {
+        $ranks = [
+            1 => '1st Prize',
+            2 => '2nd Prize',
+            3 => '3rd Prize'
+        ];
+        
+        return $ranks[$rank] ?? $rank . 'th Prize';
     }
 
     public function scheduleDraw($campaignId, $drawType, $drawDate, $checkDuplicate = false, $winnerCount = 1, $stationId = null, $programmeId = null)

@@ -17,11 +17,11 @@ class WebhookController extends Controller
         
         require_once '../app/services/TicketGeneratorService.php';
         require_once '../app/services/RevenueAllocationService.php';
-        require_once '../app/services/SmsNotificationService.php';
+        require_once '../app/services/SMS/HubtelSmsService.php';
         
         $this->ticketService = new \App\Services\TicketGeneratorService();
         $this->revenueService = new \App\Services\RevenueAllocationService();
-        $this->smsService = new \App\Services\SmsNotificationService();
+        $this->smsService = new \App\Services\SMS\HubtelSmsService();
     }
 
     public function mtn()
@@ -154,10 +154,11 @@ class WebhookController extends Controller
                     $campaign = $campaignModel->findById($payment->campaign_id);
                     $player = $playerModel->findById($payment->player_id);
                     
-                    $this->smsService->sendTicketNotification(
+                    $this->smsService->sendTicketConfirmation(
                         $player->phone,
                         $ticketResult['tickets'],
-                        $campaign->name
+                        $campaign->name,
+                        $payment->amount
                     );
                     
                     error_log("Webhook processing completed successfully");
