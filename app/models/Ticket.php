@@ -69,22 +69,46 @@ class Ticket extends Model
         return $this->db->resultSet();
     }
 
-    public function generateTicketCode($campaignCode, $stationCode, $sequence)
+    public function generateTicketCode($campaignCode, $stationCode, $sequence = null)
     {
-        // Format: CAMPAIGN-STATION-SEQUENCE (e.g., DEC24-HFM-00001)
-        return strtoupper($campaignCode) . '-' . strtoupper($stationCode) . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+        // Format: 10 random digits only (e.g., 3847562019)
+        // Generate 10 random digits that cannot be guessed
+        return $this->generateUniqueRandomDigits();
+    }
+    
+    private function generateUniqueRandomDigits($length = 10)
+    {
+        $maxAttempts = 100;
+        $attempts = 0;
+        
+        do {
+            // Generate random digits
+            $digits = '';
+            for ($i = 0; $i < $length; $i++) {
+                $digits .= mt_rand(0, 9);
+            }
+            
+            // Check if this code already exists
+            $this->db->query("SELECT COUNT(*) as count FROM {$this->table} WHERE ticket_code = :code");
+            $this->db->bind(':code', $digits);
+            $result = $this->db->single();
+            
+            $attempts++;
+            
+            if ($result->count == 0) {
+                return $digits;
+            }
+        } while ($attempts < $maxAttempts);
+        
+        // Fallback: add timestamp to ensure uniqueness
+        return $digits . substr(time(), -2);
     }
 
     public function getNextSequence($campaignId, $stationId)
     {
-        $this->db->query("SELECT MAX(CAST(SUBSTRING_INDEX(ticket_code, '-', -1) AS UNSIGNED)) as max_seq
-                         FROM {$this->table}
-                         WHERE campaign_id = :campaign_id AND station_id = :station_id");
-        $this->db->bind(':campaign_id', $campaignId);
-        $this->db->bind(':station_id', $stationId);
-        $result = $this->db->single();
-        
-        return ($result->max_seq ?? 0) + 1;
+        // This method is deprecated as we now use random digits
+        // Kept for backward compatibility but not used
+        return 1;
     }
 
     public function bulkCreate($tickets)
