@@ -94,12 +94,22 @@ class WebhookController extends Controller
 
     private function processWebhook($webhookData)
     {
+        error_log("Processing webhook for reference: " . $webhookData['reference']);
+        
         // Find payment by reference
         $payment = $this->paymentModel->findByReference($webhookData['reference']);
         
-        if (!$payment || $payment->status === 'success') {
-            return; // Already processed or not found
+        if (!$payment) {
+            error_log("Payment not found for reference: " . $webhookData['reference']);
+            return;
         }
+        
+        if ($payment->status === 'success') {
+            error_log("Payment already processed: " . $payment->id);
+            return; // Already processed
+        }
+        
+        error_log("Updating payment {$payment->id} to status: {$webhookData['status']}");
 
         if ($webhookData['status'] === 'success') {
             // Update payment status

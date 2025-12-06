@@ -10,7 +10,7 @@ class Payment extends Model
 
     public function findByReference($reference)
     {
-        $this->db->query("SELECT * FROM {$this->table} WHERE payment_reference = :reference");
+        $this->db->query("SELECT * FROM {$this->table} WHERE internal_reference = :reference OR gateway_reference = :reference");
         $this->db->bind(':reference', $reference);
         return $this->db->single();
     }
