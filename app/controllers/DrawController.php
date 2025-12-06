@@ -318,8 +318,13 @@ class DrawController extends Controller
      * Verify draw results using cryptographic seed
      * Public endpoint for transparency
      */
-    public function verify($drawId)
+    public function verify($drawId = null)
     {
+        if (!$drawId) {
+            echo json_encode(['error' => 'Draw ID is required']);
+            exit;
+        }
+        
         $verificationController = new \App\Controllers\DrawVerificationController();
         $verificationController->verify($drawId);
     }
@@ -327,8 +332,14 @@ class DrawController extends Controller
     /**
      * Show draw transparency page
      */
-    public function transparency($drawId)
+    public function transparency($drawId = null)
     {
+        if (!$drawId) {
+            flash('error', 'Draw ID is required');
+            $this->redirect('draw');
+            return;
+        }
+        
         $verificationController = new \App\Controllers\DrawVerificationController();
         $verificationController->transparency($drawId);
         $this->redirect('draw/winners');

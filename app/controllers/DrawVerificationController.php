@@ -43,7 +43,7 @@ class DrawVerificationController extends Controller
         );
         
         // Get actual winners
-        $actualWinners = $this->winnerModel->getByDrawId($drawId);
+        $actualWinners = $this->winnerModel->getByDraw($drawId);
         
         // Recreate verification hash
         $verificationData = [
