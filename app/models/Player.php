@@ -7,12 +7,47 @@ use App\Core\Model;
 class Player extends Model
 {
     protected $table = 'players';
+    
+    /**
+     * Normalize phone number to standard format
+     * Converts 0545644749 or 233545644749 to 233545644749
+     */
+    private function normalizePhone($phone)
+    {
+        // Remove spaces, dashes, and other non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        
+        // If starts with 0, replace with 233
+        if (substr($phone, 0, 1) === '0') {
+            $phone = '233' . substr($phone, 1);
+        }
+        
+        // If doesn't start with 233, add it
+        if (substr($phone, 0, 3) !== '233') {
+            $phone = '233' . $phone;
+        }
+        
+        return $phone;
+    }
 
     public function findByPhone($phone)
     {
+        // Normalize phone number
+        $normalizedPhone = $this->normalizePhone($phone);
+        
+        // Try to find with normalized phone
         $this->db->query("SELECT * FROM {$this->table} WHERE phone = :phone");
-        $this->db->bind(':phone', $phone);
-        return $this->db->single();
+        $this->db->bind(':phone', $normalizedPhone);
+        $player = $this->db->single();
+        
+        // If not found, try with original phone (for backward compatibility)
+        if (!$player) {
+            $this->db->query("SELECT * FROM {$this->table} WHERE phone = :phone");
+            $this->db->bind(':phone', $phone);
+            $player = $this->db->single();
+        }
+        
+        return $player;
     }
 
     public function getByPhone($phone)
@@ -45,6 +80,14 @@ class Player extends Model
         $result = $this->db->single();
         $totalSpent = $result->total ?? 0;
         
+        // Get total tickets
+        $this->db->query("SELECT COALESCE(SUM(quantity), 0) as total
+                         FROM tickets
+                         WHERE player_id = :player_id");
+        $this->db->bind(':player_id', $playerId);
+        $ticketResult = $this->db->single();
+        $totalTickets = $ticketResult->total ?? 0;
+        
         // Determine loyalty level
         $level = 'bronze';
         if ($totalSpent >= 1000) $level = 'platinum';
@@ -55,6 +98,8 @@ class Player extends Model
         $points = floor($totalSpent);
         
         return $this->update($playerId, [
+            'total_spent' => $totalSpent,
+            'total_tickets' => $totalTickets,
             'loyalty_level' => $level,
             'loyalty_points' => $points
         ]);
@@ -62,16 +107,19 @@ class Player extends Model
 
     public function findOrCreate($phone, $name = null)
     {
-        $player = $this->findByPhone($phone);
+        // Normalize phone number before searching/creating
+        $normalizedPhone = $this->normalizePhone($phone);
+        
+        $player = $this->findByPhone($normalizedPhone);
         
         if ($player) {
             return $player;
         }
         
-        // Create new player
+        // Create new player with normalized phone
         $data = [
-            'phone' => $phone,
-            'name' => $name ?? 'Player ' . substr($phone, -4)
+            'phone' => $normalizedPhone,
+            'name' => $name ?? 'Player ' . substr($normalizedPhone, -4)
         ];
         
         $playerId = $this->create($data);
