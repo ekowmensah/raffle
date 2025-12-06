@@ -169,17 +169,31 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" id="campaignTypeGroup">
+                            <label>Campaign Type</label>
+                            <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                                <label class="btn btn-outline-primary active" id="stationWideBtn">
+                                    <input type="radio" name="campaign_type" value="station" checked> 
+                                    <i class="fas fa-broadcast-tower"></i> Station-Wide
+                                </label>
+                                <label class="btn btn-outline-primary" id="programmeBtn">
+                                    <input type="radio" name="campaign_type" value="programme"> 
+                                    <i class="fas fa-microphone"></i> Programme
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="programmeGroup" style="display: none;">
                             <label>Select Programme <span class="text-danger">*</span></label>
-                            <select name="programme_id" id="programmeSelect" class="form-control form-control-lg" required disabled>
+                            <select name="programme_id" id="programmeSelect" class="form-control form-control-lg" disabled>
                                 <option value="">First select a station...</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label>Select Game/Campaign <span class="text-danger">*</span></label>
+                            <label>Select Campaign <span class="text-danger">*</span></label>
                             <select name="campaign_id" id="campaignSelect" class="form-control form-control-lg" required disabled>
-                                <option value="">First select a programme...</option>
+                                <option value="">First select a station...</option>
                             </select>
                             <small class="text-muted" id="ticketPriceInfo"></small>
                         </div>
@@ -246,16 +260,36 @@ function showPaymentOptions() {
 // Store campaigns data
 let campaignsData = {};
 let currentTicketPrice = 0;
+let currentCampaignType = 'station';
 
-// Load programmes when station is selected
+// Handle campaign type toggle
+$('input[name="campaign_type"]').on('change', function() {
+    currentCampaignType = $(this).val();
+    const stationId = $('#stationSelect').val();
+    
+    if (currentCampaignType === 'programme') {
+        $('#programmeGroup').show();
+        $('#programmeSelect').prop('required', true);
+    } else {
+        $('#programmeGroup').hide();
+        $('#programmeSelect').prop('required', false).val('');
+    }
+    
+    // Reload campaigns if station is selected
+    if (stationId) {
+        loadCampaigns(stationId);
+    }
+});
+
+// Load campaigns when station is selected
 $('#stationSelect').on('change', function() {
     const stationId = $(this).val();
     const programmeSelect = $('#programmeSelect');
     const campaignSelect = $('#campaignSelect');
     
-    // Reset programme and campaign dropdowns
-    programmeSelect.html('<option value="">First select a station...</option>').prop('disabled', true);
-    campaignSelect.html('<option value="">First select a programme...</option>').prop('disabled', true);
+    // Reset dropdowns
+    programmeSelect.html('<option value="">Select a programme...</option>').prop('disabled', true);
+    campaignSelect.html('<option value="">First select a station...</option>').prop('disabled', true);
     $('#ticketPriceInfo').text('');
     $('#totalAmount').text('GHS 0.00');
     
@@ -263,7 +297,7 @@ $('#stationSelect').on('change', function() {
         return;
     }
     
-    // Load programmes for this station via AJAX
+    // Load programmes for this station
     $.get('<?= url('public/getProgrammesByStation') ?>/' + stationId, function(response) {
         if (response.success && response.programmes.length > 0) {
             programmeSelect.html('<option value="">Select a programme...</option>');
@@ -281,7 +315,39 @@ $('#stationSelect').on('change', function() {
             programmeSelect.html('<option value="">No active programmes for this station</option>');
         }
     });
+    
+    // Load campaigns based on type
+    loadCampaigns(stationId);
 });
+
+function loadCampaigns(stationId) {
+    const campaignSelect = $('#campaignSelect');
+    
+    if (currentCampaignType === 'station') {
+        // Load station-wide campaigns
+        $.get('<?= url('public/getCampaignsByStation') ?>/' + stationId, function(response) {
+            if (response.success && response.campaigns.length > 0) {
+                campaignSelect.html('<option value="">Select a campaign...</option>');
+                
+                response.campaigns.forEach(function(campaign) {
+                    campaignsData[campaign.id] = campaign;
+                    campaignSelect.append(
+                        $('<option></option>')
+                            .val(campaign.id)
+                            .text(campaign.name + ' - ' + campaign.currency + ' ' + parseFloat(campaign.ticket_price).toFixed(2) + ' per ticket')
+                    );
+                });
+                
+                campaignSelect.prop('disabled', false);
+            } else {
+                campaignSelect.html('<option value="">No station-wide campaigns available</option>');
+            }
+        });
+    } else {
+        // For programme campaigns, wait for programme selection
+        campaignSelect.html('<option value="">First select a programme...</option>').prop('disabled', true);
+    }
+}
 
 // Load campaigns when programme is selected
 $('#programmeSelect').on('change', function() {
@@ -289,7 +355,7 @@ $('#programmeSelect').on('change', function() {
     const campaignSelect = $('#campaignSelect');
     
     // Reset campaign dropdown
-    campaignSelect.html('<option value="">First select a programme...</option>').prop('disabled', true);
+    campaignSelect.html('<option value="">Select a campaign...</option>').prop('disabled', true);
     $('#ticketPriceInfo').text('');
     $('#totalAmount').text('GHS 0.00');
     
@@ -300,7 +366,7 @@ $('#programmeSelect').on('change', function() {
     // Load campaigns for this programme via AJAX
     $.get('<?= url('public/getCampaignsByProgramme') ?>/' + programmeId, function(response) {
         if (response.success && response.campaigns.length > 0) {
-            campaignSelect.html('<option value="">Select a game/campaign...</option>');
+            campaignSelect.html('<option value="">Select a campaign...</option>');
             
             response.campaigns.forEach(function(campaign) {
                 campaignsData[campaign.id] = campaign;

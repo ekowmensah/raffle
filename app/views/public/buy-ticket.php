@@ -205,27 +205,41 @@
             <div id="step2" class="step-content hidden">
                 <h4 class="mb-4">Step 2: Choose Campaign</h4>
                 
-                <div id="station-campaigns-container">
-                    <!-- Station-wide campaigns will be loaded here -->
-                </div>
-                
-                <div class="text-center mt-4">
-                    <button type="button" class="btn btn-outline-primary" id="browse-by-programme-btn" onclick="showProgrammes()">
-                        <i class="fas fa-list"></i> Browse by Programme
-                    </button>
-                </div>
-                
-                <div id="programme-selection" class="hidden mt-4">
-                    <h5 class="mb-3">Select Programme:</h5>
-                    <div id="programmes-container">
-                        <!-- Programmes will be loaded here -->
+                <!-- Campaign Type Selection -->
+                <div class="mb-4" id="campaign-type-selector">
+                    <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                        <label class="btn btn-outline-primary btn-lg active" id="station-wide-type-btn">
+                            <input type="radio" name="campaign_type_choice" value="station" checked> 
+                            <i class="fas fa-broadcast-tower"></i> Station-Wide Campaigns
+                        </label>
+                        <label class="btn btn-outline-primary btn-lg" id="programme-type-btn">
+                            <input type="radio" name="campaign_type_choice" value="programme"> 
+                            <i class="fas fa-microphone"></i> Programme Campaigns
+                        </label>
                     </div>
                 </div>
                 
-                <div id="programme-campaigns-container" class="hidden mt-4">
-                    <h5 class="mb-3">Programme Campaigns:</h5>
-                    <div id="programme-campaigns-list">
-                        <!-- Programme-specific campaigns will be loaded here -->
+                <!-- Station-wide campaigns section -->
+                <div id="station-campaigns-section">
+                    <div id="station-campaigns-container">
+                        <!-- Station-wide campaigns will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Programme campaigns section -->
+                <div id="programme-campaigns-section" class="hidden">
+                    <div id="programme-selection">
+                        <h5 class="mb-3">Select Programme:</h5>
+                        <div id="programmes-container">
+                            <!-- Programmes will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div id="programme-campaigns-container" class="hidden mt-4">
+                        <h5 class="mb-3">Programme Campaigns:</h5>
+                        <div id="programme-campaigns-list">
+                            <!-- Programme-specific campaigns will be loaded here -->
+                        </div>
                     </div>
                 </div>
                 
@@ -340,6 +354,7 @@
 let selectedStationId = null;
 let selectedCampaign = null;
 let currentStep = 1;
+let currentCampaignType = 'station';
 
 function goToStep(step) {
     // Hide all steps
@@ -360,9 +375,35 @@ function goToStep(step) {
     currentStep = step;
 }
 
+// Handle campaign type toggle
+$('input[name="campaign_type_choice"]').on('change', function() {
+    currentCampaignType = $(this).val();
+    
+    if (currentCampaignType === 'station') {
+        $('#station-campaigns-section').show();
+        $('#programme-campaigns-section').hide();
+        $('#programme_id').val('');
+    } else {
+        $('#station-campaigns-section').hide();
+        $('#programme-campaigns-section').show();
+        
+        // Load programmes if not already loaded
+        if (selectedStationId && $('#programmes-container').children().length === 0) {
+            loadProgrammes();
+        }
+    }
+});
+
 function selectStation(stationId, stationName) {
     selectedStationId = stationId;
     document.getElementById('station_id').value = stationId;
+    
+    // Reset campaign type to station-wide
+    currentCampaignType = 'station';
+    $('input[name="campaign_type_choice"][value="station"]').prop('checked', true).parent().addClass('active');
+    $('input[name="campaign_type_choice"][value="programme"]').prop('checked', false).parent().removeClass('active');
+    $('#station-campaigns-section').show();
+    $('#programme-campaigns-section').hide();
     
     // Load station-wide campaigns
     $.ajax({
@@ -410,7 +451,7 @@ function displayStationCampaigns(campaigns, stationName) {
     document.getElementById('station-campaigns-container').innerHTML = html;
 }
 
-function showProgrammes() {
+function loadProgrammes() {
     $.ajax({
         url: '<?= url('public/getProgrammesByStation') ?>/' + selectedStationId,
         method: 'GET',
@@ -418,8 +459,6 @@ function showProgrammes() {
         success: function(response) {
             if (response.success) {
                 displayProgrammes(response.programmes);
-                document.getElementById('programme-selection').classList.remove('hidden');
-                document.getElementById('browse-by-programme-btn').classList.add('hidden');
             }
         },
         error: function() {

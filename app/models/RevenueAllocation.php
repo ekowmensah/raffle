@@ -70,13 +70,18 @@ class RevenueAllocation extends Model
 
     public function allocateRevenue($paymentData, $campaign)
     {
+        error_log("RevenueAllocation: Starting allocation for payment " . $paymentData['payment_id']);
+        
         $grossAmount = $paymentData['amount'];
+        error_log("RevenueAllocation: Gross amount: {$grossAmount}");
         
         // Calculate allocations based on campaign percentages
         $platformAmount = ($grossAmount * $campaign->platform_percent) / 100;
         $stationAmount = ($grossAmount * $campaign->station_percent) / 100;
         $programmeAmount = ($grossAmount * $campaign->programme_percent) / 100;
         $winnerPoolTotal = ($grossAmount * $campaign->prize_pool_percent) / 100;
+        
+        error_log("RevenueAllocation: Platform: {$platformAmount}, Station: {$stationAmount}, Programme: {$programmeAmount}, Prize Pool: {$winnerPoolTotal}");
         
         // Split prize pool between daily, final, and bonus
         $dailyPoolAmount = ($winnerPoolTotal * $campaign->daily_share_percent_of_pool) / 100;
@@ -102,9 +107,11 @@ class RevenueAllocation extends Model
         ];
         
         $allocationId = $this->create($allocation);
+        error_log("RevenueAllocation: Allocation created with ID: " . ($allocationId ?: 'FAILED'));
         
         // Credit station wallet if allocation was successful
         if ($allocationId && $stationAmount > 0) {
+            error_log("RevenueAllocation: Crediting station wallet for station {$paymentData['station_id']} with amount {$stationAmount}");
             require_once '../app/models/StationWallet.php';
             require_once '../app/models/StationWalletTransaction.php';
             
