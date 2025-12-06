@@ -164,19 +164,10 @@ class PublicController extends Controller
             $paymentModel = $this->model('Payment');
             $playerModel = $this->model('Player');
 
-            // Get or create player
+            // Get or create player (with normalized phone number)
             $phone = sanitize($_POST['phone']);
-            $player = $playerModel->findByPhone($phone);
-
-            if (!$player) {
-                $playerId = $playerModel->create([
-                    'phone' => $phone,
-                    'name' => sanitize($_POST['player_name'] ?? 'Player'),
-                    'loyalty_level' => 'bronze',
-                    'loyalty_points' => 0
-                ]);
-                $player = $playerModel->findById($playerId);
-            }
+            $playerName = sanitize($_POST['player_name'] ?? null);
+            $player = $playerModel->findOrCreate($phone, $playerName);
 
             $paymentMethod = $_POST['payment_method'] ?? 'manual';
             $ticketCount = intval($_POST['ticket_count']);
@@ -192,8 +183,8 @@ class PublicController extends Controller
                 return;
             }
 
-            // Calculate amount based on ticket count
-            $amount = $ticketCount * $campaign->ticket_price;
+            // Calculate amount based on ticket count (round to 2 decimal places)
+            $amount = round($ticketCount * $campaign->ticket_price, 2);
 
             // For manual payment, process immediately
             if ($paymentMethod === 'manual') {
