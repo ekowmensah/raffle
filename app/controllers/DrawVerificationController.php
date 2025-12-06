@@ -89,15 +89,15 @@ class DrawVerificationController extends Controller
                 'eligible_tickets' => count($eligibleTickets),
                 'total_prize_pool' => $draw->total_prize_pool
             ],
-            'winners' => array_map(function($winner) use ($eligibleTickets) {
+            'winners' => array_map(function($winner) use ($eligibleTickets, $draw) {
                 $ticket = array_filter($eligibleTickets, function($t) use ($winner) {
                     return $t->id == $winner->ticket_id;
                 });
                 $ticket = reset($ticket);
                 
                 // Calculate ticket age
-                $ticketDate = strtotime($ticket->created_at);
-                $drawDate = strtotime($winner->created_at);
+                $ticketDate = isset($ticket->created_at) ? strtotime($ticket->created_at) : strtotime($draw->draw_date);
+                $drawDate = strtotime($draw->draw_date);
                 $ageDays = floor(($drawDate - $ticketDate) / 86400);
                 
                 // Get weight multiplier
