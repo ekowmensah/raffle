@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="<?= vendor('fontawesome-free/css/all.min.css') ?>">
     <!-- Theme style -->
     <link rel="stylesheet" href="<?= vendor('adminlte/css/adminlte.min.css') ?>">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= asset('css/custom.css') ?>">
 </head>

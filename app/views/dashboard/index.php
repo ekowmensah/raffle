@@ -223,6 +223,72 @@
                 </div>
             </div>
 
+            <!-- Charts Row -->
+            <div class="row">
+                <!-- Revenue Trend Chart -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                Revenue Trend (Last 30 Days)
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueTrendChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket Sales Chart -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <h3 class="card-title">
+                                <i class="fas fa-ticket-alt mr-1"></i>
+                                Ticket Sales (Last 30 Days)
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ticketSalesChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- More Charts Row -->
+            <div class="row">
+                <!-- Loyalty Distribution -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <h3 class="card-title">
+                                <i class="fas fa-users mr-1"></i>
+                                Player Loyalty Levels
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="loyaltyChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hourly Sales Pattern -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <h3 class="card-title">
+                                <i class="fas fa-clock mr-1"></i>
+                                Hourly Sales Pattern (Last 7 Days)
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="hourlySalesChart" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Recent Tickets -->
             <div class="row">
                 <div class="col-12">
@@ -272,5 +338,148 @@
         </div>
     </section>
 </div>
+
+<script>
+// Revenue Trend Chart
+fetch('<?= url('analytics/getRevenueTrend') ?>')
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('revenueTrendChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Revenue (GHS)',
+                    data: data.revenue,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'GHS ' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+// Ticket Sales Chart
+fetch('<?= url('analytics/getTicketSalesTrend') ?>')
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('ticketSalesChart'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Tickets Sold',
+                    data: data.tickets,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+
+// Loyalty Distribution Chart
+fetch('<?= url('analytics/getLoyaltyDistribution') ?>')
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('loyaltyChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.counts,
+                    backgroundColor: [
+                        'rgba(128, 128, 128, 0.7)', // Bronze
+                        'rgba(192, 192, 192, 0.7)', // Silver
+                        'rgba(255, 215, 0, 0.7)',   // Gold
+                        'rgba(138, 43, 226, 0.7)'   // Platinum
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    });
+
+// Hourly Sales Pattern Chart
+fetch('<?= url('analytics/getHourlySalesPattern') ?>')
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('hourlySalesChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Transactions',
+                    data: data.transactions,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
 
 <?php require_once '../app/views/layouts/footer.php'; ?>
