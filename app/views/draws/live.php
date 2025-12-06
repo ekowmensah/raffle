@@ -147,13 +147,22 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
         }
 
         .winner-display {
-            margin-top: 2rem;
+            text-align: center;
         }
 
         .winner-display h2 {
             font-size: 1.5rem;
             margin: 0 0 1rem;
             color: var(--accent);
+        }
+        
+        .winner-display.rolling #winner-phone-large {
+            animation: pulse 0.1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .winner-info {
@@ -311,11 +320,8 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
                 <?php endif; ?>
 
                 <div class="display-area">
-                    <div id="rolling-display">
-                        <div class="rolling-number" id="rolling-number">---</div>
-                    </div>
-                    <div id="winner-display" class="winner-display" style="display: none;">
-                        <h2>🎉 Winner Selected!</h2>
+                    <div id="winner-display" class="winner-display">
+                        <h2 id="winner-title">🎉 Winner Selected!</h2>
                         <div class="rolling-number" id="winner-phone-large" style="font-size: 4rem; margin: 1rem 0; color: var(--accent);">---</div>
                         <div class="winner-info">
                             <div style="font-size: 1.3rem;">Ticket: <strong id="winner-ticket">---</strong></div>
@@ -490,19 +496,33 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
         }
 
         function startRolling() {
-            const rollingNumber = document.getElementById('rolling-number');
+            const phoneLarge = document.getElementById('winner-phone-large');
+            const winnerDisplay = document.getElementById('winner-display');
+            const winnerTitle = document.getElementById('winner-title');
+            
+            // Hide title during rolling
+            winnerTitle.style.display = 'none';
+            winnerDisplay.classList.add('rolling');
+            
             let interval = setInterval(() => {
-                // Generate random ticket number
-                const randomNum = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
-                rollingNumber.textContent = randomNum;
+                // Generate random phone number starting with 0
+                const randomNum = '0' + Math.floor(Math.random() * 999999999).toString().padStart(9, '0');
+                phoneLarge.textContent = randomNum;
             }, 50);
             
-            rollingNumber.dataset.interval = interval;
+            phoneLarge.dataset.interval = interval;
         }
 
         function stopRolling() {
-            const rollingNumber = document.getElementById('rolling-number');
-            clearInterval(parseInt(rollingNumber.dataset.interval));
+            const phoneLarge = document.getElementById('winner-phone-large');
+            const winnerDisplay = document.getElementById('winner-display');
+            const winnerTitle = document.getElementById('winner-title');
+            
+            clearInterval(parseInt(phoneLarge.dataset.interval));
+            winnerDisplay.classList.remove('rolling');
+            
+            // Show title when rolling stops
+            winnerTitle.style.display = 'block';
         }
 
         function displayWinners(winnersData) {
@@ -523,11 +543,9 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
                 
                 // Show first winner in main display
                 if (index === 0) {
-                    document.getElementById('rolling-number').textContent = winner.player_phone;
                     document.getElementById('winner-phone-large').textContent = winner.player_phone;
                     document.getElementById('winner-ticket').textContent = winner.ticket_code;
                     document.getElementById('winner-prize').textContent = 'GHS ' + parseFloat(winner.prize_amount).toFixed(2);
-                    document.getElementById('winner-display').style.display = 'block';
                 }
             });
             
