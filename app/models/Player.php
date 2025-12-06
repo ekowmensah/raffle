@@ -60,11 +60,12 @@ class Player extends Model
         $this->db->query("SELECT p.*, 
                          COUNT(DISTINCT t.id) as total_tickets,
                          COALESCE(SUM(pay.amount), 0) as total_spent,
-                         0 as total_wins,
+                         COUNT(DISTINCT dw.id) as total_wins,
                          COALESCE(p.loyalty_level, 'bronze') as loyalty_level
                          FROM {$this->table} p
                          LEFT JOIN tickets t ON p.id = t.player_id
                          LEFT JOIN payments pay ON p.id = pay.player_id AND pay.status = 'success'
+                         LEFT JOIN draw_winners dw ON p.id = dw.player_id
                          GROUP BY p.id
                          ORDER BY p.created_at DESC");
         return $this->db->resultSet();
