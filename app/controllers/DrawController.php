@@ -203,6 +203,27 @@ class DrawController extends Controller
             
             if ($this->winnerModel->updatePrizeStatus($winnerId, $status)) {
                 flash('success', 'Prize status updated');
+                
+                // Send SMS notification when prize is marked as paid
+                if ($status === 'paid') {
+                    $winner = $this->winnerModel->findById($winnerId);
+                    
+                    if ($winner) {
+                        require_once '../app/services/SMS/HubtelSmsService.php';
+                        $smsService = new \App\Services\SMS\HubtelSmsService();
+                        
+                        $playerModel = $this->model('Player');
+                        $player = $playerModel->findById($winner->player_id);
+                        
+                        if ($player && $player->phone) {
+                            // Send prize payment confirmation SMS
+                            $message = "Congratulations! Your prize of GHS " . number_format($winner->prize_amount, 2) . " has been credited to your MoMo account. Thank you for playing!";
+                            $smsService->send($player->phone, $message, 'winner');
+                            
+                            error_log("Prize paid SMS sent to {$player->phone} for winner ID {$winnerId}");
+                        }
+                    }
+                }
             } else {
                 flash('error', 'Failed to update status');
             }
