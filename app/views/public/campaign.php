@@ -450,30 +450,8 @@
                                    placeholder="Enter promo code if you have one">
                         </div>
 
-                        <hr>
-
-                        <h6 class="mb-3">Choose Payment Method:</h6>
-                        
-                        <div class="list-group">
-                            <label class="list-group-item">
-                                <input type="radio" name="payment_method" value="manual" checked>
-                                <i class="fas fa-hand-holding-usd fa-2x text-success ml-2"></i>
-                                <strong class="ml-2">Manual Payment (Test)</strong>
-                                <p class="mb-0 ml-5 text-muted small">Instant payment for testing</p>
-                            </label>
-                            <label class="list-group-item">
-                                <input type="radio" name="payment_method" value="mtn">
-                                <i class="fas fa-mobile-alt fa-2x text-warning ml-2"></i>
-                                <strong class="ml-2">MTN Mobile Money</strong>
-                                <p class="mb-0 ml-5 text-muted small">Pay with MTN MoMo</p>
-                            </label>
-                            <label class="list-group-item">
-                                <input type="radio" name="payment_method" value="paystack">
-                                <i class="fas fa-credit-card fa-2x text-primary ml-2"></i>
-                                <strong class="ml-2">Card Payment</strong>
-                                <p class="mb-0 ml-5 text-muted small">Pay with Visa, Mastercard</p>
-                            </label>
-                        </div>
+                        <!-- Payment method auto-selected -->
+                        <input type="hidden" name="payment_method" value="hubtel">
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg btn-block">

@@ -464,46 +464,24 @@
 
             <!-- Step 4: Payment -->
             <div id="step4" class="step-content hidden">
-                <h4 class="mb-4">Step 4: Select Payment Method</h4>
+                <h4 class="mb-4">Step 4: Confirm Payment</h4>
                 
                 <div id="payment-summary" class="alert alert-primary">
                     <!-- Payment summary will be displayed here -->
                 </div>
                 
-                <div class="form-group">
-                    <label>Payment Method</label>
-                    <div class="campaign-option" onclick="selectPaymentMethod('manual')">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-hand-holding-usd fa-2x text-success mr-3"></i>
-                            <div>
-                                <h5 class="mb-0">Manual Payment</h5>
-                                <small class="text-muted">Pay via mobile money or cash</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="campaign-option" onclick="selectPaymentMethod('mtn')">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-mobile-alt fa-2x text-warning mr-3"></i>
-                            <div>
-                                <h5 class="mb-0">MTN Mobile Money</h5>
-                                <small class="text-muted">Instant payment via MTN MoMo</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="campaign-option" onclick="selectPaymentMethod('hubtel')">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-credit-card fa-2x text-primary mr-3"></i>
-                            <div>
-                                <h5 class="mb-0">Hubtel (All Networks)</h5>
-                                <small class="text-muted">MTN, Telecel, AirtelTigo</small>
-                            </div>
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-mobile-alt fa-2x text-primary mr-3"></i>
+                        <div>
+                            <h5 class="mb-1">Mobile Money Payment</h5>
+                            <small class="text-muted">You will receive a prompt on your phone to approve the payment</small>
                         </div>
                     </div>
                 </div>
                 
-                <input type="hidden" name="payment_method" id="payment_method" value="manual" required>
+                <!-- Payment method auto-selected -->
+                <input type="hidden" name="payment_method" id="payment_method" value="hubtel" required>
                 
                 <div class="mt-4">
                     <button type="button" class="btn btn-back" onclick="goToStep(3)">
@@ -747,16 +725,6 @@ function updateTotalAmount() {
             <p class="mb-0"><strong>Total:</strong> <span class="h4">${selectedCampaign.currency} ${total.toFixed(2)}</span></p>
         `;
     }
-}
-
-function selectPaymentMethod(method) {
-    document.getElementById('payment_method').value = method;
-    
-    // Visual feedback
-    document.querySelectorAll('.campaign-option').forEach(function(el) {
-        el.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
 }
 
 // Update total when quantity changes
