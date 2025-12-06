@@ -43,7 +43,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Draw Details</h3>
                 </div>
-                <form action="<?= url('draw/schedule') ?>" method="POST">
+                <form action="<?= url('draw/schedule') ?>" method="POST" onsubmit="return validateScheduleForm()">
                     <?= csrf_field() ?>
                     <div class="card-body">
                         <div class="form-group">
@@ -75,10 +75,11 @@
                         </div>
 
                         <div class="form-group" id="programme_field" style="display: none;">
-                            <label for="programme_id">Programme <span class="text-danger">*</span></label>
+                            <label for="programme_id">Programme</label>
                             <select class="form-control" id="programme_id" name="programme_id" disabled onchange="loadCampaigns()">
                                 <option value="">First select a station...</option>
                             </select>
+                            <small class="form-text text-muted">Required for programme-specific campaigns</small>
                         </div>
 
                         <div class="form-group">
@@ -323,6 +324,45 @@ function updateScheduleType() {
     } else {
         document.getElementById('schedule_auto').disabled = false;
     }
+}
+
+// Validate form before submission
+function validateScheduleForm() {
+    const campaignType = $('input[name="campaign_type"]:checked').val();
+    const programmeId = $('#programme_id').val();
+    const campaignId = $('#campaign_id').val();
+    const scheduleType = $('input[name="schedule_type"]:checked').val();
+    
+    // Check if campaign is selected
+    if (!campaignId) {
+        alert('Please select a campaign');
+        return false;
+    }
+    
+    // For programme-specific campaigns, ensure programme is selected
+    if (campaignType === 'programme' && !programmeId) {
+        alert('Please select a programme for programme-specific campaigns');
+        return false;
+    }
+    
+    // For station-wide campaigns, clear programme_id
+    if (campaignType === 'station') {
+        $('#programme_id').val('');
+    }
+    
+    // For single draws, validate required fields
+    if (scheduleType === 'single') {
+        const drawType = $('#draw_type').val();
+        const drawDate = $('#draw_date').val();
+        const winnerCount = $('#winner_count').val();
+        
+        if (!drawType || !drawDate || !winnerCount) {
+            alert('Please fill in all draw details');
+            return false;
+        }
+    }
+    
+    return true;
 }
 </script>
 
