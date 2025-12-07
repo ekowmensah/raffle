@@ -209,4 +209,55 @@ class Draw extends Model
         $this->db->bind(':limit', $limit);
         return $this->db->resultSet();
     }
+
+    public function getPendingByProgramme($programmeId)
+    {
+        $this->db->query("SELECT d.*, c.name as campaign_name
+                         FROM {$this->table} d
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         WHERE c.programme_id = :programme_id 
+                         AND d.status = 'pending'
+                         AND d.draw_date <= NOW()
+                         ORDER BY d.draw_date ASC");
+        $this->db->bind(':programme_id', $programmeId);
+        return $this->db->resultSet();
+    }
+
+    public function getTodayByProgramme($programmeId)
+    {
+        $this->db->query("SELECT d.*, c.name as campaign_name
+                         FROM {$this->table} d
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         WHERE c.programme_id = :programme_id 
+                         AND DATE(d.draw_date) = CURDATE()
+                         ORDER BY d.draw_date DESC");
+        $this->db->bind(':programme_id', $programmeId);
+        return $this->db->resultSet();
+    }
+
+    public function countPendingByProgramme($programmeId)
+    {
+        $this->db->query("SELECT COUNT(*) as count
+                         FROM {$this->table} d
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         WHERE c.programme_id = :programme_id 
+                         AND d.status = 'pending'
+                         AND d.draw_date <= NOW()");
+        $this->db->bind(':programme_id', $programmeId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
+
+    public function countCompletedTodayByProgramme($programmeId)
+    {
+        $this->db->query("SELECT COUNT(*) as count
+                         FROM {$this->table} d
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         WHERE c.programme_id = :programme_id 
+                         AND d.status = 'completed'
+                         AND DATE(d.draw_date) = CURDATE()");
+        $this->db->bind(':programme_id', $programmeId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

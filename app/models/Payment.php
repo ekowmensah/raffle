@@ -264,4 +264,37 @@ class Payment extends Model
         $this->db->bind(':end_date', $endDate);
         return $this->db->resultSet();
     }
+
+    public function getTotalByStation($stationId)
+    {
+        $this->db->query("SELECT COALESCE(SUM(p.amount), 0) as total
+                         FROM {$this->table} p
+                         LEFT JOIN raffle_campaigns c ON p.campaign_id = c.id
+                         WHERE p.status = 'success'
+                         AND c.station_id = :station_id");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->total ?? 0;
+    }
+
+    public function getTodayRevenue()
+    {
+        $this->db->query("SELECT COALESCE(SUM(amount), 0) as total
+                         FROM {$this->table}
+                         WHERE status = 'success'
+                         AND DATE(created_at) = CURDATE()");
+        $result = $this->db->single();
+        return $result->total ?? 0;
+    }
+
+    public function countTodayByStatus($status)
+    {
+        $this->db->query("SELECT COUNT(*) as count
+                         FROM {$this->table}
+                         WHERE status = :status
+                         AND DATE(created_at) = CURDATE()");
+        $this->db->bind(':status', $status);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

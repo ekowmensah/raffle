@@ -80,4 +80,16 @@ class User extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function getByStation($stationId)
+    {
+        $this->db->query("SELECT u.*, r.name as role_name, p.name as programme_name
+                         FROM {$this->table} u
+                         LEFT JOIN roles r ON u.role_id = r.id
+                         LEFT JOIN programmes p ON u.programme_id = p.id
+                         WHERE u.station_id = :station_id
+                         ORDER BY u.created_at DESC");
+        $this->db->bind(':station_id', $stationId);
+        return $this->db->resultSet();
+    }
 }

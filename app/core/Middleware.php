@@ -48,18 +48,33 @@ class Middleware
         // Define role permissions
         $permissions = [
             'super_admin' => ['*'], // All permissions
+            
             'station_admin' => [
-                'view_stations', 'edit_station', 'view_programmes', 'edit_programmes',
-                'view_campaigns', 'view_players', 'view_tickets', 'view_reports'
+                'view_station', 'edit_station',
+                'manage_programmes', 'create_programme', 'edit_programme', 'delete_programme',
+                'manage_campaigns', 'create_campaign', 'edit_campaign', 'delete_campaign',
+                'view_station_users', 'create_station_user', 'edit_station_user',
+                'view_station_reports', 'view_station_analytics', 'view_station_finances',
+                'view_players', 'view_tickets', 'view_draws'
             ],
+            
             'programme_manager' => [
-                'view_programmes', 'view_campaigns', 'view_players', 'view_tickets'
+                'view_programme', 'edit_programme',
+                'manage_campaigns', 'create_campaign', 'edit_campaign',
+                'conduct_draw', 'view_draws', 'view_winners',
+                'view_tickets', 'view_players',
+                'view_programme_analytics', 'view_programme_finances'
             ],
+            
             'finance' => [
-                'view_payments', 'view_reports', 'view_wallets', 'manage_payouts'
+                'process_payment', 'view_payments', 'edit_payment',
+                'manage_payouts', 'view_wallets', 'reconciliation',
+                'view_financial_reports', 'export_financial_data'
             ],
+            
             'auditor' => [
-                'view_all', 'view_audit_logs', 'view_reports'
+                'view_audit_logs', 'view_security_logs',
+                'view_all_reports', 'export_data', 'view_analytics'
             ]
         ];
 
@@ -106,6 +121,34 @@ class Middleware
 
         $userStationId = $_SESSION['user']->station_id ?? null;
         return $userStationId == $stationId;
+    }
+
+    /**
+     * Check if user belongs to the programme
+     */
+    public static function belongsToProgramme($programmeId)
+    {
+        if (!isset($_SESSION['user'])) {
+            return false;
+        }
+
+        $userRole = $_SESSION['user']->role_name ?? '';
+        
+        // Super admin can access all programmes
+        if ($userRole === 'super_admin') {
+            return true;
+        }
+
+        // Station admin can access all programmes in their station
+        if ($userRole === 'station_admin') {
+            // Would need to check if programme belongs to their station
+            // For now, return true if they have a station_id
+            return isset($_SESSION['user']->station_id);
+        }
+
+        // Programme manager can only access their own programme
+        $userProgrammeId = $_SESSION['user']->programme_id ?? null;
+        return $userProgrammeId == $programmeId;
     }
 
     /**

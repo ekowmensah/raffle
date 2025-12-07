@@ -162,4 +162,45 @@ class Campaign extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function getByStation($stationId)
+    {
+        $this->db->query("SELECT c.*, p.name as programme_name, s.name as sponsor_name
+                         FROM {$this->table} c
+                         LEFT JOIN programmes p ON c.programme_id = p.id
+                         LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         WHERE c.station_id = :station_id
+                         ORDER BY c.created_at DESC");
+        $this->db->bind(':station_id', $stationId);
+        return $this->db->resultSet();
+    }
+
+    public function getByProgramme($programmeId)
+    {
+        $this->db->query("SELECT c.*, s.name as sponsor_name
+                         FROM {$this->table} c
+                         LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         WHERE c.programme_id = :programme_id
+                         ORDER BY c.created_at DESC");
+        $this->db->bind(':programme_id', $programmeId);
+        return $this->db->resultSet();
+    }
+
+    public function countActiveByStation($stationId)
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} 
+                         WHERE station_id = :station_id AND status = 'active'");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
+
+    public function countActiveByProgramme($programmeId)
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} 
+                         WHERE programme_id = :programme_id AND status = 'active'");
+        $this->db->bind(':programme_id', $programmeId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

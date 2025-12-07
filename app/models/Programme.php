@@ -66,10 +66,24 @@ class Programme extends Model
         return $this->db->single();
     }
 
-    public function countByStation($stationId)
+    public function countByStation($stationId, $activeOnly = false)
     {
-        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} WHERE station_id = :station_id");
+        $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE station_id = :station_id";
+        
+        if ($activeOnly) {
+            $sql .= " AND is_active = 1";
+        }
+        
+        $this->db->query($sql);
         $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
+
+    public function countByUser($userId)
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} WHERE created_by = :user_id");
+        $this->db->bind(':user_id', $userId);
         $result = $this->db->single();
         return $result->count ?? 0;
     }

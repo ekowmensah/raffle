@@ -146,4 +146,12 @@ class SecurityLog extends Model
             'created_at' => date('Y-m-d H:i:s')
         ]);
     }
+
+    public function countToday()
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} 
+                         WHERE DATE(created_at) = CURDATE()");
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

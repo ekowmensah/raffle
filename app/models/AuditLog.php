@@ -218,9 +218,18 @@ class AuditLog extends Model
     {
         $this->db->query("DELETE FROM {$this->table} 
                          WHERE created_at < DATE_SUB(NOW(), INTERVAL :days DAY)");
-        
         $this->db->bind(':days', $daysToKeep);
-        
         return $this->db->execute();
+    }
+
+    /**
+     * Count today's logs
+     */
+    public function countToday()
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} 
+                         WHERE DATE(created_at) = CURDATE()");
+        $result = $this->db->single();
+        return $result->count ?? 0;
     }
 }
