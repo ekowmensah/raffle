@@ -75,7 +75,28 @@ class PublicController extends Controller
 
     public function winners()
     {
-        $data = ['title' => 'Recent Winners'];
+        $winnerModel = $this->model('DrawWinner');
+        $drawModel = $this->model('Draw');
+        $campaignModel = $this->model('Campaign');
+        
+        // Get recent winners (last 50)
+        $winners = $winnerModel->getRecentWinners(50);
+        
+        // Get total stats
+        $totalWinners = $winnerModel->count();
+        $totalPrizes = $winnerModel->getTotalPrizesAwarded();
+        
+        // Get active campaigns count
+        $activeCampaigns = $campaignModel->getActiveCampaigns();
+        
+        $data = [
+            'title' => 'Recent Winners',
+            'winners' => $winners,
+            'total_winners' => $totalWinners,
+            'total_prizes' => $totalPrizes,
+            'active_campaigns' => count($activeCampaigns)
+        ];
+        
         $this->view('public/winners', $data);
     }
 

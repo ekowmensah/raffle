@@ -136,4 +136,30 @@ class DrawWinner extends Model
         $result = $this->db->single();
         return $result->total ?? 0;
     }
+    
+    public function getRecentWinners($limit = 50)
+    {
+        $this->db->query("SELECT 
+                            dw.*,
+                            d.draw_date,
+                            d.draw_type,
+                            c.name as campaign_name,
+                            s.name as station_name,
+                            pr.name as programme_name,
+                            t.ticket_code,
+                            p.phone_number
+                         FROM {$this->table} dw
+                         INNER JOIN draws d ON dw.draw_id = d.id
+                         INNER JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         LEFT JOIN stations s ON c.station_id = s.id
+                         LEFT JOIN programmes pr ON c.programme_id = pr.id
+                         INNER JOIN tickets t ON dw.ticket_id = t.id
+                         INNER JOIN players p ON dw.player_id = p.id
+                         WHERE d.status = 'completed'
+                         ORDER BY d.draw_date DESC, dw.prize_rank ASC
+                         LIMIT :limit");
+        
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
 }
