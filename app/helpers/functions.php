@@ -95,10 +95,10 @@ function isActive($path)
     return strpos($currentPath, $path) === 0 ? 'active' : '';
 }
 
-function hasRole($role)
-{
+//function hasRole($role)
+//{
     return isset($_SESSION['user']) && $_SESSION['user']->role_name === $role;
-}
+//}
 
 function can($permission)
 {
