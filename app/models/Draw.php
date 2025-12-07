@@ -215,7 +215,8 @@ class Draw extends Model
         $this->db->query("SELECT d.*, c.name as campaign_name
                          FROM {$this->table} d
                          LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
-                         WHERE c.programme_id = :programme_id 
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id 
                          AND d.status = 'pending'
                          AND d.draw_date <= NOW()
                          ORDER BY d.draw_date ASC");
@@ -228,7 +229,8 @@ class Draw extends Model
         $this->db->query("SELECT d.*, c.name as campaign_name
                          FROM {$this->table} d
                          LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
-                         WHERE c.programme_id = :programme_id 
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id 
                          AND DATE(d.draw_date) = CURDATE()
                          ORDER BY d.draw_date DESC");
         $this->db->bind(':programme_id', $programmeId);
@@ -237,10 +239,11 @@ class Draw extends Model
 
     public function countPendingByProgramme($programmeId)
     {
-        $this->db->query("SELECT COUNT(*) as count
+        $this->db->query("SELECT COUNT(DISTINCT d.id) as count
                          FROM {$this->table} d
                          LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
-                         WHERE c.programme_id = :programme_id 
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id 
                          AND d.status = 'pending'
                          AND d.draw_date <= NOW()");
         $this->db->bind(':programme_id', $programmeId);
@@ -250,10 +253,11 @@ class Draw extends Model
 
     public function countCompletedTodayByProgramme($programmeId)
     {
-        $this->db->query("SELECT COUNT(*) as count
+        $this->db->query("SELECT COUNT(DISTINCT d.id) as count
                          FROM {$this->table} d
                          LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
-                         WHERE c.programme_id = :programme_id 
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id 
                          AND d.status = 'completed'
                          AND DATE(d.draw_date) = CURDATE()");
         $this->db->bind(':programme_id', $programmeId);

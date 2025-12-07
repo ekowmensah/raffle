@@ -180,7 +180,8 @@ class Campaign extends Model
         $this->db->query("SELECT c.*, s.name as sponsor_name
                          FROM {$this->table} c
                          LEFT JOIN sponsors s ON c.sponsor_id = s.id
-                         WHERE c.programme_id = :programme_id
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id
                          ORDER BY c.created_at DESC");
         $this->db->bind(':programme_id', $programmeId);
         return $this->db->resultSet();
@@ -197,8 +198,10 @@ class Campaign extends Model
 
     public function countActiveByProgramme($programmeId)
     {
-        $this->db->query("SELECT COUNT(*) as count FROM {$this->table} 
-                         WHERE programme_id = :programme_id AND status = 'active'");
+        $this->db->query("SELECT COUNT(DISTINCT c.id) as count 
+                         FROM {$this->table} c
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id AND c.status = 'active'");
         $this->db->bind(':programme_id', $programmeId);
         $result = $this->db->single();
         return $result->count ?? 0;
