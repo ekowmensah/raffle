@@ -74,11 +74,11 @@ class HubtelSmsService
      */
     public function sendWinnerNotification($phoneNumber, $ticketCode, $prizeAmount, $prizeRank, $campaignName)
     {
-        $message = "🎉 CONGRATULATIONS! 🎉\n";
+        $message = "CONGRATULATIONS!\n";
         $message .= "You WON in {$campaignName}!\n";
         $message .= "Ticket: {$ticketCode}\n";
         $message .= "Prize: GHS " . number_format($prizeAmount, 2) . " ({$prizeRank})\n";
-        $message .= "Your Prize will be Credited to your Momo Account Soon!";
+        $message .= "Your Prize will be Credited to you Soon!";
         
         return $this->send($phoneNumber, $message, 'winner');
     }

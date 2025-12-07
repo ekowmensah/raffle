@@ -77,7 +77,7 @@ class SmsGatewayService
      */
     public function sendWinnerNotification($phoneNumber, $prizeAmount, $prizeRank, $campaignName)
     {
-        $message = "🎉 CONGRATULATIONS! 🎉\n";
+        $message = "CONGRATULATIONS!\n";
         $message .= "You WON in {$campaignName}!\n";
         $message .= "Prize: GHS " . number_format($prizeAmount, 2) . "\n";
         $message .= "Rank: {$prizeRank}\n";
