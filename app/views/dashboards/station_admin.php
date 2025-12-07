@@ -148,8 +148,51 @@
                     </div>
                 </div>
 
-                <!-- Recent Campaigns -->
+                <!-- Programme Revenue Breakdown -->
                 <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-pie"></i> Revenue by Programme
+                            </h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <?php if (!empty($data['programme_revenue'])): ?>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Programme</th>
+                                            <th class="text-right">Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($data['programme_revenue'] as $prog): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($prog->programme_name) ?></td>
+                                                <td class="text-right">
+                                                    <strong>GHS <?= number_format($prog->revenue, 2) ?></strong>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-light">
+                                            <th>Total</th>
+                                            <th class="text-right">
+                                                GHS <?= number_format($data['stats']['station_revenue'] ?? 0, 2) ?>
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            <?php else: ?>
+                                <div class="p-3 text-center text-muted">
+                                    <p>No revenue data yet</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Recent Campaigns -->
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">

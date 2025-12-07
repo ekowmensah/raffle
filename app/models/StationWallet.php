@@ -78,4 +78,14 @@ class StationWallet extends Model
         $this->db->bind(':wallet_id', $walletId);
         return $this->db->single();
     }
+
+    public function updateBalance($stationId, $newBalance)
+    {
+        $this->db->query("UPDATE {$this->table} 
+                         SET balance = :balance 
+                         WHERE station_id = :station_id");
+        $this->db->bind(':balance', $newBalance);
+        $this->db->bind(':station_id', $stationId);
+        return $this->db->execute();
+    }
 }

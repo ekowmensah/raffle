@@ -71,6 +71,21 @@
                 </div>
 
                 <div class="col-lg-3 col-6">
+                    <div class="small-box bg-primary">
+                        <div class="inner">
+                            <h3>GHS <?= number_format($data['stats']['total_revenue'] ?? 0, 2) ?></h3>
+                            <p>Total Revenue</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <a href="<?= url('payment') ?>" class="small-box-footer">
+                            View Payments <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-6">
                     <div class="small-box bg-warning">
                         <div class="inner">
                             <h3><?= $data['stats']['tickets_sold_today'] ?? 0 ?></h3>
