@@ -205,11 +205,14 @@ function canAccessDraw($draw)
         $accessModel = new \App\Models\CampaignProgrammeAccess();
         $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
         
-        $hasAccess = $access !== null;
-        error_log("Programme Manager access result: " . ($hasAccess ? 'YES' : 'NO') . " - Access record: " . ($access ? json_encode($access) : 'null'));
-        
         // Only return true if there's an explicit link in campaign_programme_access
-        return $hasAccess;
+        if ($access === null || $access === false) {
+            error_log("Programme Manager access result: NO - No link found");
+            return false;
+        }
+        
+        error_log("Programme Manager access result: YES - Access record: " . json_encode($access));
+        return true;
     }
     
     // Auditors can view
