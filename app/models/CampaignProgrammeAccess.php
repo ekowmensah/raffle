@@ -83,11 +83,6 @@ class CampaignProgrammeAccess extends Model
                          WHERE campaign_id = :campaign_id AND programme_id = :programme_id");
         $this->db->bind(':campaign_id', $campaignId);
         $this->db->bind(':programme_id', $programmeId);
-        $result = $this->db->single();
-        
-        // Debug logging
-        error_log("DB Query - Campaign: {$campaignId}, Programme: {$programmeId}, Found: " . ($result ? 'YES (ID: ' . $result->id . ')' : 'NO'));
-        
-        return $result;
+        return $this->db->single();
     }
 }

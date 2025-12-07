@@ -130,22 +130,46 @@
 
                 <div class="col-md-4">
                     <?php if ($draw->status === 'pending'): ?>
+                    <?php
+                    $drawDate = date('Y-m-d', strtotime($draw->draw_date));
+                    $today = date('Y-m-d');
+                    $canConduct = ($drawDate <= $today) || hasRole(['super_admin', 'station_admin']);
+                    ?>
                     <div class="card card-primary">
                         <div class="card-header">
                             <h3 class="card-title"><i class="fas fa-play-circle"></i> Actions</h3>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted">This draw is ready to be conducted.</p>
-                            
-                            <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-lg btn-block mb-3">
-                                <i class="fas fa-tv"></i> Live Draw
-                                <br><small>Animated display with rolling numbers</small>
-                            </a>
-                            
-                            <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-lg btn-block">
-                                <i class="fas fa-play"></i> Conduct Draw
-                                <br><small>Standard draw execution</small>
-                            </a>
+                            <?php if ($canConduct): ?>
+                                <p class="text-muted">This draw is ready to be conducted.</p>
+                                
+                                <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-lg btn-block mb-3">
+                                    <i class="fas fa-tv"></i> Live Draw
+                                    <br><small>Animated display with rolling numbers</small>
+                                </a>
+                                
+                                <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-lg btn-block">
+                                    <i class="fas fa-play"></i> Conduct Draw
+                                    <br><small>Standard draw execution</small>
+                                </a>
+                            <?php else: ?>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-calendar-times"></i>
+                                    <strong>Draw Not Ready</strong>
+                                    <p class="mb-0">This draw is scheduled for <strong><?= formatDate($draw->draw_date, 'M d, Y') ?></strong>.</p>
+                                    <p class="mb-0 mt-2"><small>Programme managers can only conduct draws on or after the scheduled date.</small></p>
+                                </div>
+                                
+                                <button class="btn btn-secondary btn-lg btn-block mb-3" disabled>
+                                    <i class="fas fa-tv"></i> Live Draw
+                                    <br><small>Available on draw date</small>
+                                </button>
+                                
+                                <button class="btn btn-secondary btn-lg btn-block" disabled>
+                                    <i class="fas fa-play"></i> Conduct Draw
+                                    <br><small>Available on draw date</small>
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <?php endif; ?>

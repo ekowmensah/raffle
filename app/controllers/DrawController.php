@@ -428,9 +428,6 @@ class DrawController extends Controller
         $user = $_SESSION['user'];
         $role = $user->role_name ?? '';
         
-        // Debug logging
-        error_log("Pending Draws - User Role: {$role}, User ID: {$user->id}");
-        
         // Get pending draws based on role
         if ($role === 'super_admin' || $role === 'auditor') {
             $draws = $this->drawModel->getPendingDraws();
@@ -458,11 +455,6 @@ class DrawController extends Controller
                     }
                 }
                 $draws = $filteredDraws;
-                
-                // Debug logging
-                error_log("Programme Manager ID: " . $user->programme_id);
-                error_log("Total pending draws: " . count($allDraws));
-                error_log("Filtered draws: " . count($filteredDraws));
             }
         } else {
             $draws = [];
