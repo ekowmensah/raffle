@@ -165,12 +165,18 @@ function canAccessCampaign($campaign)
  */
 function canAccessDraw($draw)
 {
+    $user = $_SESSION['user'] ?? null;
+    $userRole = $user->role_name ?? 'none';
+    
+    error_log("canAccessDraw called - Draw ID: {$draw->id}, Campaign ID: {$draw->campaign_id}, User Role: {$userRole}");
+    
     if (hasRole('super_admin')) {
+        error_log("Access granted - Super Admin");
         return true;
     }
     
-    $user = $_SESSION['user'] ?? null;
     if (!$user) {
+        error_log("Access denied - No user session");
         return false;
     }
     
@@ -179,30 +185,40 @@ function canAccessDraw($draw)
     $campaign = $campaignModel->findById($draw->campaign_id);
     
     if (!$campaign) {
+        error_log("Access denied - Campaign not found");
         return false;
     }
     
     // Station admin check
     if (hasRole('station_admin')) {
-        return $campaign->station_id == $user->station_id;
+        $hasAccess = $campaign->station_id == $user->station_id;
+        error_log("Station Admin check - Campaign Station: {$campaign->station_id}, User Station: {$user->station_id}, Access: " . ($hasAccess ? 'YES' : 'NO'));
+        return $hasAccess;
     }
     
     // Programme manager check
     if (hasRole('programme_manager')) {
+        error_log("Programme Manager check - Campaign ID: {$campaign->id}, User Programme ID: {$user->programme_id}");
+        
+        // Programme managers can only access campaigns linked to their programme
+        // Station-wide campaigns (without programme) should NOT be accessible
         $accessModel = new \App\Models\CampaignProgrammeAccess();
         $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
         
-        // Debug logging
-        error_log("Checking draw access - Campaign ID: {$campaign->id}, User Programme ID: {$user->programme_id}, Access: " . ($access ? 'YES' : 'NO'));
+        $hasAccess = $access !== null;
+        error_log("Programme Manager access result: " . ($hasAccess ? 'YES' : 'NO'));
         
-        return $access !== null;
+        // Only return true if there's an explicit link in campaign_programme_access
+        return $hasAccess;
     }
     
     // Auditors can view
     if (hasRole('auditor')) {
+        error_log("Access granted - Auditor");
         return true;
     }
     
+    error_log("Access denied - No matching role");
     return false;
 }
 
