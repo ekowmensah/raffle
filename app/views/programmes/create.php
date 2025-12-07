@@ -40,14 +40,20 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="station_id">Station <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="station_id" name="station_id" required>
-                                        <option value="">Select Station</option>
-                                        <?php foreach ($stations as $station): ?>
-                                            <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($station->name) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <?php if (hasRole('station_admin')): ?>
+                                        <input type="hidden" name="station_id" value="<?= $_SESSION['user']->station_id ?>">
+                                        <input type="text" class="form-control" value="<?= htmlspecialchars($_SESSION['user']->station_name ?? 'Your Station') ?>" readonly>
+                                        <small class="form-text text-muted">You can only create programmes for your station</small>
+                                    <?php else: ?>
+                                        <select class="form-control" id="station_id" name="station_id" required>
+                                            <option value="">Select Station</option>
+                                            <?php foreach ($stations as $station): ?>
+                                                <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($station->name) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6">

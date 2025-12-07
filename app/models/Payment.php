@@ -297,4 +297,49 @@ class Payment extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function getRevenueByProgramme($programmeId)
+    {
+        $this->db->query("SELECT COALESCE(SUM(p.amount), 0) as total_revenue
+                         FROM {$this->table} p
+                         INNER JOIN tickets t ON p.ticket_id = t.id
+                         INNER JOIN raffle_campaigns c ON t.campaign_id = c.id
+                         INNER JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id
+                         AND p.status = 'success'");
+        $this->db->bind(':programme_id', $programmeId);
+        $result = $this->db->single();
+        return $result->total_revenue ?? 0;
+    }
+
+    public function getRevenueByStation($stationId)
+    {
+        $this->db->query("SELECT COALESCE(SUM(p.amount), 0) as total_revenue
+                         FROM {$this->table} p
+                         INNER JOIN tickets t ON p.ticket_id = t.id
+                         INNER JOIN raffle_campaigns c ON t.campaign_id = c.id
+                         WHERE c.station_id = :station_id
+                         AND p.status = 'success'");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->total_revenue ?? 0;
+    }
+
+    public function getRevenuePerProgrammeByStation($stationId)
+    {
+        $this->db->query("SELECT 
+                            pr.id,
+                            pr.name as programme_name,
+                            COALESCE(SUM(p.amount), 0) as revenue
+                         FROM programmes pr
+                         LEFT JOIN campaign_programme_access cpa ON pr.id = cpa.programme_id
+                         LEFT JOIN raffle_campaigns c ON cpa.campaign_id = c.id
+                         LEFT JOIN tickets t ON c.id = t.campaign_id
+                         LEFT JOIN payments p ON t.id = p.ticket_id AND p.status = 'success'
+                         WHERE pr.station_id = :station_id
+                         GROUP BY pr.id, pr.name
+                         ORDER BY revenue DESC");
+        $this->db->bind(':station_id', $stationId);
+        return $this->db->resultSet();
+    }
 }

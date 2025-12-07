@@ -329,9 +329,29 @@ class DrawController extends Controller
     {
         $this->requireAuth();
 
+        // Check permission
+        if (!hasRole(['super_admin', 'station_admin', 'programme_manager', 'auditor'])) {
+            flash('error', 'You do not have permission to view winners');
+            $this->redirect('home');
+        }
+
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
         $campaignId = $_GET['campaign'] ?? null;
+        
+        // Get campaigns based on role
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $campaigns = $this->campaignModel->findAll();
+        } elseif ($role === 'station_admin') {
+            $campaigns = $this->campaignModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $campaigns = $this->campaignModel->getByProgramme($user->programme_id);
+        } else {
+            $campaigns = [];
+        }
+        
         $winners = $campaignId ? $this->winnerModel->getByCampaign($campaignId) : [];
-        $campaigns = $this->campaignModel->findAll();
 
         $data = [
             'title' => 'All Winners',

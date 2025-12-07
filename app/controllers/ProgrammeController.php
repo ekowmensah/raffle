@@ -111,6 +111,13 @@ class ProgrammeController extends Controller
         }
 
         $stations = $this->stationModel->getActive();
+        
+        // Get station name for station admin
+        $user = $_SESSION['user'];
+        if (hasRole('station_admin') && $user->station_id) {
+            $station = $this->stationModel->findById($user->station_id);
+            $_SESSION['user']->station_name = $station->name ?? '';
+        }
 
         $data = [
             'title' => 'Create Programme',

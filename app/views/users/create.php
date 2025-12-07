@@ -83,30 +83,47 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6" id="station_field">
                                 <div class="form-group">
-                                    <label for="station_id">Station (Optional)</label>
-                                    <select class="form-control" id="station_id" name="station_id">
-                                        <option value="">Select Station</option>
-                                        <?php foreach ($stations as $station): ?>
-                                            <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($station->name) ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                    <label for="station_id">
+                                        Station 
+                                        <span class="text-danger station-required" style="display:none;">*</span>
+                                    </label>
+                                    <?php if (hasRole('station_admin')): ?>
+                                        <input type="hidden" name="station_id" value="<?= $_SESSION['user']->station_id ?>">
+                                        <input type="text" class="form-control" value="<?= htmlspecialchars($_SESSION['user']->station_name ?? 'Your Station') ?>" readonly>
+                                        <small class="form-text text-muted">You can only create users for your station</small>
+                                    <?php else: ?>
+                                        <select class="form-control" id="station_id" name="station_id">
+                                            <option value="">Select Station</option>
+                                            <?php foreach ($stations as $station): ?>
+                                                <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($station->name) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <small class="form-text text-muted station-help"></small>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="programme_field">
+                                <div class="form-group">
+                                    <label for="programme_id">
+                                        Programme 
+                                        <span class="text-danger programme-required" style="display:none;">*</span>
+                                    </label>
+                                    <select class="form-control" id="programme_id" name="programme_id">
+                                        <option value="">Select Programme</option>
                                     </select>
+                                    <small class="form-text text-muted programme-help"></small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="programme_id">Programme (Optional)</label>
-                                    <select class="form-control" id="programme_id" name="programme_id">
-                                        <option value="">Select Programme</option>
-                                    </select>
-                                </div>
-                            </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <div class="custom-control custom-checkbox mt-4">
@@ -134,10 +151,56 @@
 </div>
 
 <script>
+// Role-based field requirements
+const roleSelect = document.getElementById('role_id');
+const stationField = document.getElementById('station_field');
+const programmeField = document.getElementById('programme_field');
+const stationSelect = document.getElementById('station_id');
+const programmeSelect = document.getElementById('programme_id');
+
+// Role requirements mapping
+const roleRequirements = {
+    'station_admin': { station: true, programme: false },
+    'programme_manager': { station: true, programme: true },
+    'finance': { station: false, programme: false },
+    'auditor': { station: false, programme: false }
+};
+
+// Update field requirements based on selected role
+roleSelect.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const roleName = selectedOption.text.toLowerCase().replace(/\s+/g, '_');
+    
+    const requirements = roleRequirements[roleName] || { station: false, programme: false };
+    
+    // Update station field
+    if (requirements.station) {
+        document.querySelector('.station-required').style.display = 'inline';
+        stationSelect.required = true;
+        document.querySelector('.station-help').textContent = 'Required for this role';
+        stationField.style.display = 'block';
+    } else {
+        document.querySelector('.station-required').style.display = 'none';
+        stationSelect.required = false;
+        document.querySelector('.station-help').textContent = '';
+    }
+    
+    // Update programme field
+    if (requirements.programme) {
+        document.querySelector('.programme-required').style.display = 'inline';
+        programmeSelect.required = true;
+        document.querySelector('.programme-help').textContent = 'Required for this role - select station first';
+        programmeField.style.display = 'block';
+    } else {
+        document.querySelector('.programme-required').style.display = 'none';
+        programmeSelect.required = false;
+        document.querySelector('.programme-help').textContent = '';
+    }
+});
+
 // Load programmes when station is selected
-document.getElementById('station_id').addEventListener('change', function() {
+stationSelect.addEventListener('change', function() {
     const stationId = this.value;
-    const programmeSelect = document.getElementById('programme_id');
     
     programmeSelect.innerHTML = '<option value="">Select Programme</option>';
     
@@ -156,6 +219,11 @@ document.getElementById('station_id').addEventListener('change', function() {
             });
     }
 });
+
+// Trigger role change on page load if role is selected
+if (roleSelect.value) {
+    roleSelect.dispatchEvent(new Event('change'));
+}
 </script>
 
 <?php require_once '../app/views/layouts/footer.php'; ?>

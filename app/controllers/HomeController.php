@@ -120,11 +120,12 @@ class HomeController extends Controller
             'programmes' => $programmeModel->getByStation($stationId),
             'campaigns' => $campaignModel->getByStation($stationId),
             'users' => $userModel->getByStation($stationId),
+            'programme_revenue' => $paymentModel->getRevenuePerProgrammeByStation($stationId),
             'stats' => [
                 'total_programmes' => $programmeModel->countByStation($stationId),
                 'active_campaigns' => $campaignModel->countActiveByStation($stationId),
                 'total_users' => $userModel->countByStation($stationId),
-                'station_revenue' => $paymentModel->getTotalByStation($stationId)
+                'station_revenue' => $paymentModel->getRevenueByStation($stationId)
             ]
         ];
         
@@ -147,6 +148,7 @@ class HomeController extends Controller
         $drawModel = $this->model('Draw');
         $campaignModel = $this->model('Campaign');
         $ticketModel = $this->model('Ticket');
+        $paymentModel = $this->model('Payment');
         
         $data = [
             'title' => 'Programme Dashboard',
@@ -158,7 +160,8 @@ class HomeController extends Controller
                 'pending_draws' => $drawModel->countPendingByProgramme($programmeId),
                 'completed_today' => $drawModel->countCompletedTodayByProgramme($programmeId),
                 'active_campaigns' => $campaignModel->countActiveByProgramme($programmeId),
-                'tickets_sold_today' => $ticketModel->countTodayByProgramme($programmeId)
+                'tickets_sold_today' => $ticketModel->countTodayByProgramme($programmeId),
+                'total_revenue' => $paymentModel->getRevenueByProgramme($programmeId)
             ]
         ];
         
