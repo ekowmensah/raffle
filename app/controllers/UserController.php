@@ -21,7 +21,18 @@ class UserController extends Controller
     {
         $this->requireAuth();
 
-        $users = $this->userModel->getAllWithRoles();
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $users = $this->userModel->getAllWithRoles();
+        } elseif ($role === 'station_admin') {
+            $users = $this->userModel->getByStation($user->station_id);
+        } else {
+            flash('error', 'You do not have permission to view users');
+            $this->redirect('home');
+            return;
+        }
 
         $data = [
             'title' => 'Users',
@@ -63,6 +74,11 @@ class UserController extends Controller
     public function create()
     {
         $this->requireAuth();
+        
+        if (!can('create_station_user') && !hasRole('super_admin')) {
+            flash('error', 'You do not have permission to create users');
+            $this->redirect('user');
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
@@ -125,6 +141,11 @@ class UserController extends Controller
     public function edit($id)
     {
         $this->requireAuth();
+        
+        if (!can('edit_station_user') && !hasRole('super_admin')) {
+            flash('error', 'You do not have permission to edit users');
+            $this->redirect('user');
+        }
 
         $user = $this->userModel->findById($id);
 
@@ -197,11 +218,27 @@ class UserController extends Controller
     public function delete($id)
     {
         $this->requireAuth();
-
-        // Prevent deleting own account
-        if ($id == $_SESSION['user_id']) {
-            flash('error', 'Cannot delete your own account');
+        
+        // Only super admin can delete users
+        if (!hasRole('super_admin')) {
+            flash('error', 'Only super administrators can delete users');
             $this->redirect('user');
+            return;
+        }
+
+        $user = $this->userModel->findById($id);
+
+        if (!$user) {
+            flash('error', 'User not found');
+            $this->redirect('user');
+            return;
+        }
+
+        // Cannot delete yourself
+        if ($id == $_SESSION['user_id']) {
+            flash('error', 'You cannot delete your own account');
+            $this->redirect('user');
+            return;
         }
 
         if ($this->userModel->delete($id)) {

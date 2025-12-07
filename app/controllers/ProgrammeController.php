@@ -19,7 +19,19 @@ class ProgrammeController extends Controller
     {
         $this->requireAuth();
 
-        $programmes = $this->programmeModel->getAllWithStation();
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $programmes = $this->programmeModel->getAllWithStation();
+        } elseif ($role === 'station_admin') {
+            $programmes = $this->programmeModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $programme = $this->programmeModel->findById($user->programme_id);
+            $programmes = $programme ? [$programme] : [];
+        } else {
+            $programmes = [];
+        }
 
         $data = [
             'title' => 'Programmes',
@@ -40,6 +52,11 @@ class ProgrammeController extends Controller
             $this->redirect('programme');
         }
 
+        if (!canAccessProgramme($programme)) {
+            flash('error', 'You do not have permission to view this programme');
+            $this->redirect('programme');
+        }
+
         $data = [
             'title' => 'Programme Details',
             'programme' => $programme
@@ -51,6 +68,11 @@ class ProgrammeController extends Controller
     public function create()
     {
         $this->requireAuth();
+        
+        if (!can('create_programme')) {
+            flash('error', 'You do not have permission to create programmes');
+            $this->redirect('programme');
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
@@ -109,6 +131,11 @@ class ProgrammeController extends Controller
             $this->redirect('programme');
         }
 
+        if (!canEdit($programme, 'programme')) {
+            flash('error', 'You do not have permission to edit this programme');
+            $this->redirect('programme');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
 
@@ -162,6 +189,12 @@ class ProgrammeController extends Controller
 
         if (!$programme) {
             flash('error', 'Programme not found');
+            $this->redirect('programme');
+            return;
+        }
+
+        if (!canDelete($programme, 'programme')) {
+            flash('error', 'You do not have permission to delete this programme');
             $this->redirect('programme');
             return;
         }

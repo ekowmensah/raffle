@@ -21,8 +21,26 @@ class TicketController extends Controller
     {
         $this->requireAuth();
 
+        // Check permission
+        if (!can('view_tickets') && !hasRole(['super_admin', 'station_admin', 'programme_manager', 'auditor'])) {
+            flash('error', 'You do not have permission to view tickets');
+            $this->redirect('home');
+        }
+
         $campaignModel = $this->model('Campaign');
-        $campaigns = $campaignModel->getActive();
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        // Get campaigns based on role
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $campaigns = $campaignModel->getActive();
+        } elseif ($role === 'station_admin') {
+            $campaigns = $campaignModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $campaigns = $campaignModel->getByProgramme($user->programme_id);
+        } else {
+            $campaigns = [];
+        }
 
         $campaignId = $_GET['campaign'] ?? null;
         $tickets = $campaignId ? $this->ticketModel->getByCampaign($campaignId) : [];

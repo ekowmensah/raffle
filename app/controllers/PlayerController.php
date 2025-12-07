@@ -17,6 +17,12 @@ class PlayerController extends Controller
     {
         $this->requireAuth();
 
+        // Check permission
+        if (!can('view_players') && !hasRole(['super_admin', 'station_admin', 'programme_manager', 'auditor'])) {
+            flash('error', 'You do not have permission to view players');
+            $this->redirect('home');
+        }
+
         $players = $this->playerModel->getWithStats();
 
         $data = [

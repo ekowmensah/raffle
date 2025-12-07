@@ -95,14 +95,24 @@ function isActive($path)
     return strpos($currentPath, $path) === 0 ? 'active' : '';
 }
 
-//function hasRole($role)
-//{
-    return isset($_SESSION['user']) && $_SESSION['user']->role_name === $role;
-//}
+function hasRole($role)
+{
+    if (!isset($_SESSION['user'])) {
+        return false;
+    }
+    
+    $userRole = $_SESSION['user']->role_name ?? '';
+    
+    // Support array of roles
+    if (is_array($role)) {
+        return in_array($userRole, $role);
+    }
+    
+    return $userRole === $role;
+}
 
 function can($permission)
 {
-    require_once '../app/core/Middleware.php';
     return \App\Core\Middleware::can($permission);
 }
 

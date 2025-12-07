@@ -17,6 +17,12 @@ class StationController extends Controller
     {
         $this->requireAuth();
 
+        // Only super admin can view all stations
+        if (!hasRole('super_admin')) {
+            flash('error', 'You do not have permission to view stations');
+            $this->redirect('home');
+        }
+
         $stations = $this->stationModel->findAll();
 
         $data = [

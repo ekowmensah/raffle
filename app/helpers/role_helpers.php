@@ -2,33 +2,8 @@
 
 /**
  * Role-based helper functions
+ * Note: hasRole() and can() are defined in functions.php
  */
-
-/**
- * Check if user has specific role
- */
-function hasRole($role)
-{
-    if (!isset($_SESSION['user'])) {
-        return false;
-    }
-    
-    $userRole = $_SESSION['user']->role_name ?? '';
-    
-    if (is_array($role)) {
-        return in_array($userRole, $role);
-    }
-    
-    return $userRole === $role;
-}
-
-/**
- * Check if user has permission
- */
-function can($permission)
-{
-    return \App\Core\Middleware::can($permission);
-}
 
 /**
  * Get user's station ID

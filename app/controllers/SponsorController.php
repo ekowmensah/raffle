@@ -17,6 +17,12 @@ class SponsorController extends Controller
     {
         $this->requireAuth();
 
+        // Check permission
+        if (!hasRole(['super_admin', 'station_admin'])) {
+            flash('error', 'You do not have permission to view sponsors');
+            $this->redirect('home');
+        }
+
         $sponsors = $this->sponsorModel->getAllWithStats();
 
         $data = [

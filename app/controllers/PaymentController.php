@@ -32,6 +32,12 @@ class PaymentController extends Controller
     {
         $this->requireAuth();
 
+        // Check permission
+        if (!can('view_payments') && !hasRole(['super_admin', 'station_admin', 'programme_manager', 'auditor'])) {
+            flash('error', 'You do not have permission to view payments');
+            $this->redirect('home');
+        }
+
         $payments = $this->paymentModel->getSuccessfulPayments();
 
         $data = [

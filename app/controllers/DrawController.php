@@ -28,9 +28,43 @@ class DrawController extends Controller
     {
         $this->requireAuth();
 
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
         $campaignId = $_GET['campaign'] ?? null;
-        $draws = $campaignId ? $this->drawModel->getByCampaign($campaignId) : $this->drawModel->getCompletedDraws();
-        $campaigns = $this->campaignModel->findAll();
+        
+        // Get draws based on role
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $draws = $campaignId ? $this->drawModel->getByCampaign($campaignId) : $this->drawModel->getCompletedDraws();
+            $campaigns = $this->campaignModel->findAll();
+        } elseif ($role === 'station_admin') {
+            $campaigns = $this->campaignModel->getByStation($user->station_id);
+            if ($campaignId) {
+                $campaign = $this->campaignModel->findById($campaignId);
+                if ($campaign && canAccessCampaign($campaign)) {
+                    $draws = $this->drawModel->getByCampaign($campaignId);
+                } else {
+                    $draws = [];
+                }
+            } else {
+                $draws = $this->drawModel->getCompletedDraws();
+            }
+        } elseif ($role === 'programme_manager') {
+            $campaigns = $this->campaignModel->getByProgramme($user->programme_id);
+            if ($campaignId) {
+                $campaign = $this->campaignModel->findById($campaignId);
+                if ($campaign && canAccessCampaign($campaign)) {
+                    $draws = $this->drawModel->getByCampaign($campaignId);
+                } else {
+                    $draws = [];
+                }
+            } else {
+                $draws = $this->drawModel->getCompletedDraws();
+            }
+        } else {
+            $draws = [];
+            $campaigns = [];
+        }
 
         $data = [
             'title' => 'Draws',
@@ -53,6 +87,12 @@ class DrawController extends Controller
             $this->redirect('draw');
         }
 
+        // Check access
+        if (!canAccessDraw($draw)) {
+            flash('error', 'You do not have permission to view this draw');
+            $this->redirect('draw');
+        }
+
         $winners = $this->winnerModel->getByDraw($id);
 
         $data = [
@@ -67,7 +107,12 @@ class DrawController extends Controller
     public function schedule()
     {
         $this->requireAuth();
-        $this->requireRole('super_admin');
+        
+        // Check permission
+        if (!can('conduct_draw')) {
+            flash('error', 'You do not have permission to schedule draws');
+            $this->redirect('draw');
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
@@ -235,12 +280,23 @@ class DrawController extends Controller
     public function live($id)
     {
         $this->requireAuth();
-        $this->requireRole('super_admin');
+        
+        // Check permission
+        if (!can('conduct_draw')) {
+            flash('error', 'You do not have permission to conduct draws');
+            $this->redirect('draw');
+        }
 
         $draw = $this->drawModel->findById($id);
 
         if (!$draw) {
             flash('error', 'Draw not found');
+            $this->redirect('draw');
+        }
+
+        // Check access to this draw
+        if (!canAccessDraw($draw)) {
+            flash('error', 'You do not have permission to conduct this draw');
             $this->redirect('draw');
         }
 
