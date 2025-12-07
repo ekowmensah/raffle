@@ -182,29 +182,97 @@
             justify-content: center;
         }
 
-        .lottery-machine {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background: url('https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=800&h=600&fit=crop') center/contain no-repeat;
-            filter: brightness(1.2) contrast(1.1);
-            opacity: 0.9;
+        /* Spinning Wheel */
+        .spinning-wheel {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            border: 15px solid rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            box-shadow: 
+                0 0 60px rgba(102, 126, 234, 0.4),
+                inset 0 0 60px rgba(102, 126, 234, 0.2);
+            animation: spin 20s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .lottery-ball {
+        .spinning-wheel::before {
+            content: '';
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            border: 10px solid rgba(240, 147, 251, 0.3);
+            animation: spin 15s linear infinite reverse;
+        }
+
+        .spinning-wheel::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 8px solid rgba(102, 126, 234, 0.4);
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.2), transparent);
+            animation: spin 10s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Wheel Center */
+        .wheel-center {
+            position: absolute;
             width: 80px;
             height: 80px;
             border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 0 40px rgba(102, 126, 234, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
+            z-index: 10;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(240, 147, 251, 0.8); }
+        }
+
+        .lottery-machine {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            background: url('https://images.pexels.com/photos/6963944/pexels-photo-6963944.jpeg?auto=compress&cs=tinysrgb&w=800') center/contain no-repeat;
+            filter: brightness(1.3) contrast(1.2) saturate(1.1);
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .lottery-ball {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
             font-weight: 900;
             color: white;
             position: absolute;
-            animation: float 3s ease-in-out infinite;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 -5px 20px rgba(0,0,0,0.3);
-            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.5), 
+                inset 0 -5px 20px rgba(0,0,0,0.3),
+                0 0 20px rgba(255,255,255,0.3);
+            border: 3px solid rgba(255,255,255,0.4);
+            z-index: 5;
         }
 
         .lottery-ball::after {
@@ -214,49 +282,95 @@
             left: 20%;
             width: 30%;
             height: 30%;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.5);
             border-radius: 50%;
             filter: blur(8px);
         }
 
-        .lottery-ball:nth-child(1) {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            top: 15%;
-            left: 15%;
-            animation-delay: 0s;
-        }
-
+        /* Orbit Animation */
         .lottery-ball:nth-child(2) {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            top: 55%;
-            left: 10%;
-            animation-delay: 0.5s;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            animation: orbit1 8s linear infinite;
         }
 
         .lottery-ball:nth-child(3) {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            top: 35%;
-            right: 20%;
-            animation-delay: 1s;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: orbit2 10s linear infinite;
         }
 
         .lottery-ball:nth-child(4) {
-            background: linear-gradient(135deg, #10b981, #059669);
-            top: 65%;
-            right: 15%;
-            animation-delay: 1.5s;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            animation: orbit3 12s linear infinite;
         }
 
         .lottery-ball:nth-child(5) {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            top: 10%;
-            right: 40%;
-            animation-delay: 2s;
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation: orbit4 9s linear infinite;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-            50% { transform: translateY(-30px) rotate(180deg) scale(1.1); }
+        .lottery-ball:nth-child(6) {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            animation: orbit5 11s linear infinite;
+        }
+
+        @keyframes orbit1 {
+            0% { 
+                transform: rotate(0deg) translateX(200px) rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) translateX(200px) rotate(-180deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(360deg) translateX(200px) rotate(-360deg) scale(1);
+            }
+        }
+
+        @keyframes orbit2 {
+            0% { 
+                transform: rotate(72deg) translateX(220px) rotate(-72deg) scale(1);
+            }
+            50% {
+                transform: rotate(252deg) translateX(220px) rotate(-252deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(432deg) translateX(220px) rotate(-432deg) scale(1);
+            }
+        }
+
+        @keyframes orbit3 {
+            0% { 
+                transform: rotate(144deg) translateX(210px) rotate(-144deg) scale(1);
+            }
+            50% {
+                transform: rotate(324deg) translateX(210px) rotate(-324deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(504deg) translateX(210px) rotate(-504deg) scale(1);
+            }
+        }
+
+        @keyframes orbit4 {
+            0% { 
+                transform: rotate(216deg) translateX(230px) rotate(-216deg) scale(1);
+            }
+            50% {
+                transform: rotate(396deg) translateX(230px) rotate(-396deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(576deg) translateX(230px) rotate(-576deg) scale(1);
+            }
+        }
+
+        @keyframes orbit5 {
+            0% { 
+                transform: rotate(288deg) translateX(215px) rotate(-288deg) scale(1);
+            }
+            50% {
+                transform: rotate(468deg) translateX(215px) rotate(-468deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(648deg) translateX(215px) rotate(-648deg) scale(1);
+            }
         }
 
         /* Stats Bar */
@@ -461,9 +575,9 @@
             left: -5%;
             width: 200px;
             height: 130px;
-            background: url('https://images.unsplash.com/photo-1607863680198-23d4b2565df0?w=400&h=300&fit=crop') center/cover;
+            background: url('https://images.pexels.com/photos/6963801/pexels-photo-6963801.jpeg?auto=compress&cs=tinysrgb&w=400') center/cover;
             border-radius: 15px;
-            opacity: 0.1;
+            opacity: 0.12;
             transform: rotate(-20deg);
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
@@ -475,9 +589,9 @@
             right: -5%;
             width: 200px;
             height: 130px;
-            background: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=400&h=300&fit=crop') center/cover;
+            background: url('https://images.pexels.com/photos/4968630/pexels-photo-4968630.jpeg?auto=compress&cs=tinysrgb&w=400') center/cover;
             border-radius: 15px;
-            opacity: 0.1;
+            opacity: 0.12;
             transform: rotate(20deg);
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
@@ -584,9 +698,9 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&h=400&fit=crop') center/cover;
-            opacity: 0.15;
-            filter: blur(2px);
+            background: url('https://images.pexels.com/photos/6963622/pexels-photo-6963622.jpeg?auto=compress&cs=tinysrgb&w=1200') center/cover;
+            opacity: 0.2;
+            filter: blur(3px);
         }
 
         .promo-banner::after {
@@ -611,7 +725,7 @@
             position: absolute;
             width: 150px;
             height: 100px;
-            background: url('https://images.unsplash.com/photo-1607863680198-23d4b2565df0?w=300&h=200&fit=crop') center/cover;
+            background: url('https://images.pexels.com/photos/6963945/pexels-photo-6963945.jpeg?auto=compress&cs=tinysrgb&w=300') center/cover;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             transform: rotate(-15deg);
@@ -673,35 +787,293 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .hero-section {
+                padding: 80px 0 40px;
+            }
+
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
+                line-height: 1.2;
             }
 
             .hero-subtitle {
-                font-size: 1.1rem;
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 1rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-primary-custom,
+            .btn-secondary-custom {
+                width: 100%;
+                padding: 1rem 2rem;
+                font-size: 1rem;
             }
 
             .lottery-visual {
                 height: 250px;
+                margin-top: 2rem;
+            }
+
+            .lottery-machine {
+                opacity: 0.4;
+            }
+
+            .spinning-wheel {
+                width: 200px;
+                height: 200px;
+                border-width: 8px;
+            }
+
+            .spinning-wheel::before {
+                width: 160px;
+                height: 160px;
+                border-width: 6px;
+            }
+
+            .spinning-wheel::after {
+                width: 120px;
+                height: 120px;
+                border-width: 5px;
+            }
+
+            .wheel-center {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
             }
 
             .lottery-ball {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+
+            .lottery-ball:nth-child(2) { animation: orbit1-mobile 8s linear infinite; }
+            .lottery-ball:nth-child(3) { animation: orbit2-mobile 10s linear infinite; }
+            .lottery-ball:nth-child(4) { animation: orbit3-mobile 12s linear infinite; }
+            .lottery-ball:nth-child(5) { animation: orbit4-mobile 9s linear infinite; }
+            .lottery-ball:nth-child(6) { animation: orbit5-mobile 11s linear infinite; }
+
+            @keyframes orbit1-mobile {
+                0%, 100% { transform: rotate(0deg) translateX(120px) rotate(0deg) scale(1); }
+                50% { transform: rotate(180deg) translateX(120px) rotate(-180deg) scale(1.05); }
+            }
+            @keyframes orbit2-mobile {
+                0%, 100% { transform: rotate(72deg) translateX(130px) rotate(-72deg) scale(1); }
+                50% { transform: rotate(252deg) translateX(130px) rotate(-252deg) scale(1.05); }
+            }
+            @keyframes orbit3-mobile {
+                0%, 100% { transform: rotate(144deg) translateX(125px) rotate(-144deg) scale(1); }
+                50% { transform: rotate(324deg) translateX(125px) rotate(-324deg) scale(1.05); }
+            }
+            @keyframes orbit4-mobile {
+                0%, 100% { transform: rotate(216deg) translateX(135px) rotate(-216deg) scale(1); }
+                50% { transform: rotate(396deg) translateX(135px) rotate(-396deg) scale(1.05); }
+            }
+            @keyframes orbit5-mobile {
+                0%, 100% { transform: rotate(288deg) translateX(128px) rotate(-288deg) scale(1); }
+                50% { transform: rotate(468deg) translateX(128px) rotate(-468deg) scale(1.05); }
             }
 
             .section-title {
-                font-size: 2rem;
+                font-size: 1.8rem;
+                margin-bottom: 2rem;
             }
 
             .stats-bar {
                 margin: 0 1rem 40px;
+                padding: 1.5rem 1rem;
             }
 
             .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .campaign-name {
+                font-size: 1.2rem;
+            }
+
+            .campaign-price {
+                font-size: 2.2rem;
+            }
+
+            .campaign-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .feature-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .feature-title {
+                font-size: 1.1rem;
+            }
+
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .step-title {
+                font-size: 1.1rem;
+            }
+
+            .promo-title {
+                font-size: 2rem;
+            }
+
+            .promo-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .promo-banner {
+                padding: 40px 0;
+                margin: 40px 0;
+            }
+
+            .features-section,
+            .how-it-works {
+                padding: 40px 0;
+            }
+
+            .features-section::before,
+            .features-section::after {
+                display: none;
+            }
+
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+
+            .footer-custom {
+                padding: 40px 0 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-title {
                 font-size: 1.8rem;
             }
+
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .lottery-visual {
+                height: 200px;
+            }
+
+            .spinning-wheel {
+                width: 160px;
+                height: 160px;
+                border-width: 6px;
+            }
+
+            .spinning-wheel::before {
+                width: 130px;
+                height: 130px;
+                border-width: 5px;
+            }
+
+            .spinning-wheel::after {
+                width: 100px;
+                height: 100px;
+                border-width: 4px;
+            }
+
+            .wheel-center {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .lottery-ball {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .lottery-ball:nth-child(2) { animation: orbit1-small 8s linear infinite; }
+            .lottery-ball:nth-child(3) { animation: orbit2-small 10s linear infinite; }
+            .lottery-ball:nth-child(4) { animation: orbit3-small 12s linear infinite; }
+            .lottery-ball:nth-child(5) { animation: orbit4-small 9s linear infinite; }
+            .lottery-ball:nth-child(6) { animation: orbit5-small 11s linear infinite; }
+
+            @keyframes orbit1-small {
+                0%, 100% { transform: rotate(0deg) translateX(95px) rotate(0deg) scale(1); }
+                50% { transform: rotate(180deg) translateX(95px) rotate(-180deg) scale(1.05); }
+            }
+            @keyframes orbit2-small {
+                0%, 100% { transform: rotate(72deg) translateX(100px) rotate(-72deg) scale(1); }
+                50% { transform: rotate(252deg) translateX(100px) rotate(-252deg) scale(1.05); }
+            }
+            @keyframes orbit3-small {
+                0%, 100% { transform: rotate(144deg) translateX(98px) rotate(-144deg) scale(1); }
+                50% { transform: rotate(324deg) translateX(98px) rotate(-324deg) scale(1.05); }
+            }
+            @keyframes orbit4-small {
+                0%, 100% { transform: rotate(216deg) translateX(102px) rotate(-216deg) scale(1); }
+                50% { transform: rotate(396deg) translateX(102px) rotate(-396deg) scale(1.05); }
+            }
+            @keyframes orbit5-small {
+                0%, 100% { transform: rotate(288deg) translateX(97px) rotate(-288deg) scale(1); }
+                50% { transform: rotate(468deg) translateX(97px) rotate(-468deg) scale(1.05); }
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            .campaign-price {
+                font-size: 2rem;
+            }
+
+            .btn-primary-custom,
+            .btn-secondary-custom {
+                font-size: 0.95rem;
+                padding: 0.9rem 1.5rem;
+            }
+
+            .promo-title {
+                font-size: 1.5rem;
+            }
+
+            .promo-subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Navbar toggler fix for dark theme */
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
         }
     </style>
 </head>
@@ -731,7 +1103,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link btn btn-primary-custom" href="<?= url('public/buyTicket') ?>" style="padding: 0.5rem 1.5rem; margin-left: 1rem;">
-                            <i class="fas fa-ticket"></i> Buy Now
+                            <i class="fas fa-ticket"></i> Play Now!
                         </a>
                     </li>
                 </ul>
@@ -765,6 +1137,11 @@
                 <div class="col-lg-6">
                     <div class="lottery-visual">
                         <div class="lottery-machine"></div>
+                        <div class="spinning-wheel">
+                            <div class="wheel-center">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
                         <div class="lottery-ball">7</div>
                         <div class="lottery-ball">3</div>
                         <div class="lottery-ball">9</div>

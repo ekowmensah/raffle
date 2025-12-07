@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Buy Tickets | Raffle System</title>
+    <title>Buy Tickets | eTickets Raffle</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
-    <link rel="stylesheet" href="<?= vendor('fontawesome-free/css/all.min.css') ?>">
-    <link rel="stylesheet" href="<?= vendor('adminlte/css/adminlte.min.css') ?>">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <style>
         * {
             margin: 0;
@@ -16,17 +16,33 @@
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+            background: #0f0f23;
             min-height: 100vh;
             padding-bottom: 80px;
+            color: #fff;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            opacity: 0.1;
+            z-index: -1;
         }
         
-        /* Mobile-first navbar */
+        /* Navbar */
         .navbar-custom {
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 12px 0;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding: 1rem 0;
             position: fixed;
             top: 0;
             left: 0;
@@ -35,34 +51,68 @@
         }
         
         .navbar-brand {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: #667eea !important;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: #f093fb !important;
         }
         
         /* Container */
         .buy-ticket-card {
-            background: white;
-            border-radius: 16px;
-            margin: 80px 16px 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background: rgba(15, 15, 35, 0.8);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 25px;
+            margin: 100px 16px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            position: relative;
+        }
+
+        .buy-ticket-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
         }
         
         @media (min-width: 768px) {
             .buy-ticket-card {
-                max-width: 600px;
-                margin: 100px auto 40px;
+                max-width: 700px;
+                margin: 120px auto 40px;
             }
         }
+
+        .buy-ticket-card h2 {
+            background: linear-gradient(135deg, #fff, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            padding: 2rem 1rem 1rem;
+        }
         
-        /* Step indicator - mobile optimized */
+        /* Step indicator */
         .step-indicator {
             display: flex;
             padding: 20px 16px;
-            background: #f8f9fa;
+            background: rgba(102, 126, 234, 0.1);
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
         }
         
         .step {
@@ -74,41 +124,47 @@
         }
         
         .step-number {
-            width: 32px;
-            height: 32px;
-            line-height: 32px;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
             border-radius: 50%;
-            background: #e9ecef;
-            color: #6c757d;
-            font-weight: 600;
-            font-size: 0.875rem;
-            margin: 0 auto 4px;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            font-weight: 700;
+            font-size: 1rem;
+            margin: 0 auto 8px;
             display: block;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s;
         }
         
         .step-label {
             font-size: 0.75rem;
-            color: #6c757d;
+            color: rgba(255,255,255,0.6);
             font-weight: 500;
         }
         
         .step.active .step-number {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            border-color: #f093fb;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            transform: scale(1.1);
         }
         
         .step.active .step-label {
-            color: #667eea;
-            font-weight: 600;
+            color: #f093fb;
+            font-weight: 700;
         }
         
         .step.completed .step-number {
-            background: #28a745;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
+            border-color: #10b981;
         }
         
         .step.completed .step-label {
-            color: #28a745;
+            color: #10b981;
         }
         
         /* Content area */
@@ -123,21 +179,29 @@
         }
         
         h4 {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #212529;
+            background: linear-gradient(135deg, #fff, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
         }
+
+        h5 {
+            color: #fff;
+            font-weight: 600;
+        }
         
-        /* Campaign options - card style */
+        /* Campaign options */
         .campaign-option {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
-            background: white;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+            backdrop-filter: blur(10px);
         }
         
         .campaign-option:active {
@@ -145,84 +209,108 @@
         }
         
         .campaign-option:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            border-color: #f093fb;
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
+            transform: translateY(-3px);
+            background: rgba(102, 126, 234, 0.1);
         }
         
         .campaign-option.selected {
-            border-color: #667eea;
-            background: #f0f3ff;
+            border-color: #f093fb;
+            background: rgba(240, 147, 251, 0.15);
+            box-shadow: 0 0 30px rgba(240, 147, 251, 0.4);
         }
         
         /* Badges */
         .campaign-type-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .badge-station-wide {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
         .badge-programme {
-            background: #f093fb;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
             color: white;
+            box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
         }
         
         /* Form elements */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
         
         .form-group label {
             font-weight: 600;
-            font-size: 0.875rem;
-            color: #495057;
-            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 0.5rem;
             display: block;
         }
         
         .form-control-lg {
-            height: 48px;
+            height: 52px;
             font-size: 1rem;
             border-radius: 12px;
-            border: 2px solid #e9ecef;
+            border: 2px solid rgba(102, 126, 234, 0.3);
             padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .form-control-lg::placeholder {
+            color: rgba(255,255,255,0.4);
         }
         
         .form-control-lg:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #f093fb;
+            box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.2);
+            background: rgba(255,255,255,0.08);
+            outline: none;
         }
         
-        /* Buttons - mobile optimized */
+        /* Buttons */
         .btn-next, .btn-back, .btn-success {
             border: none;
-            padding: 14px 28px;
+            padding: 1rem 2rem;
             font-size: 1rem;
             border-radius: 12px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             width: 100%;
             margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         @media (min-width: 768px) {
             .btn-next, .btn-back, .btn-success {
                 width: auto;
-                min-width: 140px;
+                min-width: 160px;
             }
         }
         
         .btn-next {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
         }
         
         .btn-next:active {
@@ -230,13 +318,25 @@
         }
         
         .btn-back {
-            background: #6c757d;
+            background: rgba(255,255,255,0.1);
             color: white;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-back:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
         }
         
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5);
         }
         
         /* Toggle buttons */
@@ -249,37 +349,60 @@
         .btn-group-toggle label {
             flex: 1;
             padding: 12px 16px;
-            border: 2px solid #e9ecef;
+            border: 2px solid rgba(102, 126, 234, 0.3);
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             font-weight: 600;
             font-size: 0.875rem;
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .btn-group-toggle label:hover {
+            border-color: #f093fb;
+            background: rgba(255,255,255,0.1);
         }
         
         .btn-group-toggle label.active {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border-color: #667eea;
+            border-color: #f093fb;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         /* Alert boxes */
         .alert {
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
-            border: none;
+            border-radius: 15px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            border: 2px solid;
+            backdrop-filter: blur(10px);
         }
         
         .alert-info {
-            background: #e7f3ff;
-            color: #004085;
+            background: rgba(102, 126, 234, 0.15);
+            color: #a5b4fc;
+            border-color: rgba(102, 126, 234, 0.3);
         }
         
         .alert-success {
-            background: #d4edda;
-            color: #155724;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-warning {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fcd34d;
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .alert-primary {
+            background: rgba(240, 147, 251, 0.15);
+            color: #f9a8d4;
+            border-color: rgba(240, 147, 251, 0.3);
         }
         
         /* Utility */
@@ -288,14 +411,31 @@
         }
         
         .text-muted {
-            color: #6c757d;
+            color: rgba(255,255,255,0.6) !important;
             font-size: 0.875rem;
+        }
+
+        .text-primary {
+            color: #667eea !important;
+        }
+
+        .form-text {
+            color: rgba(255,255,255,0.6);
         }
         
         /* Loading state */
         .loading {
             opacity: 0.6;
             pointer-events: none;
+        }
+
+        /* Navbar toggler for dark theme */
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
         }
     </style>
 </head>
@@ -305,8 +445,8 @@
 <nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
     <div class="container">
         <a class="navbar-brand" href="<?= url('public') ?>">
-            <i class="fas fa-trophy text-warning"></i>
-            <strong>Raffle System</strong>
+            <i class="fas fa-ticket"></i>
+            eTickets Raffle
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
