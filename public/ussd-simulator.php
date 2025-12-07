@@ -141,7 +141,7 @@ function makeUssdRequest($sessionId, $phoneNumber, $text) {
     ];
 }
 
-$lastResponse = $_SESSION['last_response'] ?? 'CON Welcome to Raffle System\n1. Buy Ticket\n2. Check My Tickets\n3. Check Winners\n0. Exit';
+$lastResponse = $_SESSION['last_response'] ?? 'Welcome to eTickets System\n1. Buy Ticket\n2. Check My Tickets\n3. Check Winners\n0. Exit';
 $sessionEnded = $_SESSION['session_ended'] ?? false;
 $currentText = $_SESSION['ussd_session']['text'] ?? '';
 $phoneNumber = $_SESSION['ussd_session']['phoneNumber'] ?? '233241234567';
