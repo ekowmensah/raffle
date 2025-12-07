@@ -23,7 +23,22 @@ class CampaignController extends Controller
     {
         $this->requireAuth();
 
-        $campaigns = $this->campaignModel->getAllWithDetails();
+        // Get campaigns based on user role
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'super_admin') {
+            $campaigns = $this->campaignModel->getAllWithDetails();
+        } elseif ($role === 'station_admin') {
+            $campaigns = $this->campaignModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $campaigns = $this->campaignModel->getByProgramme($user->programme_id);
+        } elseif ($role === 'auditor') {
+            // Auditors can view all
+            $campaigns = $this->campaignModel->getAllWithDetails();
+        } else {
+            $campaigns = [];
+        }
 
         $data = [
             'title' => 'Campaigns',
@@ -41,6 +56,12 @@ class CampaignController extends Controller
 
         if (!$campaign) {
             flash('error', 'Campaign not found');
+            $this->redirect('campaign');
+        }
+
+        // Check if user can access this campaign
+        if (!canAccessCampaign($campaign)) {
+            flash('error', 'You do not have permission to view this campaign');
             $this->redirect('campaign');
         }
 
@@ -64,6 +85,12 @@ class CampaignController extends Controller
     public function create()
     {
         $this->requireAuth();
+
+        // Check if user has permission to create campaigns
+        if (!can('create_campaign')) {
+            flash('error', 'You do not have permission to create campaigns');
+            $this->redirect('campaign');
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
@@ -142,6 +169,12 @@ class CampaignController extends Controller
 
         if (!$campaign) {
             flash('error', 'Campaign not found');
+            $this->redirect('campaign');
+        }
+
+        // Check if user can edit this campaign
+        if (!canEdit($campaign, 'campaign')) {
+            flash('error', 'You do not have permission to edit this campaign');
             $this->redirect('campaign');
         }
 
@@ -381,6 +414,13 @@ class CampaignController extends Controller
 
         if (!$campaign) {
             flash('error', 'Campaign not found');
+            $this->redirect('campaign');
+            return;
+        }
+
+        // Check if user can delete this campaign
+        if (!canDelete($campaign, 'campaign')) {
+            flash('error', 'You do not have permission to delete this campaign');
             $this->redirect('campaign');
             return;
         }

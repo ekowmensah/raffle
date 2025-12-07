@@ -60,20 +60,42 @@ function canAccessStation($stationId)
 
 /**
  * Check if user can access programme
+ * @param mixed $programme Programme object or ID
  */
-function canAccessProgramme($programmeId)
+function canAccessProgramme($programme)
 {
     if (hasRole('super_admin')) {
         return true;
     }
     
-    if (hasRole('station_manager')) {
-        // Station manager can access all programmes in their station
-        // Need to check if programme belongs to their station
-        return true; // Implement station check
+    $user = $_SESSION['user'] ?? null;
+    if (!$user) {
+        return false;
     }
     
-    return getUserProgrammeId() == $programmeId;
+    // Handle both object and ID
+    $programmeId = is_object($programme) ? $programme->id : $programme;
+    $stationId = is_object($programme) ? $programme->station_id : null;
+    
+    if (hasRole('station_admin')) {
+        // If we have station_id from object, check it
+        if ($stationId) {
+            return $stationId == $user->station_id;
+        }
+        // Otherwise, allow (will be checked elsewhere)
+        return true;
+    }
+    
+    if (hasRole('programme_manager')) {
+        return $programmeId == $user->programme_id;
+    }
+    
+    // Auditors can view
+    if (hasRole('auditor')) {
+        return true;
+    }
+    
+    return false;
 }
 
 /**
@@ -144,4 +166,103 @@ function getPendingDrawsCount()
     // This would query the database
     // For now, return 0
     return 0;
+}
+
+/**
+ * Check if user can access a campaign
+ */
+function canAccessCampaign($campaign)
+{
+    if (hasRole('super_admin')) {
+        return true;
+    }
+    
+    $user = $_SESSION['user'] ?? null;
+    if (!$user) {
+        return false;
+    }
+    
+    if (hasRole('station_admin')) {
+        return $campaign->station_id == $user->station_id;
+    }
+    
+    if (hasRole('programme_manager')) {
+        return $campaign->programme_id == $user->programme_id;
+    }
+    
+    // Auditors can view
+    if (hasRole('auditor')) {
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Check if user can access a draw
+ */
+function canAccessDraw($draw)
+{
+    if (hasRole('super_admin')) {
+        return true;
+    }
+    
+    // Get campaign for the draw
+    $campaignModel = new \App\Models\Campaign();
+    $campaign = $campaignModel->findById($draw->campaign_id);
+    
+    if (!$campaign) {
+        return false;
+    }
+    
+    return canAccessCampaign($campaign);
+}
+
+/**
+ * Check if user can edit a resource
+ */
+function canEdit($resource, $type = 'campaign')
+{
+    // Auditors cannot edit
+    if (hasRole('auditor')) {
+        return false;
+    }
+    
+    // Finance cannot edit campaigns/programmes
+    if (hasRole('finance') && in_array($type, ['campaign', 'programme', 'draw'])) {
+        return false;
+    }
+    
+    // Check if user can access the resource
+    switch ($type) {
+        case 'campaign':
+            return canAccessCampaign($resource) && can('edit_campaign');
+        case 'programme':
+            return canAccessProgramme($resource) && can('edit_programme');
+        case 'draw':
+            return canAccessDraw($resource) && can('conduct_draw');
+        default:
+            return false;
+    }
+}
+
+/**
+ * Check if user can delete a resource
+ */
+function canDelete($resource, $type = 'campaign')
+{
+    // Only super_admin and station_admin can delete
+    if (!hasRole(['super_admin', 'station_admin'])) {
+        return false;
+    }
+    
+    // Check scope access
+    switch ($type) {
+        case 'campaign':
+            return canAccessCampaign($resource);
+        case 'programme':
+            return canAccessProgramme($resource);
+        default:
+            return false;
+    }
 }
