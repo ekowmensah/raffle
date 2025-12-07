@@ -198,7 +198,7 @@ function canAccessDraw($draw)
     
     // Programme manager check
     if (hasRole('programme_manager')) {
-        error_log("Programme Manager check - Campaign ID: {$campaign->id}, User Programme ID: {$user->programme_id}");
+        error_log("Programme Manager check - Campaign ID: {$campaign->id}, Campaign Station: {$campaign->station_id}, User Programme ID: {$user->programme_id}");
         
         // Programme managers can only access campaigns linked to their programme
         // Station-wide campaigns (without programme) should NOT be accessible
@@ -206,7 +206,7 @@ function canAccessDraw($draw)
         $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
         
         $hasAccess = $access !== null;
-        error_log("Programme Manager access result: " . ($hasAccess ? 'YES' : 'NO'));
+        error_log("Programme Manager access result: " . ($hasAccess ? 'YES' : 'NO') . " - Access record: " . ($access ? json_encode($access) : 'null'));
         
         // Only return true if there's an explicit link in campaign_programme_access
         return $hasAccess;
