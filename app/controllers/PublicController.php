@@ -24,11 +24,20 @@ class PublicController extends Controller
         
         // Get all active campaigns with details
         $campaigns = $this->campaignModel->getAllWithDetails();
+        
+        // Get stats for homepage
+        $winnerModel = $this->model('DrawWinner');
+        $stats = [
+            'total_winners' => $winnerModel->count(),
+            'total_prizes' => $winnerModel->getTotalPrizesAwarded(),
+            'active_campaigns' => count($campaigns)
+        ];
 
         $data = [
-            'title' => 'Play & Win',
+            'title' => 'Play & Win Big',
             'campaigns' => $campaigns,
-            'stations' => $stations
+            'stations' => $stations,
+            'stats' => $stats
         ];
 
         $this->view('public/index', $data);
