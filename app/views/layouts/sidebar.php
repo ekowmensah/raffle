@@ -85,6 +85,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="<?= url('draw/schedule') ?>" class="nav-link <?= isActive('draw/schedule') ?>">
+                            <i class="nav-icon fas fa-calendar-plus"></i>
+                            <p>Schedule Draw</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= url('draw/pending') ?>" class="nav-link <?= isActive('draw/pending') ?>">
+                            <i class="nav-icon fas fa-clock"></i>
+                            <p>Pending Draws</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="<?= url('draw/winners') ?>" class="nav-link <?= isActive('draw/winners') ?>">
                             <i class="nav-icon fas fa-trophy"></i>
                             <p>Winners</p>
@@ -182,6 +194,18 @@
                         <a href="<?= url('draw') ?>" class="nav-link <?= isActive('draw') ?>">
                             <i class="nav-icon fas fa-random"></i>
                             <p>All Draws</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= url('draw/schedule') ?>" class="nav-link <?= isActive('draw/schedule') ?>">
+                            <i class="nav-icon fas fa-calendar-plus"></i>
+                            <p>Schedule Draw</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= url('draw/pending') ?>" class="nav-link <?= isActive('draw/pending') ?>">
+                            <i class="nav-icon fas fa-clock"></i>
+                            <p>Pending Draws</p>
                         </a>
                     </li>
                     <li class="nav-item">

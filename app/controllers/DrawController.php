@@ -108,6 +108,12 @@ class DrawController extends Controller
     {
         $this->requireAuth();
         
+        // Programme managers cannot schedule draws, only conduct them
+        if (hasRole('programme_manager')) {
+            flash('error', 'Programme managers can only conduct scheduled draws, not create new schedules');
+            $this->redirect('draw/pending');
+        }
+        
         // Check permission
         if (!can('conduct_draw')) {
             flash('error', 'You do not have permission to schedule draws');
@@ -184,7 +190,6 @@ class DrawController extends Controller
     public function conduct($id)
     {
         $this->requireAuth();
-        $this->requireRole('super_admin');
 
         $draw = $this->drawModel->findById($id);
 
@@ -196,6 +201,30 @@ class DrawController extends Controller
         if ($draw->status !== 'pending') {
             flash('error', 'Draw already completed or cancelled');
             $this->redirect('draw/show/' . $id);
+        }
+
+        // Role-based access control
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'programme_manager') {
+            // Programme managers can only conduct draws on the scheduled date
+            $drawDate = date('Y-m-d', strtotime($draw->draw_date));
+            $today = date('Y-m-d');
+            
+            if ($drawDate !== $today) {
+                flash('error', 'Programme managers can only conduct draws on the scheduled date. Draw date: ' . date('M d, Y', strtotime($draw->draw_date)));
+                $this->redirect('draw/pending');
+            }
+            
+            // Check if draw belongs to their programme
+            if (!canAccessDraw($draw)) {
+                flash('error', 'You do not have permission to conduct this draw');
+                $this->redirect('draw/pending');
+            }
+        } elseif (!hasRole(['super_admin', 'station_admin'])) {
+            flash('error', 'You do not have permission to conduct draws');
+            $this->redirect('draw');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -321,6 +350,75 @@ class DrawController extends Controller
         ];
 
         $this->view('draws/live', $data);
+    }
+
+    public function edit($id)
+    {
+        $this->requireAuth();
+
+        // Only super admin and station admin can edit draws
+        if (!hasRole(['super_admin', 'station_admin'])) {
+            flash('error', 'You do not have permission to edit draws');
+            $this->redirect('draw');
+        }
+
+        $draw = $this->drawModel->findById($id);
+
+        if (!$draw) {
+            flash('error', 'Draw not found');
+            $this->redirect('draw');
+        }
+
+        // Only pending draws can be edited
+        if ($draw->status !== 'pending') {
+            flash('error', 'Only pending draws can be edited');
+            $this->redirect('draw/show/' . $id);
+        }
+
+        // Station admin can only edit their station's draws
+        if (hasRole('station_admin') && !canAccessDraw($draw)) {
+            flash('error', 'You do not have permission to edit this draw');
+            $this->redirect('draw');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            verify_csrf();
+
+            $drawDate = $_POST['draw_date'];
+            $drawType = $_POST['draw_type'];
+            $winnerCount = intval($_POST['winner_count'] ?? 1);
+
+            // Validation
+            if (empty($drawDate) || empty($drawType)) {
+                flash('error', 'Please fill in all required fields');
+                $this->redirect('draw/edit/' . $id);
+                return;
+            }
+
+            $data = [
+                'draw_date' => $drawDate,
+                'draw_type' => $drawType,
+                'winner_count' => $winnerCount
+            ];
+
+            if ($this->drawModel->update($id, $data)) {
+                flash('success', 'Draw updated successfully');
+                $this->redirect('draw/show/' . $id);
+            } else {
+                flash('error', 'Failed to update draw');
+                $this->redirect('draw/edit/' . $id);
+            }
+        }
+
+        $campaign = $this->campaignModel->findById($draw->campaign_id);
+
+        $data = [
+            'title' => 'Edit Draw',
+            'draw' => $draw,
+            'campaign' => $campaign
+        ];
+
+        $this->view('draws/edit', $data);
     }
 
     public function pending()

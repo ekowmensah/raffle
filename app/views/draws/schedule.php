@@ -48,16 +48,36 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="station_id">Station <span class="text-danger">*</span></label>
-                            <select class="form-control" id="station_id" name="station_id" required onchange="onStationChange()">
-                                <option value="">Select Station</option>
-                                <?php
+                            <?php
+                            $user = $_SESSION['user'];
+                            $role = $user->role_name ?? '';
+                            
+                            if ($role === 'station_admin' && $user->station_id):
                                 $stationModel = new \App\Models\Station();
-                                $stations = $stationModel->getActive();
-                                foreach ($stations as $station):
-                                ?>
-                                    <option value="<?= $station->id ?>"><?= htmlspecialchars($station->name) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                                $station = $stationModel->findById($user->station_id);
+                            ?>
+                                <input type="hidden" name="station_id" id="station_id" value="<?= $user->station_id ?>">
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($station->name ?? 'Your Station') ?>" readonly>
+                                <small class="form-text text-muted">You can only schedule draws for your station</small>
+                            <?php elseif ($role === 'programme_manager' && $user->station_id):
+                                $stationModel = new \App\Models\Station();
+                                $station = $stationModel->findById($user->station_id);
+                            ?>
+                                <input type="hidden" name="station_id" id="station_id" value="<?= $user->station_id ?>">
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($station->name ?? 'Your Station') ?>" readonly>
+                                <small class="form-text text-muted">You can only schedule draws for your programme's station</small>
+                            <?php else: ?>
+                                <select class="form-control" id="station_id" name="station_id" required onchange="onStationChange()">
+                                    <option value="">Select Station</option>
+                                    <?php
+                                    $stationModel = new \App\Models\Station();
+                                    $stations = $stationModel->getActive();
+                                    foreach ($stations as $station):
+                                    ?>
+                                        <option value="<?= $station->id ?>"><?= htmlspecialchars($station->name) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
                         </div>
 
                         <div class="form-group">
