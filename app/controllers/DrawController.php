@@ -434,15 +434,23 @@ class DrawController extends Controller
         } elseif ($role === 'station_admin') {
             // Get pending draws for station admin's station
             $allDraws = $this->drawModel->getPendingDraws();
-            $draws = array_filter($allDraws, function($draw) {
-                return canAccessDraw($draw);
-            });
+            $filteredDraws = [];
+            foreach ($allDraws as $draw) {
+                if (canAccessDraw($draw)) {
+                    $filteredDraws[] = $draw;
+                }
+            }
+            $draws = $filteredDraws;
         } elseif ($role === 'programme_manager') {
             // Get pending draws for programme manager's programme
             $allDraws = $this->drawModel->getPendingDraws();
-            $draws = array_filter($allDraws, function($draw) {
-                return canAccessDraw($draw);
-            });
+            $filteredDraws = [];
+            foreach ($allDraws as $draw) {
+                if (canAccessDraw($draw)) {
+                    $filteredDraws[] = $draw;
+                }
+            }
+            $draws = $filteredDraws;
         } else {
             $draws = [];
         }

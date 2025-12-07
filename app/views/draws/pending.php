@@ -119,6 +119,12 @@
                                         <td><?= formatDate($draw->draw_date, 'M d, Y') ?></td>
                                         <td><span class="badge badge-warning">Pending</span></td>
                                         <td>
+                                            <?php
+                                            $drawDate = date('Y-m-d', strtotime($draw->draw_date));
+                                            $today = date('Y-m-d');
+                                            $canConduct = ($drawDate <= $today) || hasRole(['super_admin', 'station_admin']);
+                                            $isProgrammeManager = hasRole('programme_manager');
+                                            ?>
                                             <a href="<?= url('draw/show/' . $draw->id) ?>" class="btn btn-info btn-sm" title="View Details">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
@@ -127,12 +133,22 @@
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                             <?php endif; ?>
-                                            <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-sm" title="Live Draw with Animation">
-                                                <i class="fas fa-tv"></i> Live Draw
-                                            </a>
-                                            <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-sm" title="Standard Draw">
-                                                <i class="fas fa-play"></i> Conduct
-                                            </a>
+                                            
+                                            <?php if ($canConduct): ?>
+                                                <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-sm" title="Live Draw with Animation">
+                                                    <i class="fas fa-tv"></i> Live Draw
+                                                </a>
+                                                <a href="<?= url('draw/conduct/' . $draw->id) ?>" class="btn btn-success btn-sm" title="Standard Draw">
+                                                    <i class="fas fa-play"></i> Conduct
+                                                </a>
+                                            <?php else: ?>
+                                                <button class="btn btn-secondary btn-sm" disabled title="Draw date: <?= formatDate($draw->draw_date, 'M d, Y') ?>">
+                                                    <i class="fas fa-tv"></i> Live Draw
+                                                </button>
+                                                <button class="btn btn-secondary btn-sm" disabled title="Draw date: <?= formatDate($draw->draw_date, 'M d, Y') ?>">
+                                                    <i class="fas fa-play"></i> Conduct
+                                                </button>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

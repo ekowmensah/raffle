@@ -232,7 +232,7 @@
                                                     <?php else: ?>
                                                         <span class="badge badge-secondary"><?= ucfirst($campaign->status) ?></span>
                                                     <?php endif; ?>
-                                                    <a href="<?= url('campaign/view/' . $campaign->id) ?>" class="btn btn-sm btn-info ml-2">
+                                                    <a href="<?= url('campaign/show/' . $campaign->id) ?>" class="btn btn-sm btn-info ml-2">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                 </div>
