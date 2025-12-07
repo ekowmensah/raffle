@@ -165,9 +165,8 @@ class Campaign extends Model
 
     public function getByStation($stationId)
     {
-        $this->db->query("SELECT c.*, p.name as programme_name, s.name as sponsor_name
+        $this->db->query("SELECT c.*, s.name as sponsor_name
                          FROM {$this->table} c
-                         LEFT JOIN programmes p ON c.programme_id = p.id
                          LEFT JOIN sponsors s ON c.sponsor_id = s.id
                          WHERE c.station_id = :station_id
                          ORDER BY c.created_at DESC");

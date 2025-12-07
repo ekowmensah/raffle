@@ -217,7 +217,8 @@ class Ticket extends Model
         $this->db->query("SELECT COALESCE(SUM(t.quantity), 0) as count
                          FROM {$this->table} t
                          LEFT JOIN raffle_campaigns c ON t.campaign_id = c.id
-                         WHERE c.programme_id = :programme_id
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         WHERE cpa.programme_id = :programme_id
                          AND DATE(t.created_at) = CURDATE()");
         $this->db->bind(':programme_id', $programmeId);
         $result = $this->db->single();
