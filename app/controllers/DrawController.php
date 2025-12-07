@@ -114,8 +114,8 @@ class DrawController extends Controller
             $this->redirect('draw/pending');
         }
         
-        // Check permission
-        if (!can('conduct_draw')) {
+        // Only super admin and station admin can schedule draws
+        if (!hasRole(['super_admin', 'station_admin'])) {
             flash('error', 'You do not have permission to schedule draws');
             $this->redirect('draw');
         }
