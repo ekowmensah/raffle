@@ -132,52 +132,55 @@
             padding: 0 2rem;
         }
 
-        .winners-grid {
+        .winners-list {
             display: grid;
-            gap: 1.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
             margin-top: 2rem;
         }
 
-        .winner-card {
+        @media (max-width: 768px) {
+            .winners-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .winner-item {
             background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             position: relative;
             overflow: hidden;
         }
 
-        .winner-card::before {
+        .winner-item::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 6px;
+            height: 4px;
             background: linear-gradient(90deg, #667eea, #764ba2);
         }
 
-        .winner-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-        }
-
-        .winner-header {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+        .winner-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
         .rank-badge {
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: white;
             flex-shrink: 0;
@@ -189,72 +192,73 @@
         .rank-3 { background: linear-gradient(135deg, #fb923c, #f97316); }
         .rank-other { background: linear-gradient(135deg, #667eea, #764ba2); }
 
-        .winner-info {
+        .winner-content {
             flex: 1;
+            min-width: 0;
+        }
+
+        .winner-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            gap: 1rem;
         }
 
         .campaign-name {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
+            color: #111827;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .campaign-meta {
+            font-size: 0.75rem;
             color: #667eea;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
         }
 
-        .draw-date {
-            font-size: 0.9rem;
-            color: #9ca3af;
+        .prize-amount {
+            font-size: 1.3rem;
+            color: #10b981;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .winner-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .detail-item {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .winner-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            padding: 1.5rem;
-            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-            border-radius: 15px;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .detail-label {
-            font-size: 0.8rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
+        .detail-item i {
+            color: #9ca3af;
         }
 
         .detail-value {
-            font-size: 1.1rem;
-            color: #111827;
             font-weight: 600;
+            color: #111827;
             font-family: 'Courier New', monospace;
         }
 
-        .prize-amount {
-            font-size: 1.8rem !important;
-            color: #10b981 !important;
-            font-weight: 800 !important;
-        }
-
-        .phone-masked {
-            color: #667eea;
-        }
-
-        .ticket-code {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
+        .station-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #eff6ff;
+            color: #1e40af;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
 
         .no-winners {
@@ -405,7 +409,7 @@
             <p>Winners will be displayed here once draws are conducted</p>
         </div>
     <?php else: ?>
-        <div class="winners-grid">
+        <div class="winners-list">
             <?php 
             function maskPhoneNumber($phone) {
                 // Mask middle digits: +233 24 XXX 4567 -> +233 24 *** 4567
@@ -419,46 +423,38 @@
             
             foreach ($winners as $winner): 
             ?>
-            <div class="winner-card">
-                <div class="winner-header">
-                    <div class="rank-badge rank-<?= $winner->prize_rank <= 3 ? $winner->prize_rank : 'other' ?>">
-                        <?php if ($winner->prize_rank == 1): ?>
-                            <i class="fas fa-crown"></i>
-                        <?php else: ?>
-                            #<?= $winner->prize_rank ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="winner-info">
-                        <div class="campaign-name">
-                            <?= htmlspecialchars($winner->campaign_name) ?>
-                            <?php if ($winner->station_name): ?>
-                                <span class="station-badge">
-                                    <i class="fas fa-broadcast-tower"></i> <?= htmlspecialchars($winner->station_name) ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="draw-date">
-                            <i class="fas fa-calendar"></i>
-                            <?= date('F j, Y', strtotime($winner->draw_date)) ?>
-                            <span style="margin-left: 1rem;">
-                                <i class="fas fa-tag"></i> <?= strtoupper($winner->draw_type) ?> Draw
-                            </span>
-                        </div>
-                    </div>
+            <div class="winner-item">
+                <div class="rank-badge rank-<?= $winner->prize_rank <= 3 ? $winner->prize_rank : 'other' ?>">
+                    <?php if ($winner->prize_rank == 1): ?>
+                        <i class="fas fa-crown"></i>
+                    <?php else: ?>
+                        #<?= $winner->prize_rank ?>
+                    <?php endif; ?>
                 </div>
-
-                <div class="winner-details">
-                    <div class="detail-item">
-                        <div class="detail-label"><i class="fas fa-phone"></i> Phone Number</div>
-                        <div class="detail-value phone-masked"><?= maskPhoneNumber($winner->phone_number) ?></div>
+                
+                <div class="winner-content">
+                    <div class="winner-top">
+                        <div>
+                            <div class="campaign-name"><?= htmlspecialchars($winner->campaign_name) ?></div>
+                            <div class="campaign-meta">
+                                <?= date('M j, Y', strtotime($winner->draw_date)) ?> • <?= strtoupper($winner->draw_type) ?>
+                                <?php if ($winner->station_name): ?>
+                                    • <span class="station-badge"><?= htmlspecialchars($winner->station_name) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="prize-amount">GHS <?= number_format($winner->prize_amount, 2) ?></div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label"><i class="fas fa-ticket"></i> Ticket Code</div>
-                        <div class="detail-value ticket-code"><?= htmlspecialchars($winner->ticket_code) ?></div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label"><i class="fas fa-trophy"></i> Prize Won</div>
-                        <div class="detail-value prize-amount">GHS <?= number_format($winner->prize_amount, 2) ?></div>
+                    
+                    <div class="winner-details">
+                        <div class="detail-item">
+                            <i class="fas fa-phone"></i>
+                            <span class="detail-value"><?= maskPhoneNumber($winner->phone_number) ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-ticket"></i>
+                            <span class="detail-value"><?= htmlspecialchars($winner->ticket_code) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
