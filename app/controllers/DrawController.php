@@ -428,6 +428,9 @@ class DrawController extends Controller
         $user = $_SESSION['user'];
         $role = $user->role_name ?? '';
         
+        // Debug logging
+        error_log("Pending Draws - User Role: {$role}, User ID: {$user->id}");
+        
         // Get pending draws based on role
         if ($role === 'super_admin' || $role === 'auditor') {
             $draws = $this->drawModel->getPendingDraws();
@@ -443,14 +446,24 @@ class DrawController extends Controller
             $draws = $filteredDraws;
         } elseif ($role === 'programme_manager') {
             // Get pending draws for programme manager's programme
-            $allDraws = $this->drawModel->getPendingDraws();
-            $filteredDraws = [];
-            foreach ($allDraws as $draw) {
-                if (canAccessDraw($draw)) {
-                    $filteredDraws[] = $draw;
+            if (!$user->programme_id) {
+                // Programme manager without programme assigned
+                $draws = [];
+            } else {
+                $allDraws = $this->drawModel->getPendingDraws();
+                $filteredDraws = [];
+                foreach ($allDraws as $draw) {
+                    if (canAccessDraw($draw)) {
+                        $filteredDraws[] = $draw;
+                    }
                 }
+                $draws = $filteredDraws;
+                
+                // Debug logging
+                error_log("Programme Manager ID: " . $user->programme_id);
+                error_log("Total pending draws: " . count($allDraws));
+                error_log("Filtered draws: " . count($filteredDraws));
             }
-            $draws = $filteredDraws;
         } else {
             $draws = [];
         }

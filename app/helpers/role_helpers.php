@@ -191,6 +191,10 @@ function canAccessDraw($draw)
     if (hasRole('programme_manager')) {
         $accessModel = new \App\Models\CampaignProgrammeAccess();
         $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
+        
+        // Debug logging
+        error_log("Checking draw access - Campaign ID: {$campaign->id}, User Programme ID: {$user->programme_id}, Access: " . ($access ? 'YES' : 'NO'));
+        
         return $access !== null;
     }
     
