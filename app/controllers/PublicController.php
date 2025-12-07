@@ -87,7 +87,7 @@ class PublicController extends Controller
         $totalPrizes = $winnerModel->getTotalPrizesAwarded();
         
         // Get active campaigns count
-        $activeCampaigns = $campaignModel->getActiveCampaigns();
+        $activeCampaigns = $campaignModel->getActive();
         
         $data = [
             'title' => 'Recent Winners',

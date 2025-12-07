@@ -152,7 +152,8 @@ class DrawWinner extends Model
                          INNER JOIN draws d ON dw.draw_id = d.id
                          INNER JOIN raffle_campaigns c ON d.campaign_id = c.id
                          LEFT JOIN stations s ON c.station_id = s.id
-                         LEFT JOIN programmes pr ON c.programme_id = pr.id
+                         LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
+                         LEFT JOIN programmes pr ON cpa.programme_id = pr.id
                          INNER JOIN tickets t ON dw.ticket_id = t.id
                          INNER JOIN players p ON dw.player_id = p.id
                          WHERE d.status = 'completed'
@@ -161,5 +162,12 @@ class DrawWinner extends Model
         
         $this->db->bind(':limit', $limit);
         return $this->db->resultSet();
+    }
+    
+    public function count()
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table}");
+        $result = $this->db->single();
+        return $result->count ?? 0;
     }
 }

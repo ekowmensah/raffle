@@ -7,6 +7,7 @@
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <style>
         * {
             margin: 0;
@@ -311,17 +312,37 @@
         
         /* Modal improvements */
         .modal-content {
-            border-radius: 16px;
+            border-radius: 20px;
             border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         
         .modal-header {
-            border-radius: 16px 16px 0 0;
-            padding: 20px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+        
+        .modal-header .modal-title {
+            color: white;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .modal-header .close {
+            color: white;
+            opacity: 1;
+            text-shadow: none;
+            font-size: 2rem;
         }
         
         .modal-body {
-            padding: 24px;
+            padding: 2rem;
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
         }
         
         /* Form elements */
@@ -381,6 +402,22 @@
             padding: 16px;
             margin-bottom: 20px;
             border: none;
+        }
+        
+        /* Submit button in modal */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border: none !important;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
         
         /* Utility */
@@ -495,9 +532,9 @@
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header">
                     <h5 class="modal-title">Buy Tickets - <?= htmlspecialchars($campaign->name) ?></h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <?php if (flash('error')): ?>
