@@ -119,6 +119,14 @@
                                         <td><?= formatDate($draw->draw_date, 'M d, Y') ?></td>
                                         <td><span class="badge badge-warning">Pending</span></td>
                                         <td>
+                                            <a href="<?= url('draw/show/' . $draw->id) ?>" class="btn btn-info btn-sm" title="View Details">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <?php if (hasRole(['super_admin', 'station_admin'])): ?>
+                                                <a href="<?= url('draw/edit/' . $draw->id) ?>" class="btn btn-warning btn-sm" title="Edit Draw">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                            <?php endif; ?>
                                             <a href="<?= url('draw/live/' . $draw->id) ?>" class="btn btn-primary btn-sm" title="Live Draw with Animation">
                                                 <i class="fas fa-tv"></i> Live Draw
                                             </a>

@@ -425,7 +425,27 @@ class DrawController extends Controller
     {
         $this->requireAuth();
 
-        $draws = $this->drawModel->getPendingDraws();
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        // Get pending draws based on role
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $draws = $this->drawModel->getPendingDraws();
+        } elseif ($role === 'station_admin') {
+            // Get pending draws for station admin's station
+            $allDraws = $this->drawModel->getPendingDraws();
+            $draws = array_filter($allDraws, function($draw) {
+                return canAccessDraw($draw);
+            });
+        } elseif ($role === 'programme_manager') {
+            // Get pending draws for programme manager's programme
+            $allDraws = $this->drawModel->getPendingDraws();
+            $draws = array_filter($allDraws, function($draw) {
+                return canAccessDraw($draw);
+            });
+        } else {
+            $draws = [];
+        }
 
         $data = [
             'title' => 'Pending Draws',
