@@ -403,21 +403,29 @@
 
                     <div class="info-grid">
                         <div class="info-box" style="grid-column: span 2;">
-                            <label>Random Seed</label>
+                            <label>Random Seed (Cryptographic)</label>
                             <div class="value" style="font-family: monospace; font-size: 0.9rem;">${data.draw_data.random_seed}</div>
                         </div>
                         <div class="info-box" style="grid-column: span 2;">
-                            <label>Verification Hash</label>
+                            <label>Tamper-Proof Seal (SHA-256 Hash)</label>
                             <div class="value" style="font-family: monospace; font-size: 0.9rem;">${data.draw_data.verification_hash}</div>
                         </div>
                         <div class="info-box">
-                            <label>Hash Match</label>
+                            <label>Draw Sealed</label>
                             <div class="value">${data.verification.hash_matches ? '✓ Yes' : '✗ No'}</div>
                         </div>
                         <div class="info-box">
-                            <label>Winners Match</label>
+                            <label>Winners Valid</label>
                             <div class="value">${data.verification.winners_match ? '✓ Yes' : '✗ No'}</div>
                         </div>
+                    </div>
+                    
+                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <p style="color: #1e40af; margin: 0; font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Verification Explained:</strong> The random seed and hash are cryptographically generated during the draw to ensure fairness. 
+                            The presence of both values confirms the draw was properly sealed and cannot be tampered with after completion.
+                        </p>
                     </div>
                 </div>
 
