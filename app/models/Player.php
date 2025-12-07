@@ -222,10 +222,10 @@ class Player extends Model
                          COUNT(DISTINCT CASE WHEN dw.id IS NOT NULL THEN dw.id END) as total_wins,
                          COALESCE(SUM(CASE WHEN pay.status = 'success' THEN pay.amount ELSE 0 END), 0) as total_spent
                          FROM {$this->table} p
-                         LEFT JOIN tickets t ON p.id = t.player_id
-                         LEFT JOIN payments pay ON pay.player_id = p.id
+                         LEFT JOIN tickets t ON p.id = t.player_id AND t.station_id = :station_id
+                         LEFT JOIN payments pay ON pay.player_id = p.id AND pay.station_id = :station_id
                          LEFT JOIN draw_winners dw ON p.id = dw.player_id
-                         WHERE pay.station_id = :station_id OR t.station_id = :station_id
+                         WHERE (t.id IS NOT NULL OR pay.id IS NOT NULL)
                          GROUP BY p.id
                          ORDER BY p.created_at DESC");
         $this->db->bind(':station_id', $stationId);
@@ -239,10 +239,10 @@ class Player extends Model
                          COUNT(DISTINCT CASE WHEN dw.id IS NOT NULL THEN dw.id END) as total_wins,
                          COALESCE(SUM(CASE WHEN pay.status = 'success' THEN pay.amount ELSE 0 END), 0) as total_spent
                          FROM {$this->table} p
-                         LEFT JOIN tickets t ON p.id = t.player_id
-                         LEFT JOIN payments pay ON pay.player_id = p.id
+                         LEFT JOIN tickets t ON p.id = t.player_id AND t.programme_id = :programme_id
+                         LEFT JOIN payments pay ON pay.player_id = p.id AND pay.programme_id = :programme_id
                          LEFT JOIN draw_winners dw ON p.id = dw.player_id
-                         WHERE pay.programme_id = :programme_id OR t.programme_id = :programme_id
+                         WHERE (t.id IS NOT NULL OR pay.id IS NOT NULL)
                          GROUP BY p.id
                          ORDER BY p.created_at DESC");
         $this->db->bind(':programme_id', $programmeId);
