@@ -169,6 +169,11 @@ function canAccessDraw($draw)
         return true;
     }
     
+    $user = $_SESSION['user'] ?? null;
+    if (!$user) {
+        return false;
+    }
+    
     // Get campaign for the draw
     $campaignModel = new \App\Models\Campaign();
     $campaign = $campaignModel->findById($draw->campaign_id);
@@ -177,7 +182,24 @@ function canAccessDraw($draw)
         return false;
     }
     
-    return canAccessCampaign($campaign);
+    // Station admin check
+    if (hasRole('station_admin')) {
+        return $campaign->station_id == $user->station_id;
+    }
+    
+    // Programme manager check
+    if (hasRole('programme_manager')) {
+        $accessModel = new \App\Models\CampaignProgrammeAccess();
+        $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
+        return $access !== null;
+    }
+    
+    // Auditors can view
+    if (hasRole('auditor')) {
+        return true;
+    }
+    
+    return false;
 }
 
 /**

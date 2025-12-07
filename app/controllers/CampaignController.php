@@ -187,7 +187,7 @@ class CampaignController extends Controller
 
         if ($campaign->is_config_locked) {
             flash('error', 'Campaign configuration is locked');
-            $this->redirect('campaign/view/' . $id);
+            $this->redirect('campaign/show/' . $id);
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
