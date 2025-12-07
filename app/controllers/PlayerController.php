@@ -23,7 +23,19 @@ class PlayerController extends Controller
             $this->redirect('home');
         }
 
-        $players = $this->playerModel->getWithStats();
+        // Get players based on role
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $players = $this->playerModel->getWithStats();
+        } elseif ($role === 'station_admin') {
+            $players = $this->playerModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $players = $this->playerModel->getByProgramme($user->programme_id);
+        } else {
+            $players = [];
+        }
 
         $data = [
             'title' => 'Players',

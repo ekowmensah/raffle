@@ -151,6 +151,13 @@ class CampaignController extends Controller
         $sponsors = $this->sponsorModel->getActive();
         $stationModel = $this->model('Station');
         $stations = $stationModel->getAll();
+        
+        // Get station name for station admin
+        $user = $_SESSION['user'];
+        if (hasRole('station_admin') && $user->station_id) {
+            $station = $stationModel->findById($user->station_id);
+            $_SESSION['user']->station_name = $station->name ?? '';
+        }
 
         $data = [
             'title' => 'Create Campaign',

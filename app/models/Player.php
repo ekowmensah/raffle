@@ -214,4 +214,38 @@ class Player extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function getByStation($stationId)
+    {
+        $this->db->query("SELECT DISTINCT p.*,
+                         COUNT(DISTINCT t.id) as total_tickets,
+                         COUNT(DISTINCT CASE WHEN dw.id IS NOT NULL THEN dw.id END) as total_wins,
+                         COALESCE(SUM(CASE WHEN pay.status = 'success' THEN pay.amount ELSE 0 END), 0) as total_spent
+                         FROM {$this->table} p
+                         LEFT JOIN tickets t ON p.id = t.player_id
+                         LEFT JOIN payments pay ON pay.player_id = p.id
+                         LEFT JOIN draw_winners dw ON p.id = dw.player_id
+                         WHERE pay.station_id = :station_id OR t.station_id = :station_id
+                         GROUP BY p.id
+                         ORDER BY p.created_at DESC");
+        $this->db->bind(':station_id', $stationId);
+        return $this->db->resultSet();
+    }
+
+    public function getByProgramme($programmeId)
+    {
+        $this->db->query("SELECT DISTINCT p.*,
+                         COUNT(DISTINCT t.id) as total_tickets,
+                         COUNT(DISTINCT CASE WHEN dw.id IS NOT NULL THEN dw.id END) as total_wins,
+                         COALESCE(SUM(CASE WHEN pay.status = 'success' THEN pay.amount ELSE 0 END), 0) as total_spent
+                         FROM {$this->table} p
+                         LEFT JOIN tickets t ON p.id = t.player_id
+                         LEFT JOIN payments pay ON pay.player_id = p.id
+                         LEFT JOIN draw_winners dw ON p.id = dw.player_id
+                         WHERE pay.programme_id = :programme_id OR t.programme_id = :programme_id
+                         GROUP BY p.id
+                         ORDER BY p.created_at DESC");
+        $this->db->bind(':programme_id', $programmeId);
+        return $this->db->resultSet();
+    }
 }

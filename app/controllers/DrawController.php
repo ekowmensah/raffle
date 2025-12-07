@@ -159,7 +159,19 @@ class DrawController extends Controller
             }
         }
 
-        $campaigns = $this->campaignModel->getActive();
+        // Get campaigns based on role
+        $user = $_SESSION['user'];
+        $role = $user->role_name ?? '';
+        
+        if ($role === 'super_admin' || $role === 'auditor') {
+            $campaigns = $this->campaignModel->getActive();
+        } elseif ($role === 'station_admin') {
+            $campaigns = $this->campaignModel->getByStation($user->station_id);
+        } elseif ($role === 'programme_manager') {
+            $campaigns = $this->campaignModel->getByProgramme($user->programme_id);
+        } else {
+            $campaigns = [];
+        }
 
         $data = [
             'title' => 'Schedule Draw',

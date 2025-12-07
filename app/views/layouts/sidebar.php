@@ -105,6 +105,19 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="<?= url('withdrawal') ?>" class="nav-link <?= isActive('withdrawal') ?>">
+                            <i class="nav-icon fas fa-hand-holding-usd"></i>
+                            <p>Withdrawals</p>
+                            <?php
+                            $withdrawalModel = new \App\Models\Withdrawal();
+                            $pendingCount = $withdrawalModel->countPending();
+                            if ($pendingCount > 0):
+                            ?>
+                                <span class="badge badge-warning right"><?= $pendingCount ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="<?= url('player') ?>" class="nav-link <?= isActive('player') ?>">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Players</p>
