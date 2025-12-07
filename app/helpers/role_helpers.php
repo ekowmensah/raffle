@@ -109,22 +109,6 @@ function getRoleBadgeClass($role)
 }
 
 /**
- * Check if current page is active
- */
-function isActive($path)
-{
-    $currentPath = $_SERVER['REQUEST_URI'] ?? '';
-    $currentPath = str_replace(BASE_URL, '', $currentPath);
-    $currentPath = trim($currentPath, '/');
-    
-    if (strpos($currentPath, $path) === 0) {
-        return 'active';
-    }
-    
-    return '';
-}
-
-/**
  * Get pending draws count for presenter
  */
 function getPendingDrawsCount()
