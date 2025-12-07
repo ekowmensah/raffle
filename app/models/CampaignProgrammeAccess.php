@@ -76,4 +76,13 @@ class CampaignProgrammeAccess extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function findByCampaignAndProgramme($campaignId, $programmeId)
+    {
+        $this->db->query("SELECT * FROM {$this->table} 
+                         WHERE campaign_id = :campaign_id AND programme_id = :programme_id");
+        $this->db->bind(':campaign_id', $campaignId);
+        $this->db->bind(':programme_id', $programmeId);
+        return $this->db->single();
+    }
 }

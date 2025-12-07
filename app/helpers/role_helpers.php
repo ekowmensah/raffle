@@ -146,7 +146,10 @@ function canAccessCampaign($campaign)
     }
     
     if (hasRole('programme_manager')) {
-        return $campaign->programme_id == $user->programme_id;
+        // Check if campaign is linked to user's programme via campaign_programme_access
+        $accessModel = new \App\Models\CampaignProgrammeAccess();
+        $access = $accessModel->findByCampaignAndProgramme($campaign->id, $user->programme_id);
+        return $access !== null;
     }
     
     // Auditors can view
