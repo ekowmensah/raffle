@@ -13,6 +13,7 @@ require_once '../app/config/config.php';
 
 // Load helper functions
 require_once '../app/helpers/functions.php';
+require_once '../app/helpers/role_helpers.php';
 
 // Autoloader
 spl_autoload_register(function ($class) {
