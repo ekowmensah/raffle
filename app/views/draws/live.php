@@ -320,7 +320,12 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
                 <?php endif; ?>
 
                 <div class="display-area">
-                    <div id="winner-display" class="winner-display">
+                    <div id="waiting-display" class="winner-display" style="text-align: center;">
+                        <i class="fas fa-trophy" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1rem;"></i>
+                        <h2 style="color: var(--text-muted); font-weight: 400;">Click "Start Draw" to begin</h2>
+                        <p style="color: var(--text-muted); opacity: 0.7;">The winning ticket will be displayed here</p>
+                    </div>
+                    <div id="winner-display" class="winner-display" style="display: none;">
                         <h2 id="winner-title">🎉 Winner Selected!</h2>
                         <div class="rolling-number" id="winner-phone-large" style="font-size: 4rem; margin: 1rem 0; color: var(--accent);">---</div>
                         <div class="winner-info">
@@ -398,6 +403,10 @@ $drawAlreadyCompleted = ($draw->status !== 'pending');
             startBtn.style.cursor = 'not-allowed';
             
             document.getElementById('status-text').textContent = 'Drawing in progress...';
+            
+            // Hide waiting display, show winner display
+            document.getElementById('waiting-display').style.display = 'none';
+            document.getElementById('winner-display').style.display = 'block';
             
             // Start rolling animation
             startRolling();
