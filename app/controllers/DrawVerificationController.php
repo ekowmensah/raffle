@@ -23,6 +23,16 @@ class DrawVerificationController extends Controller
      */
     public function verify($drawId)
     {
+        // Check if this is an AJAX request
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                  strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+        
+        // If not AJAX, show the graphical verification page
+        if (!$isAjax) {
+            $this->view('draws/verify', ['draw_id' => $drawId]);
+            return;
+        }
+        
         // Get draw details
         $draw = $this->drawModel->findById($drawId);
         
