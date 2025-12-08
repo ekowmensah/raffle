@@ -189,10 +189,16 @@
         }
         
         .tickets-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 12px;
             margin-top: 15px;
+        }
+        
+        .tickets-grid .ticket-card {
+            flex: 0 1 250px;
+            min-width: 200px;
         }
         
         .ticket-card {
@@ -468,7 +474,11 @@
         <?php endif; ?>
 
         <div class="action-buttons">
-            <a href="<?= url('public/buyTicket') ?>" class="btn btn-primary">
+            <a href="<?= url('public/campaign/' . $campaign->id) ?>" class="btn btn-primary">
+                <i class="fas fa-info-circle"></i>
+                View Campaign Details
+            </a>
+            <a href="<?= url('public/buyTicket') ?>" class="btn btn-secondary">
                 <i class="fas fa-plus-circle"></i>
                 Buy More Tickets
             </a>

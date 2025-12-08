@@ -491,8 +491,8 @@
             </div>
         </div>
         
-        <a href="<?= BASE_URL ?>/public" class="btn">
-            <i class="fas fa-home"></i> Back to Home
+        <a href="<?= url('public/campaign/' . $campaign->id) ?>" class="btn">
+            <i class="fas fa-home"></i> Cancel
         </a>
         
         <div class="auto-check">
