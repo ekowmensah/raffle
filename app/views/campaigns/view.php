@@ -106,10 +106,14 @@
                         <div class="card-header">
                             <h3 class="card-title">Campaign Details</h3>
                             <div class="card-tools">
-                                <?php if (!$campaign->is_config_locked): ?>
+                                <?php if (!$campaign->is_config_locked && ($campaign->total_tickets ?? 0) == 0): ?>
                                 <a href="<?= url('campaign/edit/' . $campaign->id) ?>" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                                <?php elseif (($campaign->total_tickets ?? 0) > 0): ?>
+                                <button class="btn btn-secondary btn-sm" disabled title="Cannot edit - tickets already sold">
+                                    <i class="fas fa-lock"></i> Locked
+                                </button>
                                 <?php endif; ?>
                                 <a href="<?= url('campaign/clone/' . $campaign->id) ?>" class="btn btn-info btn-sm">
                                     <i class="fas fa-clone"></i> Clone
