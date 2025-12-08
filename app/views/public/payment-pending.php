@@ -57,15 +57,16 @@
             background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
             border: 3px solid rgba(102, 126, 234, 0.5);
-            border-radius: 30px;
+            border-radius: 25px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(102, 126, 234, 0.3);
-            max-width: 700px;
-            width: 100%;
-            padding: 50px;
+            max-width: 1100px;
+            width: 95%;
+            padding: 30px;
             text-align: center;
             position: relative;
             overflow: hidden;
             animation: slideIn 0.5s ease-out;
+            max-height: 95vh;
         }
         
         @keyframes slideIn {
@@ -92,13 +93,13 @@
         /* Animated phone icon */
         .phone-animation {
             position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
         }
         
         .phone-icon {
-            font-size: 80px;
+            font-size: 60px;
             background: linear-gradient(135deg, #667eea, #f093fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -115,9 +116,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            border: 3px solid #667eea;
+            width: 80px;
+            height: 80px;
+            border: 2px solid #667eea;
             border-radius: 50%;
             animation: ripple 2s ease-out infinite;
         }
@@ -132,13 +133,13 @@
         
         @keyframes ripple {
             0% {
-                width: 120px;
-                height: 120px;
+                width: 80px;
+                height: 80px;
                 opacity: 1;
             }
             100% {
-                width: 200px;
-                height: 200px;
+                width: 140px;
+                height: 140px;
                 opacity: 0;
             }
         }
@@ -147,8 +148,8 @@
             background: linear-gradient(135deg, #fff, #f093fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
-            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-size: 2rem;
             font-weight: 900;
             animation: glow 2s ease-in-out infinite;
         }
@@ -160,8 +161,8 @@
         
         .subtitle {
             color: rgba(255,255,255,0.8);
-            font-size: 1.1rem;
-            margin-bottom: 30px;
+            font-size: 1rem;
+            margin-bottom: 20px;
             font-weight: 500;
         }
         
@@ -169,10 +170,10 @@
             background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
             border: 2px solid rgba(255, 193, 7, 0.5);
             color: #ffd700;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 30px 0;
-            font-size: 1.2rem;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-size: 1.1rem;
             font-weight: 700;
             animation: statusPulse 2s ease-in-out infinite;
         }
@@ -192,19 +193,26 @@
             to { transform: rotate(360deg); }
         }
         
+        /* Horizontal layout for content */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
         .info {
             background: rgba(102, 126, 234, 0.1);
             border: 2px solid rgba(102, 126, 234, 0.3);
-            padding: 25px;
-            border-radius: 15px;
-            margin: 30px 0;
+            padding: 20px;
+            border-radius: 12px;
             text-align: left;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 15px 0;
+            padding: 10px 0;
             border-bottom: 1px solid rgba(102, 126, 234, 0.2);
         }
         
@@ -215,46 +223,45 @@
         .info-label {
             font-weight: 600;
             color: rgba(255,255,255,0.7);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
         
         .info-value {
             color: #f093fb;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
         
         .instructions {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
             border: 2px solid rgba(16, 185, 129, 0.4);
-            border-left: 6px solid #10b981;
-            padding: 25px;
-            margin: 30px 0;
+            border-left: 5px solid #10b981;
+            padding: 20px;
             text-align: left;
-            border-radius: 15px;
+            border-radius: 12px;
         }
         
         .instructions h3 {
             color: #10b981;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
             font-weight: 700;
         }
         
         .instructions ol {
-            margin-left: 25px;
+            margin-left: 20px;
             counter-reset: item;
             list-style: none;
         }
         
         .instructions li {
-            margin: 15px 0;
+            margin: 10px 0;
             color: rgba(255,255,255,0.9);
-            font-size: 1rem;
-            line-height: 1.6;
+            font-size: 0.9rem;
+            line-height: 1.5;
             counter-increment: item;
             position: relative;
-            padding-left: 35px;
+            padding-left: 30px;
         }
         
         .instructions li::before {
@@ -264,30 +271,30 @@
             top: 0;
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            width: 25px;
-            height: 25px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
         
         .btn {
             display: inline-block;
-            padding: 15px 40px;
+            padding: 12px 30px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             text-decoration: none;
             border-radius: 50px;
             font-weight: 700;
-            margin-top: 30px;
+            margin-top: 15px;
             transition: all 0.3s;
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
             text-transform: uppercase;
             letter-spacing: 1px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         
         .btn:hover {
@@ -299,9 +306,9 @@
         
         .auto-check {
             color: rgba(255,255,255,0.6);
-            font-size: 0.9rem;
-            margin-top: 25px;
-            padding: 15px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            padding: 10px;
             background: rgba(102, 126, 234, 0.1);
             border-radius: 10px;
             border: 1px solid rgba(102, 126, 234, 0.2);
@@ -317,9 +324,9 @@
         .motivation {
             background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(118, 75, 162, 0.15));
             border: 2px solid rgba(240, 147, 251, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 30px 0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
             animation: fadeIn 1s ease-in;
         }
         
@@ -330,23 +337,24 @@
         
         .motivation h4 {
             color: #f093fb;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .motivation p {
             color: rgba(255,255,255,0.8);
-            line-height: 1.6;
+            line-height: 1.5;
             margin: 0;
+            font-size: 0.9rem;
         }
         
         /* Progress dots */
         .progress-dots {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 8px;
+            margin: 12px 0;
         }
         
         .dot {
@@ -365,19 +373,55 @@
             50% { background: #667eea; transform: scale(1.3); }
         }
         
+        @media (max-width: 992px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .container {
-                padding: 30px 20px;
+                padding: 20px 15px;
+                max-height: 98vh;
             }
             h1 {
-                font-size: 2rem;
+                font-size: 1.5rem;
+                margin-bottom: 8px;
+            }
+            .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
             }
             .phone-animation {
-                width: 100px;
-                height: 100px;
+                width: 60px;
+                height: 60px;
+                margin-bottom: 10px;
             }
             .phone-icon {
-                font-size: 60px;
+                font-size: 45px;
+            }
+            .status {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            .motivation {
+                padding: 12px;
+            }
+            .motivation h4 {
+                font-size: 0.95rem;
+            }
+            .motivation p {
+                font-size: 0.85rem;
+            }
+            .instructions {
+                padding: 15px;
+            }
+            .instructions h3 {
+                font-size: 1rem;
+            }
+            .instructions li {
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -409,38 +453,40 @@
             <div class="dot"></div>
         </div>
         
-        <div class="info">
-            <div class="info-row">
-                <span class="info-label">Payment ID:</span>
-                <span class="info-value"><?= htmlspecialchars($data['payment']->id) ?></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Reference:</span>
-                <span class="info-value"><?= htmlspecialchars($data['payment']->internal_reference) ?></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Amount:</span>
-                <span class="info-value">GHS <?= number_format($data['payment']->amount, 2) ?></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Campaign:</span>
-                <span class="info-value"><?= htmlspecialchars($data['campaign']->name) ?></span>
-            </div>
-        </div>
-        
         <div class="motivation">
             <h4><i class="fas fa-trophy"></i> You're Almost There!</h4>
             <p>Your tickets are reserved and waiting for you. Complete the payment now to secure your chance to win amazing prizes!</p>
         </div>
         
-        <div class="instructions">
-            <h3><i class="fas fa-mobile-alt"></i> Complete Payment on Your Phone</h3>
-            <ol>
-                <li>Check your phone for a mobile money prompt</li>
-                <li>Enter your mobile money PIN to approve the payment</li>
-                <li>Wait for the confirmation SMS</li>
-                <li>This page will automatically redirect when payment is confirmed</li>
-            </ol>
+        <div class="content-grid">
+            <div class="info">
+                <div class="info-row">
+                    <span class="info-label">Payment ID:</span>
+                    <span class="info-value"><?= htmlspecialchars($data['payment']->id) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reference:</span>
+                    <span class="info-value"><?= htmlspecialchars($data['payment']->internal_reference) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Amount:</span>
+                    <span class="info-value">GHS <?= number_format($data['payment']->amount, 2) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Campaign:</span>
+                    <span class="info-value"><?= htmlspecialchars($data['campaign']->name) ?></span>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-mobile-alt"></i> Complete Payment on Your Phone</h3>
+                <ol>
+                    <li>Check your phone for a mobile money prompt</li>
+                    <li>Enter your mobile money PIN to approve the payment</li>
+                    <li>Wait for the confirmation SMS</li>
+                    <li>This page will automatically redirect when payment is confirmed</li>
+                </ol>
+            </div>
         </div>
         
         <a href="<?= BASE_URL ?>/public" class="btn">
