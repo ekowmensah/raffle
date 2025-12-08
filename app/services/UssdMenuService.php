@@ -155,9 +155,10 @@ class UssdMenuService
                "How many tickets?\n" .
                "1. 10 (GHS " . number_format($ticketPrice * 10, 2) . ")\n" .
                "2. 20 (GHS " . number_format($ticketPrice * 20, 2) . ")\n" .
-               "3. 30 (GHS " . number_format($ticketPrice * 30, 2) . ")\n" .
-               "4. 50 (GHS " . number_format($ticketPrice * 50, 2) . ")\n" .
-               "5. Custom Amount\n" .
+               "3. 50 (GHS " . number_format($ticketPrice * 50, 2) . ")\n" .
+               "4. 70 (GHS " . number_format($ticketPrice * 70, 2) . ")\n" .
+               "5. 100 (GHS " . number_format($ticketPrice * 100, 2) . ")\n" .
+               "6. Custom Amount\n" .
                "0. Back";
     }
     

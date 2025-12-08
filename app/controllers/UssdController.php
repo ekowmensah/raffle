@@ -347,20 +347,23 @@ class UssdController extends Controller
         
         switch ($input) {
             case '1':
-                $quantity = 1;
+                $quantity = 10;
                 break;
             case '2':
-                $quantity = 2;
+                $quantity = 20;
                 break;
             case '3':
-                $quantity = 3;
+                $quantity = 50;
                 break;
             case '4':
-                $quantity = 5;
+                $quantity = 70;
                 break;
             case '5':
+                $quantity = 100;
+                break;
+            case '6':
                 $this->sessionService->updateSession($sessionId, 'enter_custom_quantity');
-                return "CON Enter number of Entries (1-100):";
+                return "CON Enter number of Entries (1-1000):";
             default:
                 return "CON Invalid selection.\n" . 
                        substr($this->menuService->buildQuantityMenu(
@@ -389,8 +392,8 @@ class UssdController extends Controller
     {
         $quantity = (int)$input;
         
-        if ($quantity < 1 || $quantity > 100) {
-            return "CON Invalid quantity. Enter 1-100:";
+        if ($quantity < 1 || $quantity > 1000) {
+            return "CON Invalid quantity. Enter 1-1000:";
         }
         
         $ticketPrice = $sessionData['ticket_price'];
