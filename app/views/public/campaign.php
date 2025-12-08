@@ -447,10 +447,33 @@
         <h1><?= htmlspecialchars($campaign->name) ?></h1>
         <p class="lead"><?= nl2br(htmlspecialchars($campaign->description ?? 'Join this exciting raffle campaign and stand a chance to win amazing prizes!')) ?></p>
         
+        <?php if ($campaign->campaign_type === 'item'): ?>
+        <!-- Item Campaign Display -->
+        <?php if (!empty($campaign->item_image)): ?>
+        <div style="text-align: center; margin: 2rem 0;">
+            <img src="<?= BASE_URL ?>/<?= htmlspecialchars($campaign->item_image) ?>" 
+                 alt="<?= htmlspecialchars($campaign->item_name) ?>" 
+                 style="max-width: 100%; max-height: 400px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        </div>
+        <?php endif; ?>
+        
+        <div class="price-section" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div style="font-size: 1.5rem; color: white; margin-bottom: 0.5rem;">
+                <i class="fas fa-gift"></i> Win This Prize!
+            </div>
+            <div class="price-tag"><?= htmlspecialchars($campaign->item_name) ?></div>
+            <div class="price-label">Worth <?= $campaign->currency ?> <?= number_format($campaign->item_value ?? 0, 2) ?></div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid rgba(255,255,255,0.3);">
+                <div style="font-size: 1.2rem; color: white; font-weight: 600;">Ticket Price: <?= $campaign->currency ?> <?= number_format($campaign->ticket_price, 2) ?></div>
+            </div>
+        </div>
+        <?php else: ?>
+        <!-- Cash Campaign Display -->
         <div class="price-section">
             <div class="price-tag"><?= $campaign->currency ?> <?= number_format($campaign->ticket_price, 2) ?></div>
             <div class="price-label">Per Ticket</div>
         </div>
+        <?php endif; ?>
 
         <div class="campaign-info">
             <div class="info-item">
@@ -463,6 +486,60 @@
                 </div>
             </div>
 
+            <?php if ($campaign->campaign_type === 'item'): ?>
+            <div class="info-item">
+                <div class="info-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Prize Type</div>
+                    <div class="info-value">Item Campaign - <?= htmlspecialchars($campaign->item_name) ?></div>
+                </div>
+            </div>
+            
+            <?php if ($campaign->item_description): ?>
+            <div class="info-item">
+                <div class="info-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Item Description</div>
+                    <div class="info-value"><?= nl2br(htmlspecialchars($campaign->item_description)) ?></div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="info-item">
+                <div class="info-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Winner Selection</div>
+                    <div class="info-value">
+                        <?php
+                        $types = [
+                            'single' => 'Single Winner',
+                            'multiple' => 'Multiple Winners (' . ($campaign->item_quantity ?? 1) . ' items)',
+                            'tiered' => 'Tiered Prizes'
+                        ];
+                        echo $types[$campaign->winner_selection_type] ?? 'Single Winner';
+                        ?>
+                    </div>
+                </div>
+            </div>
+            
+            <?php if ($campaign->min_tickets_for_draw): ?>
+            <div class="info-item">
+                <div class="info-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Minimum Tickets Required</div>
+                    <div class="info-value"><?= number_format($campaign->min_tickets_for_draw) ?> tickets must be sold before draw</div>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php else: ?>
             <div class="info-item">
                 <div class="info-icon">
                     <i class="fas fa-trophy"></i>
@@ -472,6 +549,7 @@
                     <div class="info-value"><?= $campaign->prize_pool_percent ?>% of Total Revenue</div>
                 </div>
             </div>
+            <?php endif; ?>
 
             <?php if ($campaign->daily_draw_enabled): ?>
             <div class="info-item">
@@ -515,7 +593,13 @@
                     <i class="fas fa-trophy"></i>
                 </div>
                 <div class="feature-title">Big Prizes</div>
-                <div class="feature-desc">Win amazing cash prizes and rewards</div>
+                <div class="feature-desc">
+                    <?php if ($campaign->campaign_type === 'item'): ?>
+                        Win amazing items like phones, cars, TVs and more!
+                    <?php else: ?>
+                        Win amazing cash prizes and rewards
+                    <?php endif; ?>
+                </div>
             </div>
 
             <div class="feature-card">

@@ -307,9 +307,13 @@ class DrawController extends Controller
             }
         }
 
+        // Get campaign details
+        $campaign = $this->campaignModel->findById($draw->campaign_id);
+        
         $data = [
             'title' => 'Conduct Draw',
-            'draw' => $draw
+            'draw' => $draw,
+            'campaign' => $campaign
         ];
 
         $this->view('draws/conduct', $data);
@@ -495,12 +499,19 @@ class DrawController extends Controller
         }
         
         $winners = $campaignId ? $this->winnerModel->getByCampaign($campaignId) : [];
+        
+        // Get campaign details if selected
+        $selectedCampaignData = null;
+        if ($campaignId) {
+            $selectedCampaignData = $this->campaignModel->findById($campaignId);
+        }
 
         $data = [
             'title' => 'All Winners',
             'winners' => $winners,
             'campaigns' => $campaigns,
-            'selected_campaign' => $campaignId
+            'selected_campaign' => $campaignId,
+            'campaign' => $selectedCampaignData
         ];
 
         $this->view('draws/winners', $data);

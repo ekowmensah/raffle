@@ -43,6 +43,22 @@
             </div>
 
             <?php if (!empty($winners)): ?>
+            <?php if ($campaign): ?>
+            <div class="alert <?= $campaign->campaign_type === 'item' ? 'alert-success' : 'alert-info' ?>">
+                <h5><i class="fas fa-info-circle"></i> Campaign Information</h5>
+                <div class="row">
+                    <div class="col-md-3"><strong>Campaign:</strong> <?= htmlspecialchars($campaign->name) ?></div>
+                    <?php if ($campaign->campaign_type === 'item'): ?>
+                        <div class="col-md-3"><strong>Type:</strong> <span class="badge badge-success"><i class="fas fa-gift"></i> Item Campaign</span></div>
+                        <div class="col-md-3"><strong>Prize:</strong> <?= htmlspecialchars($campaign->item_name) ?></div>
+                        <div class="col-md-3"><strong>Value:</strong> GHS <?= number_format($campaign->item_value ?? 0, 2) ?></div>
+                    <?php else: ?>
+                        <div class="col-md-3"><strong>Type:</strong> <span class="badge badge-primary"><i class="fas fa-money-bill-wave"></i> Cash Campaign</span></div>
+                        <div class="col-md-3"><strong>Prize Pool:</strong> <?= $campaign->prize_pool_percent ?>%</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="card card-success">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-trophy"></i> Winners List</h3>
@@ -56,8 +72,8 @@
                                 <th>Player</th>
                                 <th>Draw Date</th>
                                 <th>Draw Type</th>
-                                <th>Prize Amount</th>
-                                <th>Prize Status</th>
+                                <th><?= $campaign && $campaign->campaign_type === 'item' ? 'Prize/Value' : 'Prize Amount' ?></th>
+                                <th><?= $campaign && $campaign->campaign_type === 'item' ? 'Delivery Status' : 'Prize Status' ?></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -79,7 +95,14 @@
                                             <?= strtoupper($winner->draw_type) ?>
                                         </span>
                                     </td>
-                                    <td><strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong></td>
+                                    <td>
+                                        <?php if ($campaign && $campaign->campaign_type === 'item'): ?>
+                                            <strong><?= htmlspecialchars($campaign->item_name) ?></strong><br>
+                                            <small class="text-muted">Value: GHS <?= number_format($winner->prize_amount, 2) ?></small>
+                                        <?php else: ?>
+                                            <strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php
                                         $statusColors = [
@@ -89,9 +112,18 @@
                                             'failed' => 'danger'
                                         ];
                                         $color = $statusColors[$winner->prize_paid_status] ?? 'secondary';
+                                        
+                                        // Different labels for item vs cash
+                                        $statusLabels = [
+                                            'pending' => $campaign && $campaign->campaign_type === 'item' ? 'PENDING DELIVERY' : 'PENDING',
+                                            'processing' => 'PROCESSING',
+                                            'paid' => $campaign && $campaign->campaign_type === 'item' ? 'DELIVERED' : 'PAID',
+                                            'failed' => 'CANCELLED'
+                                        ];
+                                        $statusLabel = $statusLabels[$winner->prize_paid_status] ?? strtoupper($winner->prize_paid_status);
                                         ?>
                                         <span class="badge badge-<?= $color ?>">
-                                            <?= strtoupper($winner->prize_paid_status) ?>
+                                            <?= $statusLabel ?>
                                         </span>
                                     </td>
                                     <td>
@@ -100,12 +132,12 @@
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="status" value="paid">
                                             <button type="submit" class="btn btn-success btn-sm" 
-                                                    onclick="return confirm('Mark this prize as paid?')">
-                                                <i class="fas fa-check"></i> Mark Paid
+                                                    onclick="return confirm('<?= $campaign && $campaign->campaign_type === 'item' ? 'Mark this item as delivered?' : 'Mark this prize as paid?' ?>')">
+                                                <i class="fas fa-check"></i> <?= $campaign && $campaign->campaign_type === 'item' ? 'Mark Delivered' : 'Mark Paid' ?>
                                             </button>
                                         </form>
                                         <?php else: ?>
-                                            <span class="text-success"><i class="fas fa-check-circle"></i> Paid</span>
+                                            <span class="text-success"><i class="fas fa-check-circle"></i> <?= $campaign && $campaign->campaign_type === 'item' ? 'Delivered' : 'Paid' ?></span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

@@ -356,10 +356,32 @@
         
         <h1><?= htmlspecialchars($campaign->name) ?></h1>
         
+        <?php if ($campaign->campaign_type === 'item'): ?>
+        <!-- Item Showcase -->
+        <div class="item-showcase" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); border: 3px solid rgba(16, 185, 129, 0.4); border-radius: 20px; padding: 2rem; margin: 2rem 0; text-align: center;">
+            <?php if ($campaign->item_image): ?>
+            <div style="margin-bottom: 1.5rem;">
+                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($campaign->item_image) ?>" alt="<?= htmlspecialchars($campaign->item_name) ?>" style="max-width: 100%; max-height: 400px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            </div>
+            <?php endif; ?>
+            <h2 style="color: #10b981; font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">
+                <i class="fas fa-gift"></i> WIN: <?= htmlspecialchars($campaign->item_name) ?>
+            </h2>
+            <div style="font-size: 1.5rem; color: #f093fb; font-weight: 700; margin-bottom: 1rem;">
+                Worth GHS <?= number_format($campaign->item_value, 0) ?>
+            </div>
+            <?php if (!empty($campaign->item_description)): ?>
+            <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 1.7; max-width: 800px; margin: 0 auto;">
+                <?= nl2br(htmlspecialchars($campaign->item_description)) ?>
+            </p>
+            <?php endif; ?>
+        </div>
+        <?php else: ?>
         <?php if (!empty($campaign->description)): ?>
         <p class="campaign-description">
             <?= nl2br(htmlspecialchars($campaign->description)) ?>
         </p>
+        <?php endif; ?>
         <?php endif; ?>
         
         <!-- Social Proof & Urgency Stats -->
@@ -487,21 +509,58 @@
                     <div class="info-card">
                         <h3><i class="fas fa-gift"></i> What You Could Win</h3>
                         <ul class="info-list">
-                            <?php 
-                                // Calculate prize tiers based on prize pool percentage
-                                $firstPrize = $prizePool * 0.50; // 50% to 1st
-                                $secondPrize = $prizePool * 0.30; // 30% to 2nd
-                                $thirdPrize = $prizePool * 0.20; // 20% to 3rd
-                            ?>
-                            <?php if ($prizePool > 0): ?>
-                            <li><i class="fas fa-crown" style="color: #ffd700;"></i> <strong>1st Prize:</strong> GHS <?= number_format($firstPrize, 0) ?> 🎉</li>
-                            <li><i class="fas fa-medal" style="color: #c0c0c0;"></i> <strong>2nd Prize:</strong> GHS <?= number_format($secondPrize, 0) ?> 🎊</li>
-                            <li><i class="fas fa-award" style="color: #cd7f32;"></i> <strong>3rd Prize:</strong> GHS <?= number_format($thirdPrize, 0) ?> 🎁</li>
+                            <?php if ($campaign->campaign_type === 'item'): ?>
+                                <!-- Item Campaign Prizes -->
+                                <?php if ($campaign->winner_selection_type === 'single'): ?>
+                                    <li><i class="fas fa-trophy" style="color: #ffd700;"></i> <strong>Grand Prize:</strong> <?= htmlspecialchars($campaign->item_name) ?></li>
+                                    <li><i class="fas fa-tag"></i> <strong>Value:</strong> GHS <?= number_format($campaign->item_value, 0) ?></li>
+                                    <li><i class="fas fa-user"></i> <strong>Winners:</strong> 1 Lucky Player!</li>
+                                <?php elseif ($campaign->winner_selection_type === 'multiple'): ?>
+                                    <li><i class="fas fa-trophy" style="color: #ffd700;"></i> <strong>Prize:</strong> <?= htmlspecialchars($campaign->item_name) ?></li>
+                                    <li><i class="fas fa-tag"></i> <strong>Value:</strong> GHS <?= number_format($campaign->item_value, 0) ?> each</li>
+                                    <li><i class="fas fa-users"></i> <strong>Winners:</strong> <?= $campaign->item_quantity ?> Lucky Players!</li>
+                                <?php elseif ($campaign->winner_selection_type === 'tiered'): ?>
+                                    <?php 
+                                        $campaignModel = new \App\Models\Campaign();
+                                        $itemPrizes = $campaignModel->getItemPrizes($campaign->id);
+                                        $icons = ['fa-crown' => '#ffd700', 'fa-medal' => '#c0c0c0', 'fa-award' => '#cd7f32'];
+                                        $iconKeys = array_keys($icons);
+                                    ?>
+                                    <?php foreach ($itemPrizes as $index => $prize): ?>
+                                        <?php 
+                                            $icon = $iconKeys[$index] ?? 'fa-gift';
+                                            $color = $icons[$icon] ?? '#10b981';
+                                        ?>
+                                        <li>
+                                            <i class="fas <?= $icon ?>" style="color: <?= $color ?>;"></i> 
+                                            <strong><?= $index + 1 ?><?= $index == 0 ? 'st' : ($index == 1 ? 'nd' : ($index == 2 ? 'rd' : 'th')) ?> Prize:</strong> 
+                                            <?php if ($prize->prize_type === 'item'): ?>
+                                                <?= htmlspecialchars($prize->item_name) ?> (GHS <?= number_format($prize->item_value, 0) ?>)
+                                            <?php else: ?>
+                                                GHS <?= number_format($prize->cash_amount, 0) ?>
+                                            <?php endif; ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                                <li><i class="fas fa-star"></i> <strong>100% Guaranteed:</strong> Item will be awarded!</li>
                             <?php else: ?>
-                            <li><i class="fas fa-trophy"></i> <strong>Prize Pool:</strong> <?= $campaign->prize_pool_percent ?>% of total revenue</li>
-                            <li><i class="fas fa-star"></i> <strong>Multiple Winners:</strong> More tickets sold = Bigger prizes!</li>
+                                <!-- Cash Campaign Prizes -->
+                                <?php 
+                                    // Calculate prize tiers based on prize pool percentage
+                                    $firstPrize = $prizePool * 0.50; // 50% to 1st
+                                    $secondPrize = $prizePool * 0.30; // 30% to 2nd
+                                    $thirdPrize = $prizePool * 0.20; // 20% to 3rd
+                                ?>
+                                <?php if ($prizePool > 0): ?>
+                                <li><i class="fas fa-crown" style="color: #ffd700;"></i> <strong>1st Prize:</strong> GHS <?= number_format($firstPrize, 0) ?> 🎉</li>
+                                <li><i class="fas fa-medal" style="color: #c0c0c0;"></i> <strong>2nd Prize:</strong> GHS <?= number_format($secondPrize, 0) ?> 🎊</li>
+                                <li><i class="fas fa-award" style="color: #cd7f32;"></i> <strong>3rd Prize:</strong> GHS <?= number_format($thirdPrize, 0) ?> 🎁</li>
+                                <?php else: ?>
+                                <li><i class="fas fa-trophy"></i> <strong>Prize Pool:</strong> <?= $campaign->prize_pool_percent ?>% of total revenue</li>
+                                <li><i class="fas fa-star"></i> <strong>Multiple Winners:</strong> More tickets sold = Bigger prizes!</li>
+                                <?php endif; ?>
+                                <li><i class="fas fa-percentage"></i> <strong><?= $campaign->prize_pool_percent ?>%</strong> goes directly to winners!</li>
                             <?php endif; ?>
-                            <li><i class="fas fa-percentage"></i> <strong><?= $campaign->prize_pool_percent ?>%</strong> goes directly to winners!</li>
                         </ul>
                     </div>
                 </div>

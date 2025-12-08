@@ -1307,13 +1307,111 @@
         <div style="position: absolute; top: -50px; right: 10%; width: 100px; height: 100px; font-size: 5rem; opacity: 0.1; animation: float 3s ease-in-out infinite;">🎲</div>
         <div style="position: absolute; bottom: 20%; left: 5%; width: 100px; height: 100px; font-size: 5rem; opacity: 0.1; animation: float 3s ease-in-out infinite; animation-delay: 1s;">🎯</div>
         
-        <h2 class="section-title">
-            <i class="fas fa-gamepad"></i> Active Lottery Games
-        </h2>
+        <?php 
+        // Separate campaigns by type
+        $itemCampaigns = array_filter($campaigns ?? [], function($c) { return $c->campaign_type === 'item'; });
+        $cashCampaigns = array_filter($campaigns ?? [], function($c) { return $c->campaign_type !== 'item'; });
+        ?>
         
-        <div class="row">
-            <?php if (!empty($campaigns)): ?>
-                <?php foreach ($campaigns as $campaign): ?>
+        <?php if (!empty($itemCampaigns)): ?>
+        <!-- Item Prize Campaigns -->
+        <div class="mb-5">
+            <h2 class="section-title" style="background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                <i class="fas fa-gift"></i> Win Amazing Prizes
+            </h2>
+            <p class="text-center mb-4" style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">
+                Enter for a chance to win phones, cars, TVs, and more!
+            </p>
+            
+            <div class="row">
+                <?php foreach ($itemCampaigns as $campaign): ?>
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="campaign-card" style="border-color: rgba(16, 185, 129, 0.4);">
+                            <div class="campaign-badge" style="background: linear-gradient(135deg, #10b981, #059669);">
+                                <i class="fas fa-gift"></i> WIN ITEM
+                            </div>
+                            
+                            <?php if ($campaign->item_image): ?>
+                                <div style="width: 100%; height: 220px; overflow: hidden; border-radius: 15px 15px 0 0; margin: -20px -20px 15px -20px; position: relative;">
+                                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($campaign->item_image) ?>" 
+                                         alt="<?= htmlspecialchars($campaign->item_name) ?>" 
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 1rem;">
+                                        <span style="color: white; font-weight: 700; font-size: 1.1rem;">
+                                            <i class="fas fa-gift"></i> <?= htmlspecialchars($campaign->item_name) ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="campaign-header" style="background: linear-gradient(135deg, #10b981, #059669);">
+                                <h3 class="campaign-name"><?= htmlspecialchars($campaign->name) ?></h3>
+                                <div class="campaign-price" style="font-size: 2.5rem;">
+                                    <i class="fas fa-trophy"></i> <?= htmlspecialchars($campaign->item_name) ?>
+                                </div>
+                                <small style="color: #ffd32a; font-weight: 700; font-size: 1.1rem;">
+                                    Worth GHS <?= number_format($campaign->item_value, 0) ?>
+                                </small>
+                            </div>
+                            
+                            <div class="campaign-body">
+                                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem; min-height: 60px;">
+                                    <?= htmlspecialchars(substr($campaign->item_description ?? 'Amazing prize waiting for you!', 0, 100)) ?>...
+                                </p>
+                                
+                                <div class="campaign-info-grid">
+                                    <div class="info-box" style="background: rgba(16, 185, 129, 0.15);">
+                                        <div class="info-label">Ticket Price</div>
+                                        <div class="info-value" style="color: #10b981;"><?= $campaign->currency ?> <?= number_format($campaign->ticket_price, 2) ?></div>
+                                    </div>
+                                    <div class="info-box" style="background: rgba(16, 185, 129, 0.15);">
+                                        <div class="info-label">Winners</div>
+                                        <div class="info-value" style="color: #10b981;"><?= $campaign->item_quantity ?? 1 ?></div>
+                                    </div>
+                                    <div class="info-box" style="background: rgba(16, 185, 129, 0.15);">
+                                        <div class="info-label">Selection</div>
+                                        <div class="info-value" style="color: #10b981; font-size: 0.9rem;">
+                                            <?php
+                                            $types = [
+                                                'single' => 'Single',
+                                                'multiple' => 'Multiple',
+                                                'tiered' => 'Tiered'
+                                            ];
+                                            echo $types[$campaign->winner_selection_type] ?? 'Single';
+                                            ?>
+                                        </div>
+                                    </div>
+                                    <div class="info-box" style="background: rgba(16, 185, 129, 0.15);">
+                                        <div class="info-label">Ends</div>
+                                        <div class="info-value" style="color: #10b981;"><?= formatDate($campaign->end_date, 'M d') ?></div>
+                                    </div>
+                                </div>
+                                
+                                <a href="<?= url('public/buyTicket?campaign=' . $campaign->id) ?>" 
+                                   class="btn btn-campaign" 
+                                   style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
+                                    <i class="fas fa-ticket-alt"></i> Enter to Win This Prize
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <?php if (!empty($cashCampaigns)): ?>
+        <!-- Cash Prize Campaigns -->
+        <div class="mb-5">
+            <h2 class="section-title">
+                <i class="fas fa-money-bill-wave"></i> Cash Prize Lotteries
+            </h2>
+            <p class="text-center mb-4" style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">
+                Play daily and win instant cash prizes!
+            </p>
+            
+            <div class="row">
+                <?php foreach ($cashCampaigns as $campaign): ?>
                     <div class="col-md-6 col-lg-4 mb-4">
                         <div class="campaign-card">
                             <?php if ($campaign->daily_draw_enabled): ?>
@@ -1331,8 +1429,8 @@
                             </div>
                             
                             <div class="campaign-body">
-                                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">
-                                    <?= htmlspecialchars(substr($campaign->description ?? 'Play and win amazing prizes!', 0, 100)) ?>...
+                                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem; min-height: 60px;">
+                                    <?= htmlspecialchars(substr($campaign->description ?? 'Play and win amazing cash prizes!', 0, 100)) ?>...
                                 </p>
                                 
                                 <div class="campaign-info-grid">
@@ -1347,20 +1445,27 @@
                                 </div>
                                 
                                 <a href="<?= url('public/buyTicket?campaign=' . $campaign->id) ?>" class="btn btn-campaign">
-                                    <i class="fas fa-ticket-alt"></i> Buy Tickets
+                                    <i class="fas fa-ticket-alt"></i> Buy Tickets Now
                                 </a>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <div class="col-12">
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No active games at the moment. Check back soon!
-                    </div>
-                </div>
-            <?php endif; ?>
+            </div>
         </div>
+        <?php endif; ?>
+        
+        <?php if (empty($campaigns)): ?>
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info text-center" style="background: rgba(102, 126, 234, 0.2); border: 2px solid rgba(102, 126, 234, 0.4); border-radius: 20px; padding: 3rem;">
+                    <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 1rem; color: #667eea;"></i>
+                    <h4 style="color: white; margin-bottom: 1rem;">No Active Games</h4>
+                    <p style="color: rgba(255,255,255,0.7);">Check back soon for exciting new lottery games and prize giveaways!</p>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </section>
 
     <!-- Promo Banner -->

@@ -80,6 +80,9 @@ class Campaign extends Model
 
     public function getStats($campaignId)
     {
+        // Get campaign to check type
+        $campaign = $this->findById($campaignId);
+        
         $this->db->query("SELECT 
                          (SELECT COUNT(*) FROM tickets WHERE campaign_id = :cid1) as total_tickets,
                          (SELECT COUNT(DISTINCT player_id) FROM tickets WHERE campaign_id = :cid2) as total_players,
@@ -91,7 +94,15 @@ class Campaign extends Model
         $this->db->bind(':cid3', $campaignId);
         $this->db->bind(':cid4', $campaignId);
         $this->db->bind(':cid5', $campaignId);
-        return $this->db->single();
+        
+        $stats = $this->db->single();
+        
+        // For item campaigns, set total_prize_pool to item_value instead of 0
+        if ($campaign && $campaign->campaign_type === 'item') {
+            $stats->total_prize_pool = $campaign->item_value ?? 0;
+        }
+        
+        return $stats;
     }
 
     public function lockConfiguration($campaignId)
@@ -204,5 +215,224 @@ class Campaign extends Model
         $this->db->bind(':programme_id', $programmeId);
         $result = $this->db->single();
         return $result->count ?? 0;
+    }
+
+    // ============================================
+    // ITEM CAMPAIGN METHODS
+    // ============================================
+
+    /**
+     * Check if campaign is item-based
+     */
+    public function isItemCampaign($campaign = null)
+    {
+        if ($campaign === null) {
+            return false;
+        }
+        return isset($campaign->campaign_type) && $campaign->campaign_type === 'item';
+    }
+
+    /**
+     * Get display prize (item name or cash amount)
+     */
+    public function getDisplayPrize($campaign)
+    {
+        if ($this->isItemCampaign($campaign)) {
+            $value = number_format($campaign->item_value ?? 0, 2);
+            return $campaign->item_name . ' (Worth ' . $campaign->currency . ' ' . $value . ')';
+        }
+        
+        $stats = $this->getStats($campaign->id);
+        $prizePool = $stats->total_prize_pool ?? 0;
+        return $campaign->currency . ' ' . number_format($prizePool, 2);
+    }
+
+    /**
+     * Get prize structure for display
+     */
+    public function getPrizeStructure($campaignId)
+    {
+        $campaign = $this->findById($campaignId);
+        
+        if ($this->isItemCampaign($campaign)) {
+            $structure = [
+                'type' => 'item',
+                'main_prize' => $campaign->item_name,
+                'value' => $campaign->item_value,
+                'quantity' => $campaign->item_quantity ?? 1,
+                'selection_type' => $campaign->winner_selection_type ?? 'single'
+            ];
+            
+            // Get tiered prizes if applicable
+            if ($campaign->winner_selection_type === 'tiered') {
+                $structure['prizes'] = $this->getItemPrizes($campaignId);
+            }
+            
+            return $structure;
+        }
+        
+        // Cash campaign structure
+        $stats = $this->getStats($campaignId);
+        $totalRevenue = $stats->total_revenue ?? 0;
+        $prizePool = $totalRevenue * ($campaign->prize_pool_percent / 100);
+        
+        return [
+            'type' => 'cash',
+            'prize_pool' => $prizePool,
+            'first_prize' => $prizePool * 0.50,
+            'second_prize' => $prizePool * 0.30,
+            'third_prize' => $prizePool * 0.20
+        ];
+    }
+
+    /**
+     * Get item prizes for tiered campaigns
+     */
+    public function getItemPrizes($campaignId)
+    {
+        $this->db->query("SELECT * FROM item_prizes 
+                         WHERE campaign_id = :campaign_id 
+                         ORDER BY prize_position ASC");
+        $this->db->bind(':campaign_id', $campaignId);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Add item prize to campaign
+     */
+    public function addItemPrize($data)
+    {
+        $this->db->query("INSERT INTO item_prizes 
+                         (campaign_id, prize_position, prize_type, item_name, item_description, 
+                          item_value, item_image, cash_amount, cash_percentage) 
+                         VALUES 
+                         (:campaign_id, :prize_position, :prize_type, :item_name, :item_description, 
+                          :item_value, :item_image, :cash_amount, :cash_percentage)");
+        
+        $this->db->bind(':campaign_id', $data['campaign_id']);
+        $this->db->bind(':prize_position', $data['prize_position']);
+        $this->db->bind(':prize_type', $data['prize_type']);
+        $this->db->bind(':item_name', $data['item_name'] ?? null);
+        $this->db->bind(':item_description', $data['item_description'] ?? null);
+        $this->db->bind(':item_value', $data['item_value'] ?? null);
+        $this->db->bind(':item_image', $data['item_image'] ?? null);
+        $this->db->bind(':cash_amount', $data['cash_amount'] ?? null);
+        $this->db->bind(':cash_percentage', $data['cash_percentage'] ?? null);
+        
+        return $this->db->execute();
+    }
+
+    /**
+     * Get item images for campaign
+     */
+    public function getItemImages($campaignId)
+    {
+        $this->db->query("SELECT * FROM item_images 
+                         WHERE campaign_id = :campaign_id 
+                         ORDER BY is_primary DESC, display_order ASC");
+        $this->db->bind(':campaign_id', $campaignId);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Add item image
+     */
+    public function addItemImage($campaignId, $imagePath, $isPrimary = false, $displayOrder = 0)
+    {
+        $this->db->query("INSERT INTO item_images 
+                         (campaign_id, image_path, is_primary, display_order) 
+                         VALUES (:campaign_id, :image_path, :is_primary, :display_order)");
+        
+        $this->db->bind(':campaign_id', $campaignId);
+        $this->db->bind(':image_path', $imagePath);
+        $this->db->bind(':is_primary', $isPrimary ? 1 : 0);
+        $this->db->bind(':display_order', $displayOrder);
+        
+        return $this->db->execute();
+    }
+
+    /**
+     * Get item specifications
+     */
+    public function getItemSpecifications($campaignId)
+    {
+        $this->db->query("SELECT * FROM item_specifications 
+                         WHERE campaign_id = :campaign_id 
+                         ORDER BY display_order ASC");
+        $this->db->bind(':campaign_id', $campaignId);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Add item specification
+     */
+    public function addItemSpecification($campaignId, $key, $value, $displayOrder = 0)
+    {
+        $this->db->query("INSERT INTO item_specifications 
+                         (campaign_id, spec_key, spec_value, display_order) 
+                         VALUES (:campaign_id, :spec_key, :spec_value, :display_order)");
+        
+        $this->db->bind(':campaign_id', $campaignId);
+        $this->db->bind(':spec_key', $key);
+        $this->db->bind(':spec_value', $value);
+        $this->db->bind(':display_order', $displayOrder);
+        
+        return $this->db->execute();
+    }
+
+    /**
+     * Check if minimum tickets reached for item campaign
+     */
+    public function hasReachedMinimumTickets($campaignId)
+    {
+        $campaign = $this->findById($campaignId);
+        
+        if (!$this->isItemCampaign($campaign) || !$campaign->min_tickets_for_draw) {
+            return true; // No minimum set or not item campaign
+        }
+        
+        $stats = $this->getStats($campaignId);
+        return ($stats->total_tickets ?? 0) >= $campaign->min_tickets_for_draw;
+    }
+
+    /**
+     * Calculate break-even tickets for item campaign
+     */
+    public function calculateBreakEvenTickets($itemValue, $ticketPrice)
+    {
+        if ($ticketPrice <= 0) {
+            return 0;
+        }
+        return ceil($itemValue / $ticketPrice);
+    }
+
+    /**
+     * Get item campaigns only
+     */
+    public function getItemCampaigns($status = 'active')
+    {
+        $this->db->query("SELECT c.*, s.name as sponsor_name 
+                         FROM {$this->table} c
+                         LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         WHERE c.campaign_type = 'item' 
+                         AND c.status = :status
+                         ORDER BY c.start_date DESC");
+        $this->db->bind(':status', $status);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get cash campaigns only
+     */
+    public function getCashCampaigns($status = 'active')
+    {
+        $this->db->query("SELECT c.*, s.name as sponsor_name 
+                         FROM {$this->table} c
+                         LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         WHERE c.campaign_type = 'cash' 
+                         AND c.status = :status
+                         ORDER BY c.start_date DESC");
+        $this->db->bind(':status', $status);
+        return $this->db->resultSet();
     }
 }

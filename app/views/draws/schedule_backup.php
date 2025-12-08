@@ -6,7 +6,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0"><i class="fas fa-calendar-plus"></i> Schedule Draw</h1>
+                    <h1 class="m-0">Schedule Draw</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -29,40 +29,43 @@
                 </div>
             <?php endif; ?>
 
-            <?php if (flash('error')): ?>
+            <?php 
+            $errorMsg = flash('error');
+            if ($errorMsg): 
+            ?>
                 <div class="alert alert-danger alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="icon fas fa-ban"></i> <?= htmlspecialchars(flash('error') ?? '') ?>
+                    <i class="icon fas fa-ban"></i> <?= htmlspecialchars($errorMsg) ?>
                 </div>
             <?php endif; ?>
 
-            <form action="<?= url('draw/schedule') ?>" method="POST" id="scheduleForm" onsubmit="return validateScheduleForm()">
-                <?= csrf_field() ?>
-                
-                <!-- Campaign Selection Card -->
-                <div class="card card-primary card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-bullseye"></i> Select Campaign</h3>
-                        <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Draw Details</h3>
+                </div>
+                <form action="<?= url('draw/schedule') ?>" method="POST" onsubmit="return validateScheduleForm()">
+                    <?= csrf_field() ?>
                     <div class="card-body">
                         <div class="form-group">
-                            <label for="station_id"><i class="fas fa-broadcast-tower"></i> Station <span class="text-danger">*</span></label>
+                            <label for="station_id">Station <span class="text-danger">*</span></label>
                             <?php
                             $user = $_SESSION['user'];
                             $role = $user->role_name ?? '';
                             
-                            if (($role === 'station_admin' || $role === 'programme_manager') && $user->station_id):
+                            if ($role === 'station_admin' && $user->station_id):
                                 $stationModel = new \App\Models\Station();
                                 $station = $stationModel->findById($user->station_id);
                             ?>
                                 <input type="hidden" name="station_id" id="station_id" value="<?= $user->station_id ?>">
                                 <input type="text" class="form-control" value="<?= htmlspecialchars($station->name ?? 'Your Station') ?>" readonly>
                                 <small class="form-text text-muted">You can only schedule draws for your station</small>
+                            <?php elseif ($role === 'programme_manager' && $user->station_id):
+                                $stationModel = new \App\Models\Station();
+                                $station = $stationModel->findById($user->station_id);
+                            ?>
+                                <input type="hidden" name="station_id" id="station_id" value="<?= $user->station_id ?>">
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($station->name ?? 'Your Station') ?>" readonly>
+                                <small class="form-text text-muted">You can only schedule draws for your programme's station</small>
                             <?php else: ?>
                                 <select class="form-control" id="station_id" name="station_id" required onchange="onStationChange()">
                                     <option value="">Select Station</option>
@@ -71,14 +74,14 @@
                                     $stations = $stationModel->getActive();
                                     foreach ($stations as $station):
                                     ?>
-                                        <option value="<?= $station->id ?>"><?= htmlspecialchars($station->name ?? '') ?></option>
+                                        <option value="<?= $station->id ?>"><?= htmlspecialchars($station->name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             <?php endif; ?>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-layer-group"></i> Campaign Type</label>
+                            <label>Campaign Type</label>
                             <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
                                 <label class="btn btn-outline-primary active" id="station-wide-btn">
                                     <input type="radio" name="campaign_type" value="station" checked onchange="toggleCampaignType()"> 
@@ -92,7 +95,7 @@
                         </div>
 
                         <div class="form-group" id="programme_field" style="display: none;">
-                            <label for="programme_id"><i class="fas fa-microphone"></i> Programme</label>
+                            <label for="programme_id">Programme</label>
                             <select class="form-control" id="programme_id" name="programme_id" disabled onchange="loadCampaigns()">
                                 <option value="">First select a station...</option>
                             </select>
@@ -100,47 +103,26 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="campaign_id"><i class="fas fa-gamepad"></i> Campaign <span class="text-danger">*</span></label>
-                            <select class="form-control" id="campaign_id" name="campaign_id" required disabled onchange="onCampaignChange()">
+                            <label for="campaign_id">Campaign <span class="text-danger">*</span></label>
+                            <select class="form-control" id="campaign_id" name="campaign_id" required disabled onchange="updateScheduleType()">
                                 <option value="">First select a station...</option>
                             </select>
                         </div>
 
-                        <!-- Campaign Info Display -->
-                        <div id="campaign_info" style="display: none;">
-                            <div class="alert alert-info" id="campaign_info_box">
-                                <h5><i class="fas fa-info-circle"></i> Campaign Information</h5>
-                                <div id="campaign_details"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Draw Configuration Card -->
-                <div class="card card-success card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-cog"></i> Draw Configuration</h3>
-                        <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
                         <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> Scheduling Type</label>
+                            <label>Scheduling Type</label>
                             <div class="custom-control custom-radio">
                                 <input type="radio" id="schedule_single" name="schedule_type" value="single" 
                                        class="custom-control-input" checked onchange="toggleScheduleFields()">
                                 <label class="custom-control-label" for="schedule_single">
-                                    <i class="fas fa-calendar-day"></i> Schedule Single Draw
+                                    Schedule Single Draw
                                 </label>
                             </div>
                             <div class="custom-control custom-radio">
                                 <input type="radio" id="schedule_auto" name="schedule_type" value="auto_daily" 
                                        class="custom-control-input" onchange="toggleScheduleFields()">
                                 <label class="custom-control-label" for="schedule_auto">
-                                    <i class="fas fa-calendar-week"></i> Auto-Schedule All Daily Draws (from start to end date)
+                                    Auto-Schedule All Daily Draws (from start to end date)
                                 </label>
                             </div>
                         </div>
@@ -149,7 +131,7 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="draw_type"><i class="fas fa-tag"></i> Draw Type <span class="text-danger">*</span></label>
+                                        <label for="draw_type">Draw Type <span class="text-danger">*</span></label>
                                         <select class="form-control" id="draw_type" name="draw_type">
                                             <option value="daily">Daily Draw</option>
                                             <option value="final">Final Draw</option>
@@ -159,13 +141,13 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="draw_date"><i class="fas fa-calendar"></i> Draw Date <span class="text-danger">*</span></label>
+                                        <label for="draw_date">Draw Date <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="draw_date" name="draw_date">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-group" id="winner_count_group">
-                                        <label for="winner_count"><i class="fas fa-users"></i> Number of Winners <span class="text-danger">*</span></label>
+                                    <div class="form-group">
+                                        <label for="winner_count">Number of Winners <span class="text-danger">*</span></label>
                                         <select class="form-control" id="winner_count" name="winner_count" required onchange="updatePrizePreview()">
                                             <option value="1">1 Winner</option>
                                             <option value="2">2 Winners</option>
@@ -194,29 +176,23 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Submit Buttons -->
-                <div class="card">
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-calendar-check"></i> <span id="submit_text">Schedule Draw</span>
                         </button>
-                        <a href="<?= url('draw/pending') ?>" class="btn btn-default btn-lg">
+                        <a href="<?= url('draw/pending') ?>" class="btn btn-default">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </section>
 </div>
 
 <script src="<?= vendor('jquery/jquery.min.js') ?>"></script>
 <script>
-// Store selected campaign data
-let selectedCampaign = null;
-
 // Handle station selection
 function onStationChange() {
     const campaignType = $('input[name="campaign_type"]:checked').val();
@@ -257,7 +233,6 @@ function loadStationWideCampaigns() {
     const campaignSelect = $('#campaign_id');
     
     campaignSelect.html('<option value="">Loading...</option>').prop('disabled', true);
-    $('#campaign_info').hide();
     
     if (!stationId) {
         campaignSelect.html('<option value="">First select a station...</option>');
@@ -268,12 +243,13 @@ function loadStationWideCampaigns() {
         if (response.success && response.campaigns.length > 0) {
             campaignSelect.html('<option value="">Select a campaign...</option>');
             response.campaigns.forEach(function(campaign) {
-                const campaignType = campaign.campaign_type === 'item' ? '🎁' : '💰';
                 campaignSelect.append(
                     $('<option></option>')
                         .val(campaign.id)
-                        .text(campaignType + ' ' + campaign.name + ' (' + campaign.code + ')')
-                        .data('campaign', campaign)
+                        .text(campaign.name + ' (' + campaign.code + ')')
+                        .attr('data-daily-enabled', campaign.daily_draw_enabled || 0)
+                        .attr('data-start', campaign.start_date || '')
+                        .attr('data-end', campaign.end_date || '')
                 );
             });
             campaignSelect.prop('disabled', false);
@@ -289,9 +265,9 @@ function loadProgrammes() {
     const programmeSelect = $('#programme_id');
     const campaignSelect = $('#campaign_id');
     
+    // Reset dependent dropdowns
     programmeSelect.html('<option value="">Loading...</option>').prop('disabled', true);
     campaignSelect.html('<option value="">First select a programme...</option>').prop('disabled', true);
-    $('#campaign_info').hide();
     
     if (!stationId) {
         programmeSelect.html('<option value="">First select a station...</option>');
@@ -317,7 +293,6 @@ function loadCampaigns() {
     const campaignSelect = $('#campaign_id');
     
     campaignSelect.html('<option value="">Loading...</option>').prop('disabled', true);
-    $('#campaign_info').hide();
     
     if (!programmeId) {
         campaignSelect.html('<option value="">First select a programme...</option>');
@@ -328,12 +303,13 @@ function loadCampaigns() {
         if (response.success && response.campaigns.length > 0) {
             campaignSelect.html('<option value="">Select a campaign...</option>');
             response.campaigns.forEach(function(campaign) {
-                const campaignType = campaign.campaign_type === 'item' ? '🎁' : '💰';
                 campaignSelect.append(
                     $('<option></option>')
                         .val(campaign.id)
-                        .text(campaignType + ' ' + campaign.name + ' (' + campaign.code + ')')
-                        .data('campaign', campaign)
+                        .text(campaign.name + ' (' + campaign.code + ')')
+                        .attr('data-daily-enabled', campaign.daily_draw_enabled || 0)
+                        .attr('data-start', campaign.start_date || '')
+                        .attr('data-end', campaign.end_date || '')
                 );
             });
             campaignSelect.prop('disabled', false);
@@ -341,123 +317,6 @@ function loadCampaigns() {
             campaignSelect.html('<option value="">No campaigns available</option>');
         }
     });
-}
-
-// Handle campaign selection
-function onCampaignChange() {
-    const campaignSelect = $('#campaign_id');
-    const selectedOption = campaignSelect.find('option:selected');
-    selectedCampaign = selectedOption.data('campaign');
-    
-    if (!selectedCampaign) {
-        $('#campaign_info').hide();
-        return;
-    }
-    
-    // Display campaign information
-    displayCampaignInfo(selectedCampaign);
-    
-    // Configure draw options based on campaign type
-    configureDrawOptions(selectedCampaign);
-    
-    // Update schedule type availability
-    updateScheduleType(selectedCampaign);
-}
-
-// Display campaign information
-function displayCampaignInfo(campaign) {
-    let html = '<div class="row">';
-    
-    // Campaign Type
-    if (campaign.campaign_type === 'item') {
-        html += '<div class="col-md-12"><p><strong><i class="fas fa-gift text-success"></i> Campaign Type:</strong> <span class="badge badge-success">Item Campaign</span></p></div>';
-        html += '<div class="col-md-6"><p><strong><i class="fas fa-trophy"></i> Prize Item:</strong> ' + (campaign.item_name || 'N/A') + '</p></div>';
-        html += '<div class="col-md-6"><p><strong><i class="fas fa-money-bill-wave"></i> Item Value:</strong> ' + (campaign.currency || 'GHS') + ' ' + parseFloat(campaign.item_value || 0).toFixed(2) + '</p></div>';
-        
-        // Winner selection type
-        let selectionType = 'Single Winner';
-        if (campaign.winner_selection_type === 'multiple') {
-            selectionType = 'Multiple Winners (' + (campaign.item_quantity || 1) + ' items)';
-        } else if (campaign.winner_selection_type === 'tiered') {
-            selectionType = 'Tiered Prizes';
-        }
-        html += '<div class="col-md-6"><p><strong><i class="fas fa-users"></i> Winner Selection:</strong> ' + selectionType + '</p></div>';
-        
-        // Minimum tickets
-        if (campaign.min_tickets_for_draw) {
-            html += '<div class="col-md-6"><p><strong><i class="fas fa-exclamation-triangle text-warning"></i> Minimum Tickets:</strong> ' + campaign.min_tickets_for_draw + ' tickets required</p></div>';
-        }
-    } else {
-        html += '<div class="col-md-12"><p><strong><i class="fas fa-money-bill-wave text-primary"></i> Campaign Type:</strong> <span class="badge badge-primary">Cash Campaign</span></p></div>';
-        html += '<div class="col-md-6"><p><strong><i class="fas fa-trophy"></i> Prize Pool:</strong> ' + (campaign.prize_pool_percent || 0) + '% of revenue</p></div>';
-    }
-    
-    // Common info
-    html += '<div class="col-md-6"><p><strong><i class="fas fa-ticket-alt"></i> Ticket Price:</strong> ' + (campaign.currency || 'GHS') + ' ' + parseFloat(campaign.ticket_price || 0).toFixed(2) + '</p></div>';
-    html += '<div class="col-md-6"><p><strong><i class="fas fa-calendar-alt"></i> Period:</strong> ' + (campaign.start_date || 'N/A') + ' to ' + (campaign.end_date || 'N/A') + '</p></div>';
-    
-    if (campaign.daily_draw_enabled == 1) {
-        html += '<div class="col-md-6"><p><strong><i class="fas fa-bolt text-warning"></i> Daily Draws:</strong> <span class="badge badge-success">Enabled</span></p></div>';
-    }
-    
-    html += '</div>';
-    
-    $('#campaign_details').html(html);
-    $('#campaign_info').show();
-    
-    // Update info box color based on campaign type
-    if (campaign.campaign_type === 'item') {
-        $('#campaign_info_box').removeClass('alert-info').addClass('alert-success');
-    } else {
-        $('#campaign_info_box').removeClass('alert-success').addClass('alert-info');
-    }
-}
-
-// Configure draw options based on campaign type
-function configureDrawOptions(selectedCampaign) {
-    const winnerCountGroup = $('#winner_count_group');
-    const winnerCountSelect = $('#winner_count');
-    const prizePreview = $('#prize_preview');
-    
-    if (selectedCampaign.campaign_type === 'item') {
-        // For item campaigns, winner count depends on selection type
-        if (selectedCampaign.winner_selection_type === 'single') {
-            // Single winner only
-            winnerCountSelect.html('<option value="1">1 Winner</option>');
-            winnerCountSelect.val('1').prop('disabled', true);
-            prizePreview.html('<i class="fas fa-gift text-success"></i> Winner gets: ' + (selectedCampaign.item_name || 'Item'));
-        } else if (selectedCampaign.winner_selection_type === 'multiple') {
-            // Multiple winners based on item quantity
-            const quantity = parseInt(selectedCampaign.item_quantity) || 1;
-            winnerCountSelect.html('<option value="' + quantity + '">' + quantity + ' Winner(s)</option>');
-            winnerCountSelect.val(quantity).prop('disabled', true);
-            prizePreview.html('<i class="fas fa-gift text-success"></i> Each winner gets 1 ' + (selectedCampaign.item_name || 'Item'));
-        } else if (selectedCampaign.winner_selection_type === 'tiered') {
-            // Tiered prizes - typically 3 levels
-            winnerCountSelect.html('<option value="3">3 Winners (Tiered)</option>');
-            winnerCountSelect.val('3').prop('disabled', true);
-            prizePreview.html('<i class="fas fa-trophy text-warning"></i> Tiered prizes: 1st, 2nd, 3rd place');
-        }
-    } else {
-        // Cash campaign - allow flexible winner count
-        winnerCountSelect.prop('disabled', false);
-        // Restore options if they were removed
-        if (winnerCountSelect.find('option').length < 5) {
-            winnerCountSelect.html(`
-                <option value="1">1 Winner</option>
-                <option value="2">2 Winners</option>
-                <option value="3" selected>3 Winners (Recommended)</option>
-                <option value="4">4 Winners</option>
-                <option value="5">5 Winners</option>
-                <option value="6">6 Winners</option>
-                <option value="7">7 Winners</option>
-                <option value="8">8 Winners</option>
-                <option value="9">9 Winners</option>
-                <option value="10">10 Winners</option>
-            `);
-        }
-        updatePrizePreview();
-    }
 }
 
 function toggleScheduleFields() {
@@ -471,6 +330,7 @@ function toggleScheduleFields() {
         autoInfo.style.display = 'block';
         submitText.textContent = 'Auto-Schedule Daily Draws';
         
+        // Make single draw fields optional
         document.getElementById('draw_type').removeAttribute('required');
         document.getElementById('draw_date').removeAttribute('required');
     } else {
@@ -478,13 +338,18 @@ function toggleScheduleFields() {
         autoInfo.style.display = 'none';
         submitText.textContent = 'Schedule Draw';
         
+        // Make single draw fields required
         document.getElementById('draw_type').setAttribute('required', 'required');
         document.getElementById('draw_date').setAttribute('required', 'required');
     }
 }
 
-function updateScheduleType(campaign) {
-    if (campaign.daily_draw_enabled == 0) {
+function updateScheduleType() {
+    const campaignSelect = document.getElementById('campaign_id');
+    const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
+    const dailyEnabled = selectedOption.getAttribute('data-daily-enabled');
+    
+    if (dailyEnabled === '0') {
         document.getElementById('schedule_auto').disabled = true;
         document.getElementById('schedule_single').checked = true;
         toggleScheduleFields();
@@ -499,13 +364,13 @@ function updatePrizePreview() {
     const preview = $('#prize_preview');
     
     if (winnerCount === 1) {
-        preview.html('<i class="fas fa-trophy text-warning"></i> Prize split: 100% (Winner takes all)');
+        preview.text('Prize split: 100% (Winner takes all)');
     } else if (winnerCount === 2) {
-        preview.html('<i class="fas fa-trophy text-warning"></i> Prize split: 60% / 40%');
+        preview.text('Prize split: 60% / 40%');
     } else if (winnerCount === 3) {
-        preview.html('<i class="fas fa-trophy text-warning"></i> Prize split: 50% / 30% / 20%');
+        preview.text('Prize split: 50% / 30% / 20%');
     } else {
-        preview.html('<i class="fas fa-trophy text-warning"></i> Prize split: Equal distribution (' + (100/winnerCount).toFixed(1) + '% each)');
+        preview.text(`Prize split: Equal distribution (${(100/winnerCount).toFixed(1)}% each)`);
     }
 }
 
@@ -516,27 +381,24 @@ function validateScheduleForm() {
     const campaignId = $('#campaign_id').val();
     const scheduleType = $('input[name="schedule_type"]:checked').val();
     
+    // Check if campaign is selected
     if (!campaignId) {
         alert('Please select a campaign');
         return false;
     }
     
+    // For programme-specific campaigns, ensure programme is selected
     if (campaignType === 'programme' && !programmeId) {
         alert('Please select a programme for programme-specific campaigns');
         return false;
     }
     
+    // For station-wide campaigns, clear programme_id
     if (campaignType === 'station') {
         $('#programme_id').val('');
     }
     
-    // For item campaigns, check minimum tickets if set
-    if (selectedCampaign && selectedCampaign.campaign_type === 'item' && selectedCampaign.min_tickets_for_draw) {
-        if (!confirm('This item campaign requires ' + selectedCampaign.min_tickets_for_draw + ' tickets before draw. Make sure this threshold is met before the draw date. Continue?')) {
-            return false;
-        }
-    }
-    
+    // For single draws, validate required fields
     if (scheduleType === 'single') {
         const drawType = $('#draw_type').val();
         const drawDate = $('#draw_date').val();

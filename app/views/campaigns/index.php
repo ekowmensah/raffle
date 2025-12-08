@@ -75,13 +75,16 @@
                                         </td>
                                         <td><span class="badge badge-info"><?= htmlspecialchars($campaign->code) ?></span></td>
                                         <td>
-                                            <?php if (($campaign->programme_count ?? 0) > 0): ?>
-                                                <span class="badge badge-primary" title="Programme-specific campaign">
-                                                    <i class="fas fa-users"></i> Programme
+                                            <?php if ($campaign->campaign_type === 'item'): ?>
+                                                <span class="badge badge-success" title="Item Prize Campaign">
+                                                    <i class="fas fa-gift"></i> Item
                                                 </span>
+                                                <?php if ($campaign->item_name): ?>
+                                                    <br><small class="text-muted"><?= htmlspecialchars(substr($campaign->item_name, 0, 20)) ?><?= strlen($campaign->item_name) > 20 ? '...' : '' ?></small>
+                                                <?php endif; ?>
                                             <?php else: ?>
-                                                <span class="badge badge-success" title="Station-wide campaign">
-                                                    <i class="fas fa-broadcast-tower"></i> Station-wide
+                                                <span class="badge badge-primary" title="Cash Prize Campaign">
+                                                    <i class="fas fa-money-bill-wave"></i> Cash
                                                 </span>
                                             <?php endif; ?>
                                         </td>
@@ -106,10 +109,14 @@
                                             <a href="<?= url('campaign/show/' . $campaign->id) ?>" class="btn btn-info btn-sm" title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (!$campaign->is_config_locked): ?>
+                                            <?php if (!$campaign->is_config_locked && ($campaign->total_tickets ?? 0) == 0): ?>
                                                 <a href="<?= url('campaign/edit/' . $campaign->id) ?>" class="btn btn-warning btn-sm" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                            <?php elseif (($campaign->total_tickets ?? 0) > 0): ?>
+                                                <button class="btn btn-secondary btn-sm" disabled title="Cannot edit - tickets already sold">
+                                                    <i class="fas fa-lock"></i>
+                                                </button>
                                             <?php endif; ?>
                                             <?php if (($campaign->total_tickets ?? 0) == 0): ?>
                                                 <button type="button" class="btn btn-danger btn-sm" 

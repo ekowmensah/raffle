@@ -122,7 +122,16 @@ class CampaignController extends Controller
                 'daily_share_percent_of_pool' => $_POST['daily_share_percent_of_pool'] ?? 50,
                 'final_share_percent_of_pool' => $_POST['final_share_percent_of_pool'] ?? 50,
                 'daily_draw_enabled' => isset($_POST['daily_draw_enabled']) ? 1 : 0,
-                'created_by_user_id' => $_SESSION['user_id']
+                'created_by_user_id' => $_SESSION['user_id'],
+                // Item campaign fields
+                'campaign_type' => $_POST['campaign_type'] ?? 'cash',
+                'item_name' => !empty($_POST['item_name']) ? sanitize($_POST['item_name']) : null,
+                'item_description' => !empty($_POST['item_description']) ? sanitize($_POST['item_description']) : null,
+                'item_value' => !empty($_POST['item_value']) ? $_POST['item_value'] : null,
+                'item_image' => !empty($_POST['item_image']) ? sanitize($_POST['item_image']) : null,
+                'item_quantity' => !empty($_POST['item_quantity']) ? $_POST['item_quantity'] : 1,
+                'winner_selection_type' => $_POST['winner_selection_type'] ?? 'single',
+                'min_tickets_for_draw' => !empty($_POST['min_tickets_for_draw']) ? $_POST['min_tickets_for_draw'] : null
             ];
 
             try {
@@ -190,8 +199,63 @@ class CampaignController extends Controller
             $this->redirect('campaign/show/' . $id);
         }
 
+        // Check if campaign has tickets sold
+        $ticketCount = $campaign->total_tickets ?? 0;
+        if ($ticketCount > 0) {
+            flash('error', 'Cannot edit campaign - tickets have already been sold. Create a new campaign instead.');
+            $this->redirect('campaign/show/' . $id);
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
+
+            // Handle image upload
+            $itemImagePath = $_POST['item_image'] ?? null; // Keep existing image by default
+            
+            if (isset($_FILES['item_image_upload']) && $_FILES['item_image_upload']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['item_image_upload'];
+                
+                // Validate file
+                $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                $maxSize = 5 * 1024 * 1024; // 5MB
+                
+                if (!in_array($file['type'], $allowedTypes)) {
+                    flash('error', 'Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.');
+                    $this->redirect('campaign/edit/' . $id);
+                    return;
+                }
+                
+                if ($file['size'] > $maxSize) {
+                    flash('error', 'Image size must be less than 5MB.');
+                    $this->redirect('campaign/edit/' . $id);
+                    return;
+                }
+                
+                // Create upload directory if it doesn't exist
+                $uploadDir = 'uploads/campaigns/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                
+                // Generate unique filename
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'campaign_' . $id . '_' . time() . '.' . $extension;
+                $uploadPath = $uploadDir . $filename;
+                
+                // Delete old image if exists
+                if (!empty($campaign->item_image) && file_exists($campaign->item_image)) {
+                    unlink($campaign->item_image);
+                }
+                
+                // Move uploaded file
+                if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                    $itemImagePath = $uploadPath;
+                } else {
+                    flash('error', 'Failed to upload image.');
+                    $this->redirect('campaign/edit/' . $id);
+                    return;
+                }
+            }
 
             $data = [
                 'name' => sanitize($_POST['name']),
@@ -204,7 +268,16 @@ class CampaignController extends Controller
                 'station_percent' => $_POST['station_percent'],
                 'programme_percent' => $_POST['programme_percent'],
                 'prize_pool_percent' => $_POST['prize_pool_percent'],
-                'daily_draw_enabled' => isset($_POST['daily_draw_enabled']) ? 1 : 0
+                'daily_draw_enabled' => isset($_POST['daily_draw_enabled']) ? 1 : 0,
+                // Item campaign fields
+                'campaign_type' => $_POST['campaign_type'] ?? 'cash',
+                'item_name' => !empty($_POST['item_name']) ? sanitize($_POST['item_name']) : null,
+                'item_description' => !empty($_POST['item_description']) ? sanitize($_POST['item_description']) : null,
+                'item_value' => !empty($_POST['item_value']) ? $_POST['item_value'] : null,
+                'item_image' => $itemImagePath,
+                'item_quantity' => !empty($_POST['item_quantity']) ? $_POST['item_quantity'] : 1,
+                'winner_selection_type' => $_POST['winner_selection_type'] ?? 'single',
+                'min_tickets_for_draw' => !empty($_POST['min_tickets_for_draw']) ? $_POST['min_tickets_for_draw'] : null
             ];
 
             if ($this->campaignModel->update($id, $data)) {

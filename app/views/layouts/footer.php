@@ -16,13 +16,20 @@
 <!-- AdminLTE App -->
 <script src="<?= vendor('adminlte/js/adminlte.min.js') ?>"></script>
 <!-- Custom JS -->
-<script src="<?= asset('js/custom.js') ?>"></script>
+<script src="<?= asset('js/custom.js') ?>?v=<?= time() ?>"></script>
 
 <script>
-    // Flash message auto-hide
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+    // Prevent any auto-hiding of flash messages
+    $(document).ready(function() {
+        // Stop all timers that might hide alerts
+        $('.alert').stop(true, true);
+        
+        // Ensure alerts are visible
+        $('.alert').show();
+        
+        // Flash messages will stay on screen until manually dismissed
+        // Users can click the X button to close them
+    });
 </script>
 </body>
 </html>

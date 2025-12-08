@@ -57,7 +57,45 @@
 
                         <hr>
                         <h5>Original Campaign Details</h5>
-                        <table class="table table-sm">
+                        <table class="table table-sm table-bordered">
+                            <tr>
+                                <th style="width: 200px;">Campaign Type:</th>
+                                <td>
+                                    <?php if ($campaign->campaign_type === 'item'): ?>
+                                        <span class="badge badge-success"><i class="fas fa-gift"></i> Item Campaign</span>
+                                    <?php else: ?>
+                                        <span class="badge badge-primary"><i class="fas fa-money-bill-wave"></i> Cash Campaign</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php if ($campaign->campaign_type === 'item'): ?>
+                            <tr>
+                                <th>Prize Item:</th>
+                                <td>
+                                    <strong><?= htmlspecialchars($campaign->item_name ?? 'N/A') ?></strong>
+                                    <br><small class="text-muted">Value: <?= $campaign->currency ?> <?= number_format($campaign->item_value ?? 0, 2) ?></small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Winner Selection:</th>
+                                <td>
+                                    <?php
+                                    $types = [
+                                        'single' => 'Single Winner',
+                                        'multiple' => 'Multiple Winners (' . ($campaign->item_quantity ?? 1) . ' items)',
+                                        'tiered' => 'Tiered Prizes'
+                                    ];
+                                    echo $types[$campaign->winner_selection_type] ?? 'Single Winner';
+                                    ?>
+                                </td>
+                            </tr>
+                            <?php if ($campaign->min_tickets_for_draw): ?>
+                            <tr>
+                                <th>Minimum Tickets:</th>
+                                <td><span class="badge badge-warning"><?= number_format($campaign->min_tickets_for_draw) ?> tickets</span></td>
+                            </tr>
+                            <?php endif; ?>
+                            <?php endif; ?>
                             <tr>
                                 <th>Ticket Price:</th>
                                 <td><?= $campaign->currency ?> <?= number_format($campaign->ticket_price, 2) ?></td>
@@ -73,9 +111,24 @@
                             </tr>
                             <tr>
                                 <th>Daily Draw:</th>
-                                <td><?= $campaign->daily_draw_enabled ? 'Enabled' : 'Disabled' ?></td>
+                                <td>
+                                    <?php if ($campaign->daily_draw_enabled): ?>
+                                        <span class="badge badge-success">Enabled</span>
+                                    <?php else: ?>
+                                        <span class="badge badge-secondary">Disabled</span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         </table>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong> 
+                            <?php if ($campaign->campaign_type === 'item'): ?>
+                                Item campaign details (including images) will be copied. Make sure to update item-specific information if needed.
+                            <?php else: ?>
+                                All campaign settings will be copied. You can modify them after creation.
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="card-footer">

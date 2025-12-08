@@ -18,10 +18,7 @@ $(document).ready(function() {
         }
     });
     
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+    // Alerts will stay visible until manually dismissed by clicking the X button
     
     // Form validation
     $('form').on('submit', function() {
