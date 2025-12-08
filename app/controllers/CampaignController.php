@@ -10,6 +10,7 @@ class CampaignController extends Controller
     private $sponsorModel;
     private $programmeModel;
     private $accessModel;
+    private $ticketModel;
 
     public function __construct()
     {
@@ -17,6 +18,7 @@ class CampaignController extends Controller
         $this->sponsorModel = $this->model('Sponsor');
         $this->programmeModel = $this->model('Programme');
         $this->accessModel = $this->model('CampaignProgrammeAccess');
+        $this->ticketModel = $this->model('Ticket');
     }
 
     public function index()
