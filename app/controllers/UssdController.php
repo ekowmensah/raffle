@@ -29,11 +29,20 @@ class UssdController extends Controller
     public function index()
     {
         // Get USSD parameters (format depends on gateway)
-        $sessionId = $_POST['sessionId'] ?? $_GET['sessionId'] ?? '';
-        $phoneNumber = $_POST['phoneNumber'] ?? $_GET['phoneNumber'] ?? '';
-        $text = $_POST['text'] ?? $_GET['text'] ?? '';
+        // Support multiple parameter names used by different gateways
+        $sessionId = $_POST['sessionId'] ?? $_POST['SessionId'] ?? $_GET['sessionId'] ?? $_GET['SessionId'] ?? '';
         
-        // Debug log
+        // Try different phone number parameter names
+        $phoneNumber = $_POST['phoneNumber'] ?? $_POST['PhoneNumber'] ?? $_POST['msisdn'] ?? $_POST['MSISDN'] ?? 
+                      $_GET['phoneNumber'] ?? $_GET['PhoneNumber'] ?? $_GET['msisdn'] ?? $_GET['MSISDN'] ?? '';
+        
+        // Try different text parameter names
+        $text = $_POST['text'] ?? $_POST['Text'] ?? $_POST['input'] ?? $_POST['Input'] ?? 
+               $_GET['text'] ?? $_GET['Text'] ?? $_GET['input'] ?? $_GET['Input'] ?? '';
+        
+        // Debug log - show all POST/GET parameters
+        error_log('USSD Request - POST: ' . json_encode($_POST));
+        error_log('USSD Request - GET: ' . json_encode($_GET));
         error_log('USSD Request - Raw Phone: ' . $phoneNumber . ', Text: ' . $text);
         
         // Clean phone number
