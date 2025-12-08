@@ -434,20 +434,20 @@
                         <div id="single-item-image-section">
                             <div class="form-group">
                                 <label for="item_image_upload">Item Image</label>
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="item_image_upload" name="item_image_upload" 
-                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
-                                <label class="custom-file-label" for="item_image_upload">Choose image file...</label>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="item_image_upload" name="item_image_upload" 
+                                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                                    <label class="custom-file-label" for="item_image_upload">Choose image file...</label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Accepted formats: JPG, PNG, GIF, WEBP (Max 5MB)
+                                </small>
+                                <!-- Hidden field to store existing image path -->
+                                <input type="hidden" id="item_image" name="item_image" value="<?= htmlspecialchars($campaign->item_image ?? '') ?>">
                             </div>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Accepted formats: JPG, PNG, GIF, WEBP (Max 5MB)
-                            </small>
-                            <!-- Hidden field to store existing image path -->
-                            <input type="hidden" id="item_image" name="item_image" value="<?= htmlspecialchars($campaign->item_image ?? '') ?>">
-                        </div>
 
-                        <!-- Image Preview -->
-                        <div class="form-group" id="image-preview-container">
+                            <!-- Image Preview -->
+                            <div class="form-group" id="image-preview-container">
                             <label>
                                 <?php if (!empty($campaign->item_image)): ?>
                                     Current Item Image
@@ -473,13 +473,14 @@
                                 </button>
                             </div>
                             <?php endif; ?>
-                        </div>
+                            </div>
 
-                        <div class="alert alert-warning" id="breakeven-alert">
-                            <h5><i class="fas fa-calculator"></i> Break-Even Analysis</h5>
-                            <p class="mb-0" id="breakeven-calc">
-                                <em>Enter item value and ticket price to calculate break-even point</em>
-                            </p>
+                            <div class="alert alert-warning" id="breakeven-alert">
+                                <h5><i class="fas fa-calculator"></i> Break-Even Analysis</h5>
+                                <p class="mb-0" id="breakeven-calc">
+                                    <em>Enter item value and ticket price to calculate break-even point</em>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
