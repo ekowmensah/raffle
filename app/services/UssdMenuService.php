@@ -73,21 +73,36 @@ class UssdMenuService
     }
     
     /**
-     * Build programme selection menu
+     * Build programme selection menu with pagination
      */
-    public function buildProgrammeMenu($stationId)
+    public function buildProgrammeMenu($stationId, $page = 1)
     {
-        $this->db->query("SELECT id, name FROM programmes 
-                         WHERE station_id = :station_id AND is_active = 1 
-                         ORDER BY name");
-        $this->db->bind(':station_id', $stationId);
-        $programmes = $this->db->resultSet();
+        $perPage = 4;
+        $offset = ($page - 1) * $perPage;
         
-        if (empty($programmes)) {
+        // Get total count
+        $this->db->query("SELECT COUNT(*) as total FROM programmes 
+                         WHERE station_id = :station_id AND is_active = 1");
+        $this->db->bind(':station_id', $stationId);
+        $countResult = $this->db->single();
+        $totalProgrammes = $countResult->total ?? 0;
+        
+        if ($totalProgrammes == 0) {
             return "END No active programmes available for this station.";
         }
         
-        $menu = "CON Select Programme:\n";
+        // Get programmes for current page
+        $this->db->query("SELECT id, name FROM programmes 
+                         WHERE station_id = :station_id AND is_active = 1 
+                         ORDER BY name LIMIT :limit OFFSET :offset");
+        $this->db->bind(':station_id', $stationId);
+        $this->db->bind(':limit', $perPage);
+        $this->db->bind(':offset', $offset);
+        $programmes = $this->db->resultSet();
+        
+        $totalPages = ceil($totalProgrammes / $perPage);
+        
+        $menu = "CON Select Programme (Page {$page}/{$totalPages}):\n";
         $index = 1;
         
         foreach ($programmes as $programme) {
@@ -95,6 +110,14 @@ class UssdMenuService
             $index++;
         }
         
+        // Add navigation options
+        $menu .= "\n";
+        if ($page < $totalPages) {
+            $menu .= "5. Next Page\n";
+        }
+        if ($page > 1) {
+            $menu .= "6. Previous Page\n";
+        }
         $menu .= "0. Back";
         
         return $menu;
@@ -368,28 +391,37 @@ class UssdMenuService
     }
     
     /**
-     * Get programmes as array for indexing
+     * Get programmes as array for indexing with pagination support
      */
-    public function getProgrammesArray($stationId)
+    public function getProgrammesArray($stationId, $offset = 0, $limit = null)
     {
-        $this->db->query("SELECT id, name FROM programmes 
-                         WHERE station_id = :station_id AND is_active = 1 
-                         ORDER BY name");
-        $this->db->bind(':station_id', $stationId);
+        if ($limit !== null) {
+            $this->db->query("SELECT id, name FROM programmes 
+                             WHERE station_id = :station_id AND is_active = 1 
+                             ORDER BY name LIMIT :limit OFFSET :offset");
+            $this->db->bind(':station_id', $stationId);
+            $this->db->bind(':limit', $limit);
+            $this->db->bind(':offset', $offset);
+        } else {
+            $this->db->query("SELECT id, name FROM programmes 
+                             WHERE station_id = :station_id AND is_active = 1 
+                             ORDER BY name");
+            $this->db->bind(':station_id', $stationId);
+        }
         return $this->db->resultSet();
     }
     
     /**
-     * Get station-wide campaigns as array for indexing
+     * Get ALL campaigns for station as array for indexing
      */
     public function getStationCampaignsArray($stationId)
     {
+        // Get ALL campaigns for this station (both station-wide and programme-specific)
         $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency
                          FROM raffle_campaigns rc
                          WHERE rc.station_id = :station_id
                          AND rc.status = 'active'
                          AND rc.end_date >= CURDATE()
-                         AND rc.id NOT IN (SELECT campaign_id FROM campaign_programme_access WHERE programme_id IS NOT NULL)
                          ORDER BY rc.name");
         $this->db->bind(':station_id', $stationId);
         return $this->db->resultSet();

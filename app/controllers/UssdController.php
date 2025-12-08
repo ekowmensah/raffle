@@ -130,13 +130,13 @@ class UssdController extends Controller
                 return $this->handleStationSelection($session->session_id, $userInput, $sessionData);
                 
             case 'select_station_campaign':
-                return $this->handleStationCampaignSelection($session->session_id, $userInput, $sessionData);
+                return $this->handleStationCampaignSelection($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
             case 'select_programme':
                 return $this->handleProgrammeSelection($session->session_id, $userInput, $sessionData);
                 
             case 'select_campaign':
-                return $this->handleCampaignSelection($session->session_id, $userInput, $sessionData);
+                return $this->handleCampaignSelection($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
             case 'select_quantity':
                 return $this->handleQuantitySelection($session->session_id, $userInput, $sessionData);
@@ -240,11 +240,11 @@ class UssdController extends Controller
     /**
      * Handle station campaign selection (station-wide campaigns or browse by programme)
      */
-    private function handleStationCampaignSelection($sessionId, $input, $sessionData)
+    private function handleStationCampaignSelection($sessionId, $input, $sessionData, $phoneNumber)
     {
         if ($input == '0') {
-            $this->sessionService->updateSession($sessionId, 'select_station');
-            return $this->menuService->buildStationMenu();
+            $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => 1]);
+            return $this->menuService->buildStationMenu(1);
         }
         
         $stationId = $sessionData['station_id'];
@@ -258,25 +258,27 @@ class UssdController extends Controller
             // User wants to browse by programme
             $this->sessionService->updateSession($sessionId, 'select_programme', [
                 'station_id' => $stationId,
-                'station_name' => $sessionData['station_name']
+                'station_name' => $sessionData['station_name'],
+                'programme_page' => 1
             ]);
-            return $this->menuService->buildProgrammeMenu($stationId);
+            return $this->menuService->buildProgrammeMenu($stationId, 1);
         }
         
         // User selected a station-wide campaign
         if (!isset($campaigns[$index])) {
-            return "Invalid selection. Please try again.\n" . 
-                   $this->menuService->buildStationCampaignMenu($stationId);
+            return "CON Invalid selection. Please try again.\n" . 
+                   substr($this->menuService->buildStationCampaignMenu($stationId), 4);
         }
         
         $selectedCampaign = $campaigns[$index];
-        $this->sessionService->updateSession($sessionId, 'select_quantity', [
+        $this->sessionService->updateSession($sessionId, 'select_quantity', array_merge($sessionData, [
             'campaign_id' => $selectedCampaign->id,
             'campaign_name' => $selectedCampaign->name,
             'ticket_price' => $selectedCampaign->ticket_price,
             'station_id' => $stationId,
-            'programme_id' => null // Station-wide campaign
-        ]);
+            'programme_id' => null, // Station-wide campaign
+            'phone_number' => $phoneNumber
+        ]));
         
         return $this->menuService->buildQuantityMenu(
             $selectedCampaign->name,
@@ -285,30 +287,53 @@ class UssdController extends Controller
     }
     
     /**
-     * Handle programme selection
+     * Handle programme selection with pagination
      */
     private function handleProgrammeSelection($sessionId, $input, $sessionData)
     {
+        $currentPage = $sessionData['programme_page'] ?? 1;
+        $stationId = $sessionData['station_id'];
+        
         if ($input == '0') {
             // Go back to station campaigns
-            $this->sessionService->updateSession($sessionId, 'select_station_campaign');
-            return $this->menuService->buildStationCampaignMenu($sessionData['station_id']);
+            $this->sessionService->updateSession($sessionId, 'select_station_campaign', [
+                'station_id' => $stationId,
+                'station_name' => $sessionData['station_name'] ?? ''
+            ]);
+            return $this->menuService->buildStationCampaignMenu($stationId);
         }
         
-        $stationId = $sessionData['station_id'];
-        $programmes = $this->menuService->getProgrammesArray($stationId);
+        // Handle pagination
+        if ($input == '5') {
+            // Next page
+            $newPage = $currentPage + 1;
+            $this->sessionService->updateSession($sessionId, 'select_programme', array_merge($sessionData, ['programme_page' => $newPage]));
+            return $this->menuService->buildProgrammeMenu($stationId, $newPage);
+        }
+        
+        if ($input == '6') {
+            // Previous page
+            $newPage = max(1, $currentPage - 1);
+            $this->sessionService->updateSession($sessionId, 'select_programme', array_merge($sessionData, ['programme_page' => $newPage]));
+            return $this->menuService->buildProgrammeMenu($stationId, $newPage);
+        }
+        
+        // Get programmes for current page
+        $perPage = 4;
+        $offset = ($currentPage - 1) * $perPage;
+        $programmes = $this->menuService->getProgrammesArray($stationId, $offset, $perPage);
         $index = (int)$input - 1;
         
         if (!isset($programmes[$index])) {
-            return "Invalid selection. Please try again.\n" . 
-                   $this->menuService->buildProgrammeMenu($stationId);
+            return "CON Invalid selection. Please try again.\n" . 
+                   substr($this->menuService->buildProgrammeMenu($stationId, $currentPage), 4);
         }
         
         $selectedProgramme = $programmes[$index];
-        $this->sessionService->updateSession($sessionId, 'select_campaign', [
+        $this->sessionService->updateSession($sessionId, 'select_campaign', array_merge($sessionData, [
             'programme_id' => $selectedProgramme->id,
             'programme_name' => $selectedProgramme->name
-        ]);
+        ]));
         
         return $this->menuService->buildCampaignMenu($stationId, $selectedProgramme->id);
     }
@@ -316,11 +341,15 @@ class UssdController extends Controller
     /**
      * Handle campaign selection
      */
-    private function handleCampaignSelection($sessionId, $input, $sessionData)
+    private function handleCampaignSelection($sessionId, $input, $sessionData, $phoneNumber)
     {
         if ($input == '0') {
-            $this->sessionService->updateSession($sessionId, 'select_programme');
-            return $this->menuService->buildProgrammeMenu($sessionData['station_id']);
+            $this->sessionService->updateSession($sessionId, 'select_programme', [
+                'station_id' => $sessionData['station_id'],
+                'station_name' => $sessionData['station_name'] ?? '',
+                'programme_page' => 1
+            ]);
+            return $this->menuService->buildProgrammeMenu($sessionData['station_id'], 1);
         }
         
         $campaigns = $this->menuService->getCampaignsArray(
@@ -330,19 +359,20 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($campaigns[$index])) {
-            return "Invalid selection. Please try again.\n" . 
-                   $this->menuService->buildCampaignMenu(
+            return "CON Invalid selection. Please try again.\n" . 
+                   substr($this->menuService->buildCampaignMenu(
                        $sessionData['station_id'],
                        $sessionData['programme_id']
-                   );
+                   ), 4);
         }
         
         $selectedCampaign = $campaigns[$index];
-        $this->sessionService->updateSession($sessionId, 'select_quantity', [
+        $this->sessionService->updateSession($sessionId, 'select_quantity', array_merge($sessionData, [
             'campaign_id' => $selectedCampaign->id,
             'campaign_name' => $selectedCampaign->name,
-            'ticket_price' => $selectedCampaign->ticket_price
-        ]);
+            'ticket_price' => $selectedCampaign->ticket_price,
+            'phone_number' => $phoneNumber
+        ]));
         
         return $this->menuService->buildQuantityMenu(
             $selectedCampaign->name,
@@ -394,10 +424,10 @@ class UssdController extends Controller
         }
         
         $totalAmount = $quantity * $ticketPrice;
-        $this->sessionService->updateSession($sessionId, 'confirm_payment', [
+        $this->sessionService->updateSession($sessionId, 'confirm_payment', array_merge($sessionData, [
             'quantity' => $quantity,
             'total_amount' => $totalAmount
-        ]);
+        ]));
         
         return $this->menuService->buildPaymentConfirmation(
             $quantity,
@@ -420,10 +450,10 @@ class UssdController extends Controller
         $ticketPrice = $sessionData['ticket_price'];
         $totalAmount = $quantity * $ticketPrice;
         
-        $this->sessionService->updateSession($sessionId, 'confirm_payment', [
+        $this->sessionService->updateSession($sessionId, 'confirm_payment', array_merge($sessionData, [
             'quantity' => $quantity,
             'total_amount' => $totalAmount
-        ]);
+        ]));
         
         return $this->menuService->buildPaymentConfirmation(
             $quantity,
