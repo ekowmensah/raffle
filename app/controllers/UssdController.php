@@ -230,11 +230,12 @@ class UssdController extends Controller
         $selectedStation = $stations[$index];
         $this->sessionService->updateSession($sessionId, 'select_station_campaign', [
             'station_id' => $selectedStation->id,
-            'station_name' => $selectedStation->name
+            'station_name' => $selectedStation->name,
+            'campaign_page' => 1
         ]);
         
         // Show station-wide campaigns with option to browse by programme
-        return $this->menuService->buildStationCampaignMenu($selectedStation->id);
+        return $this->menuService->buildStationCampaignMenu($selectedStation->id, 1);
     }
     
     /**
@@ -242,20 +243,32 @@ class UssdController extends Controller
      */
     private function handleStationCampaignSelection($sessionId, $input, $sessionData, $phoneNumber)
     {
+        $currentPage = $sessionData['campaign_page'] ?? 1;
+        $stationId = $sessionData['station_id'];
+        
         if ($input == '0') {
             $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => 1]);
             return $this->menuService->buildStationMenu(1);
         }
         
-        $stationId = $sessionData['station_id'];
-        $campaigns = $this->menuService->getStationCampaignsArray($stationId);
-        $index = (int)$input - 1;
+        // Handle pagination
+        if ($input == '5') {
+            // Next page
+            $newPage = $currentPage + 1;
+            $this->sessionService->updateSession($sessionId, 'select_station_campaign', array_merge($sessionData, ['campaign_page' => $newPage]));
+            return $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+        }
         
-        // Check if user selected "Browse by Programme" option
-        $browseByProgrammeIndex = count($campaigns);
+        if ($input == '6') {
+            // Previous page
+            $newPage = max(1, $currentPage - 1);
+            $this->sessionService->updateSession($sessionId, 'select_station_campaign', array_merge($sessionData, ['campaign_page' => $newPage]));
+            return $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+        }
         
-        if ($index == $browseByProgrammeIndex) {
-            // User wants to browse by programme
+        // Check if user selected "Filter by Programme" option (option 7)
+        if ($input == '7') {
+            // User wants to filter by programme
             $this->sessionService->updateSession($sessionId, 'select_programme', [
                 'station_id' => $stationId,
                 'station_name' => $sessionData['station_name'],
@@ -264,10 +277,16 @@ class UssdController extends Controller
             return $this->menuService->buildProgrammeMenu($stationId, 1);
         }
         
-        // User selected a station-wide campaign
+        // Get campaigns for current page
+        $perPage = 4;
+        $offset = ($currentPage - 1) * $perPage;
+        $campaigns = $this->menuService->getStationCampaignsArray($stationId, $offset, $perPage);
+        $index = (int)$input - 1;
+        
+        // User selected a campaign
         if (!isset($campaigns[$index])) {
             return "CON Invalid selection. Please try again.\n" . 
-                   substr($this->menuService->buildStationCampaignMenu($stationId), 4);
+                   substr($this->menuService->buildStationCampaignMenu($stationId, $currentPage), 4);
         }
         
         $selectedCampaign = $campaigns[$index];
@@ -401,18 +420,12 @@ class UssdController extends Controller
                 $quantity = 10;
                 break;
             case '2':
-                $quantity = 20;
-                break;
-            case '3':
                 $quantity = 50;
                 break;
-            case '4':
-                $quantity = 70;
-                break;
-            case '5':
+            case '3':
                 $quantity = 100;
                 break;
-            case '6':
+            case '4':
                 $this->sessionService->updateSession($sessionId, 'enter_custom_quantity');
                 return "CON Enter number of Entries (1-1000):";
             default:
@@ -584,7 +597,7 @@ class UssdController extends Controller
                 $this->sessionService->closeSession($sessionId);
                 
                 // Return success message
-                return "END Amt: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
+                return "END Amt: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Entries: {$sessionData['quantity']}\n\n" .
                        "Approve prompt on your phone or Dial *170# and go to Approval";
             } else {
@@ -647,7 +660,7 @@ class UssdController extends Controller
                 }, $ticketResult['tickets']);
                 
                 return "END Payment Successful!\n" .
-                       "Amount: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
+                       "Amount: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Entries: {$sessionData['quantity']}\n" .
                        "Code: " . implode(', ', $ticketCodes) . "\n\n" .
                        "Good luck!";

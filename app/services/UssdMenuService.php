@@ -124,25 +124,41 @@ class UssdMenuService
     }
     
     /**
-     * Build campaign selection menu for station (ALL campaigns under the station)
+     * Build campaign selection menu for station (ALL campaigns under the station) with pagination
      */
-    public function buildStationCampaignMenu($stationId)
+    public function buildStationCampaignMenu($stationId, $page = 1)
     {
-        // Get ALL campaigns for this station (both station-wide and programme-specific)
+        $perPage = 4;
+        $offset = ($page - 1) * $perPage;
+        
+        // Get total count
+        $this->db->query("SELECT COUNT(*) as total FROM raffle_campaigns rc
+                         WHERE rc.station_id = :station_id
+                         AND rc.status = 'active'
+                         AND rc.end_date >= CURDATE()");
+        $this->db->bind(':station_id', $stationId);
+        $countResult = $this->db->single();
+        $totalCampaigns = $countResult->total ?? 0;
+        
+        if ($totalCampaigns == 0) {
+            return "END No active campaigns available for this station.";
+        }
+        
+        // Get campaigns for current page
         $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency, rc.end_date
                          FROM raffle_campaigns rc
                          WHERE rc.station_id = :station_id
                          AND rc.status = 'active'
                          AND rc.end_date >= CURDATE()
-                         ORDER BY rc.name");
+                         ORDER BY rc.name LIMIT :limit OFFSET :offset");
         $this->db->bind(':station_id', $stationId);
+        $this->db->bind(':limit', $perPage);
+        $this->db->bind(':offset', $offset);
         $campaigns = $this->db->resultSet();
         
-        if (empty($campaigns)) {
-            return "END No active campaigns available for this station.";
-        }
+        $totalPages = ceil($totalCampaigns / $perPage);
         
-        $menu = "CON Select Campaign:\n";
+        $menu = "CON Select Campaign (Page {$page}/{$totalPages}):\n";
         $index = 1;
         
         foreach ($campaigns as $campaign) {
@@ -150,8 +166,15 @@ class UssdMenuService
             $index++;
         }
         
-        // Add option to filter by programme
-        $menu .= "\n{$index}. Filter by Programme\n";
+        // Add navigation and filter options
+        $menu .= "\n";
+        if ($page < $totalPages) {
+            $menu .= "5. Next Page\n";
+        }
+        if ($page > 1) {
+            $menu .= "6. Previous Page\n";
+        }
+        $menu .= "7. Filter by Programme\n";
         $menu .= "0. Back";
         
         return $menu;
@@ -198,14 +221,12 @@ class UssdMenuService
     public function buildQuantityMenu($campaignName, $ticketPrice)
     {
         return "CON {$campaignName}\n" .
-               "Ticket Price: GHS " . number_format($ticketPrice, 2) . "\n\n" .
+               "Ticket Price: ₵" . number_format($ticketPrice, 2) . "\n\n" .
                "How many tickets?\n" .
-               "1. 10 (GHS " . number_format($ticketPrice * 10, 2) . ")\n" .
-               "2. 20 (GHS " . number_format($ticketPrice * 20, 2) . ")\n" .
-               "3. 50 (GHS " . number_format($ticketPrice * 50, 2) . ")\n" .
-               "4. 70 (GHS " . number_format($ticketPrice * 70, 2) . ")\n" .
-               "5. 100 (GHS " . number_format($ticketPrice * 100, 2) . ")\n" .
-               "6. Custom Amount\n" .
+               "1. 10 - ₵" . number_format($ticketPrice * 10, 2) . "\n" .
+               "2. 50 - ₵" . number_format($ticketPrice * 50, 2) . "\n" .
+               "3. 100 - ₵" . number_format($ticketPrice * 100, 2) . "\n" .
+               "4. Custom Amount\n" .
                "0. Back";
     }
     
@@ -216,7 +237,7 @@ class UssdMenuService
     {
         return "CON Confirm Purchase:\n" .
                "Entries: {$quantity}\n" .
-               "Total: GHS " . number_format($totalAmount, 2) . "\n" .
+               "Total: ₵" . number_format($totalAmount, 2) . "\n" .
                "Phone: {$phoneNumber}\n\n" .
                "1. Confirm & Pay\n" .
                "0. Cancel";
@@ -330,7 +351,7 @@ class UssdMenuService
         
         foreach ($winners as $winner) {
             $menu .= "Campaign: {$winner->campaign_name}\n";
-            $menu .= "Prize: GHS " . number_format($winner->prize_amount, 2) . "\n";
+            $menu .= "Prize: ₵" . number_format($winner->prize_amount, 2) . "\n";
             $menu .= "Rank: {$winner->prize_rank}\n";
             $menu .= "Status: " . strtoupper($winner->prize_paid_status) . "\n";
             $menu .= "Date: " . date('d M Y', strtotime($winner->draw_date)) . "\n\n";
@@ -369,7 +390,7 @@ class UssdMenuService
         $menu = "END Account Balance:\n\n";
         $menu .= "Phone: {$player->phone}\n";
         $menu .= "Total Tickets: {$ticketData->ticket_count}\n";
-        $menu .= "Total Winnings: GHS " . number_format($winningData->total_winnings ?? 0, 2) . "\n";
+        $menu .= "Total Winnings: ₵" . number_format($winningData->total_winnings ?? 0, 2) . "\n";
         $menu .= "Loyalty Points: {$player->loyalty_points}";
         
         return $menu;
@@ -412,18 +433,30 @@ class UssdMenuService
     }
     
     /**
-     * Get ALL campaigns for station as array for indexing
+     * Get ALL campaigns for station as array for indexing with pagination support
      */
-    public function getStationCampaignsArray($stationId)
+    public function getStationCampaignsArray($stationId, $offset = 0, $limit = null)
     {
         // Get ALL campaigns for this station (both station-wide and programme-specific)
-        $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency
-                         FROM raffle_campaigns rc
-                         WHERE rc.station_id = :station_id
-                         AND rc.status = 'active'
-                         AND rc.end_date >= CURDATE()
-                         ORDER BY rc.name");
-        $this->db->bind(':station_id', $stationId);
+        if ($limit !== null) {
+            $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency
+                             FROM raffle_campaigns rc
+                             WHERE rc.station_id = :station_id
+                             AND rc.status = 'active'
+                             AND rc.end_date >= CURDATE()
+                             ORDER BY rc.name LIMIT :limit OFFSET :offset");
+            $this->db->bind(':station_id', $stationId);
+            $this->db->bind(':limit', $limit);
+            $this->db->bind(':offset', $offset);
+        } else {
+            $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency
+                             FROM raffle_campaigns rc
+                             WHERE rc.station_id = :station_id
+                             AND rc.status = 'active'
+                             AND rc.end_date >= CURDATE()
+                             ORDER BY rc.name");
+            $this->db->bind(':station_id', $stationId);
+        }
         return $this->db->resultSet();
     }
     
