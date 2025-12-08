@@ -23,9 +23,16 @@ class SmsNotificationService
         if (count($ticketCodes) > 3) {
             $ticketList .= '...';
         }
+        
+        // Calculate total entries across all tickets
+        $totalEntries = 0;
+        foreach ($tickets as $ticket) {
+            $quantity = is_array($ticket) ? ($ticket['quantity'] ?? 1) : ($ticket->quantity ?? 1);
+            $totalEntries += $quantity;
+        }
 
-        $message = "Your raffle tickets for {$campaignName}: {$ticketList}. "
-                 . "Total: " . count($ticketCodes) . " ticket(s). Good luck!";
+        $message = "Ticket for {$campaignName}: {$ticketList}. "
+                 . "Entries: {$totalEntries}. Good luck!";
 
         return $this->sendSms($phone, $message);
     }
@@ -33,7 +40,7 @@ class SmsNotificationService
     public function sendWinnerNotification($phone, $ticketCode, $prizeAmount, $campaignName)
     {
         $message = "Congratulations! Your ticket {$ticketCode} won GHS {$prizeAmount} "
-                 . "in {$campaignName}! Contact us to claim your prize.";
+                 . "in {$campaignName}!";
 
         return $this->sendSms($phone, $message);
     }

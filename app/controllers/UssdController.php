@@ -127,7 +127,7 @@ class UssdController extends Controller
                 return $this->handleMainMenu($session->session_id, $userInput, $phoneNumber);
                 
             case 'select_station':
-                return $this->handleStationSelection($session->session_id, $userInput);
+                return $this->handleStationSelection($session->session_id, $userInput, $sessionData);
                 
             case 'select_station_campaign':
                 return $this->handleStationCampaignSelection($session->session_id, $userInput, $sessionData);
@@ -165,8 +165,8 @@ class UssdController extends Controller
     {
         switch ($input) {
             case '1': // Buy Ticket
-                $this->sessionService->updateSession($sessionId, 'select_station');
-                return $this->menuService->buildStationMenu();
+                $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => 1]);
+                return $this->menuService->buildStationMenu(1);
                 
             case '2': // Check My Tickets
                 $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => 1]);
@@ -190,20 +190,41 @@ class UssdController extends Controller
     }
     
     /**
-     * Handle station selection
+     * Handle station selection with pagination
      */
-    private function handleStationSelection($sessionId, $input)
+    private function handleStationSelection($sessionId, $input, $sessionData = [])
     {
+        $currentPage = $sessionData['station_page'] ?? 1;
+        
         if ($input == '0') {
             $this->sessionService->updateSession($sessionId, 'main_menu');
             return $this->menuService->buildMainMenu();
         }
         
-        $stations = $this->menuService->getStationsArray();
+        // Handle pagination
+        if ($input == '5') {
+            // Next page
+            $newPage = $currentPage + 1;
+            $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => $newPage]);
+            return $this->menuService->buildStationMenu($newPage);
+        }
+        
+        if ($input == '6') {
+            // Previous page
+            $newPage = max(1, $currentPage - 1);
+            $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => $newPage]);
+            return $this->menuService->buildStationMenu($newPage);
+        }
+        
+        // Get stations for current page
+        $perPage = 4;
+        $offset = ($currentPage - 1) * $perPage;
+        $stations = $this->menuService->getStationsArray($offset, $perPage);
         $index = (int)$input - 1;
         
         if (!isset($stations[$index])) {
-            return "Invalid selection. Please try again.\n" . $this->menuService->buildStationMenu();
+            return "CON Invalid selection. Please try again.\n" . 
+                   substr($this->menuService->buildStationMenu($currentPage), 4);
         }
         
         $selectedStation = $stations[$index];

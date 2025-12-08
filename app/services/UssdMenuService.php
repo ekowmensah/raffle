@@ -27,18 +27,31 @@ class UssdMenuService
     }
     
     /**
-     * Build station selection menu
+     * Build station selection menu with pagination
      */
-    public function buildStationMenu()
+    public function buildStationMenu($page = 1)
     {
-        $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
-        $stations = $this->db->resultSet();
+        $perPage = 4;
+        $offset = ($page - 1) * $perPage;
         
-        if (empty($stations)) {
+        // Get total count
+        $this->db->query("SELECT COUNT(*) as total FROM stations WHERE is_active = 1");
+        $countResult = $this->db->single();
+        $totalStations = $countResult->total ?? 0;
+        
+        if ($totalStations == 0) {
             return "END No active stations available.";
         }
         
-        $menu = "CON Select Station:\n";
+        // Get stations for current page
+        $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name LIMIT :limit OFFSET :offset");
+        $this->db->bind(':limit', $perPage);
+        $this->db->bind(':offset', $offset);
+        $stations = $this->db->resultSet();
+        
+        $totalPages = ceil($totalStations / $perPage);
+        
+        $menu = "CON Select Station (Page {$page}/{$totalPages}):\n";
         $index = 1;
         
         foreach ($stations as $station) {
@@ -46,6 +59,14 @@ class UssdMenuService
             $index++;
         }
         
+        // Add navigation options
+        $menu .= "\n";
+        if ($page < $totalPages) {
+            $menu .= "5. Next Page\n";
+        }
+        if ($page > 1) {
+            $menu .= "6. Previous Page\n";
+        }
         $menu .= "0. Back";
         
         return $menu;
@@ -95,7 +116,7 @@ class UssdMenuService
         $this->db->bind(':station_id', $stationId);
         $campaigns = $this->db->resultSet();
         
-        $menu = "Select Campaign:\n";
+        $menu = "CON Select Campaign:\n";
         $index = 1;
         
         foreach ($campaigns as $campaign) {
@@ -329,11 +350,17 @@ class UssdMenuService
     }
     
     /**
-     * Get stations as array for indexing
+     * Get stations as array for indexing with pagination support
      */
-    public function getStationsArray()
+    public function getStationsArray($offset = 0, $limit = null)
     {
-        $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
+        if ($limit !== null) {
+            $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name LIMIT :limit OFFSET :offset");
+            $this->db->bind(':limit', $limit);
+            $this->db->bind(':offset', $offset);
+        } else {
+            $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
+        }
         return $this->db->resultSet();
     }
     
