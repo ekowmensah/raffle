@@ -235,10 +235,9 @@ class UssdMenuService
     public function buildPaymentConfirmation($quantity, $totalAmount, $phoneNumber)
     {
         return "CON Confirm Purchase:\n" .
-               "Entries: {$quantity}\n" .
-               "Total: ₵" . number_format($totalAmount, 2) . "\n" .
+               "Entries: {$quantity} - ₵" . number_format($totalAmount, 2) . "\n" .
                "Phone: {$phoneNumber}\n\n" .
-               "1. Confirm & Pay\n" .
+               "1. Confirm\n" .
                "0. Cancel";
     }
     
