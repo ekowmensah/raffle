@@ -123,7 +123,7 @@ class UssdMenuService
         $index = 1;
         
         foreach ($campaigns as $campaign) {
-            $menu .= "{$index}. {$campaign->name} (GHS " . number_format($campaign->ticket_price, 2) . ")\n";
+            $menu .= "{$index}. {$campaign->name} - " . number_format($campaign->ticket_price, 2) . "\n";
             $index++;
         }
         
@@ -160,7 +160,7 @@ class UssdMenuService
         $index = 1;
         
         foreach ($campaigns as $campaign) {
-            $menu .= "{$index}. {$campaign->name} (GHS " . number_format($campaign->ticket_price, 2) . ")\n";
+            $menu .= "{$index}. {$campaign->name} - " . number_format($campaign->ticket_price, 2) . "\n";
             $index++;
         }
         
