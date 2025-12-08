@@ -18,7 +18,7 @@ class UssdMenuService
      */
     public function buildMainMenu()
     {
-        return "Welcome to Raffle System\n" .
+        return "CON Welcome to Raffle System\n" .
                "1. Buy Ticket\n" .
                "2. Check My Tickets\n" .
                "3. Check Winners\n" .
@@ -34,7 +34,7 @@ class UssdMenuService
         $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
         $stations = $this->db->resultSet();
         
-        $menu = "Select Station:\n";
+        $menu = "CON Select Station:\n";
         $index = 1;
         
         foreach ($stations as $station) {
@@ -59,10 +59,10 @@ class UssdMenuService
         $programmes = $this->db->resultSet();
         
         if (empty($programmes)) {
-            return "No active programmes available for this station.";
+            return "END No active programmes available for this station.";
         }
         
-        $menu = "Select Programme:\n";
+        $menu = "CON Select Programme:\n";
         $index = 1;
         
         foreach ($programmes as $programme) {
@@ -125,10 +125,10 @@ class UssdMenuService
         $campaigns = $this->db->resultSet();
         
         if (empty($campaigns)) {
-            return "No active campaigns available.";
+            return "END No active campaigns available.";
         }
         
-        $menu = "Select Campaign:\n";
+        $menu = "CON Select Campaign:\n";
         $index = 1;
         
         foreach ($campaigns as $campaign) {
@@ -146,7 +146,7 @@ class UssdMenuService
      */
     public function buildQuantityMenu($campaignName, $ticketPrice)
     {
-        return "{$campaignName}\n" .
+        return "CON {$campaignName}\n" .
                "Ticket Price: GHS " . number_format($ticketPrice, 2) . "\n\n" .
                "How many tickets?\n" .
                "1. 1 ticket (GHS " . number_format($ticketPrice, 2) . ")\n" .
@@ -162,7 +162,7 @@ class UssdMenuService
      */
     public function buildPaymentConfirmation($quantity, $totalAmount, $phoneNumber)
     {
-        return "Confirm Purchase:\n" .
+        return "CON Confirm Purchase:\n" .
                "Tickets: {$quantity}\n" .
                "Total: GHS " . number_format($totalAmount, 2) . "\n" .
                "Phone: {$phoneNumber}\n\n" .
@@ -175,7 +175,7 @@ class UssdMenuService
      */
     public function buildPaymentMethodMenu()
     {
-        return "Select Payment Method:\n" .
+        return "CON Select Payment Method:\n" .
                "1. Mobile Money (All Networks)\n" .
                "2. Manual Payment (Test)\n" .
                "0. Cancel";
@@ -198,7 +198,7 @@ class UssdMenuService
         $totalTickets = $countResult->total ?? 0;
         
         if ($totalTickets == 0) {
-            return "You have no tickets yet.";
+            return "END You have no tickets yet.";
         }
         
         // Get tickets with status and quantity
@@ -271,10 +271,10 @@ class UssdMenuService
         $winners = $this->db->resultSet();
         
         if (empty($winners)) {
-            return "You haven't won yet. Keep playing!";
+            return "END You haven't won yet. Keep playing!";
         }
         
-        $menu = "Congratulations! You Won:\n\n";
+        $menu = "END Congratulations! You Won:\n\n";
         
         foreach ($winners as $winner) {
             $menu .= "Campaign: {$winner->campaign_name}\n";
@@ -298,7 +298,7 @@ class UssdMenuService
         $player = $this->db->single();
         
         if (!$player) {
-            return "No account found for this number.";
+            return "END No account found for this number.";
         }
         
         // Get ticket count
@@ -314,7 +314,7 @@ class UssdMenuService
         $this->db->bind(':player_id', $player->id);
         $winningData = $this->db->single();
         
-        $menu = "Account Balance:\n\n";
+        $menu = "END Account Balance:\n\n";
         $menu .= "Phone: {$player->phone}\n";
         $menu .= "Total Tickets: {$ticketData->ticket_count}\n";
         $menu .= "Total Winnings: GHS " . number_format($winningData->total_winnings ?? 0, 2) . "\n";

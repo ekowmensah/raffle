@@ -303,13 +303,13 @@ class UssdController extends Controller
                 break;
             case '5':
                 $this->sessionService->updateSession($sessionId, 'enter_custom_quantity');
-                return "Enter number of Entries (1-10):";
+                return "CON Enter number of Entries (1-100):";
             default:
-                return "Invalid selection.\n" . 
-                       $this->menuService->buildQuantityMenu(
+                return "CON Invalid selection.\n" . 
+                       substr($this->menuService->buildQuantityMenu(
                            $sessionData['campaign_name'],
                            $ticketPrice
-                       );
+                       ), 4); // Remove CON prefix to avoid duplication
         }
         
         $totalAmount = $quantity * $ticketPrice;
@@ -333,7 +333,7 @@ class UssdController extends Controller
         $quantity = (int)$input;
         
         if ($quantity < 1 || $quantity > 100) {
-            return "Invalid quantity. Enter 1-100:";
+            return "CON Invalid quantity. Enter 1-100:";
         }
         
         $ticketPrice = $sessionData['ticket_price'];
@@ -366,12 +366,12 @@ class UssdController extends Controller
             return $this->menuService->buildPaymentMethodMenu();
         }
         
-        return "Invalid selection.\n" . 
-               $this->menuService->buildPaymentConfirmation(
+        return "CON Invalid selection.\n" . 
+               substr($this->menuService->buildPaymentConfirmation(
                    $sessionData['quantity'],
                    $sessionData['total_amount'],
                    $phoneNumber
-               );
+               ), 4); // Remove CON prefix to avoid duplication
     }
     
     /**
@@ -398,7 +398,7 @@ class UssdController extends Controller
                 $isManual = true;
                 break;
             default:
-                return "Invalid selection.\n" . $this->menuService->buildPaymentMethodMenu();
+                return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu(), 4);
         }
         
         // Validate phone number
@@ -473,7 +473,7 @@ class UssdController extends Controller
                 $this->sessionService->closeSession($sessionId);
                 
                 // Return success message
-                return "Amt: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
+                return "END Amt: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Qty: {$sessionData['quantity']} ticket(s)\n\n" .
                        "Approve prompt on your phone.";
             } else {
@@ -485,7 +485,7 @@ class UssdController extends Controller
                 // Close session
                 $this->sessionService->closeSession($sessionId);
                 
-                return "Payment failed.\n" .
+                return "END Payment failed.\n" .
                        $hubtelResponse['message'] . "\n\n" .
                        "Please try again or contact support.\n" .
                        "Reference: {$reference}";
@@ -535,21 +535,21 @@ class UssdController extends Controller
                     return is_array($t) ? $t['ticket_code'] : $t->ticket_code; 
                 }, $ticketResult['tickets']);
                 
-                return "Payment Successful!\n" .
+                return "END Payment Successful!\n" .
                        "Amount: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Quantity: {$sessionData['quantity']} ticket(s)\n" .
                        "Code: " . implode(', ', $ticketCodes) . "\n\n" .
                        "Good luck!";
             }
             
-            return "Payment processed but ticket generation failed.\n" .
+            return "END Payment processed but ticket generation failed.\n" .
                    "Please contact support.\n" .
                    "Reference: PAY{$paymentId}";
         }
         
         // This should not be reached anymore (all cases handled above)
         $this->sessionService->closeSession($sessionId);
-        return "Payment processing error. Please try again.";
+        return "END Payment processing error. Please try again.";
     }
     
     /**
