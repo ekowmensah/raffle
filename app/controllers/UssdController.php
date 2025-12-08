@@ -41,6 +41,12 @@ class UssdController extends Controller
             return;
         }
         
+        // Check if this is a Service Fulfillment request (has OrderId)
+        if (isset($request['OrderId'])) {
+            error_log("USSD: Detected Service Fulfillment request");
+            return $this->handleServiceFulfillment();
+        }
+        
         // Extract Hubtel parameters
         $sessionId = $request['SessionId'] ?? '';
         $phoneNumber = $request['Mobile'] ?? '';
@@ -567,14 +573,16 @@ class UssdController extends Controller
             'payment_number' => $paymentNumber
         ]));
         
-        // Build AddToCart item
+        // Build AddToCart item - all amounts must be properly formatted
         $item = [
             'ItemName' => 'Raffle Ticket - ' . ($sessionData['campaign_name'] ?? 'Campaign'),
-            'ItemQuantity' => $sessionData['quantity'],
-            'ItemPrice' => $sessionData['ticket_price'],
-            'ItemSubtotal' => $sessionData['total_amount'],
-            'ItemTotalAmount' => $sessionData['total_amount']
+            'ItemQuantity' => (int)$sessionData['quantity'],
+            'ItemPrice' => round((float)$sessionData['ticket_price'], 2),
+            'ItemSubtotal' => round((float)$sessionData['total_amount'], 2),
+            'ItemTotalAmount' => round((float)$sessionData['total_amount'], 2)
         ];
+        
+        error_log('USSD AddToCart Item: ' . json_encode($item));
         
         $message = "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
                    "Approve the mobile money prompt on your phone";
@@ -756,6 +764,119 @@ class UssdController extends Controller
                 
             default:
                 return $this->menuService->buildTicketList($phoneNumber, $currentPage);
+        }
+    }
+    
+    /**
+     * Handle Service Fulfillment callback from Hubtel
+     * Called after user completes payment via AddToCart
+     */
+    public function handleServiceFulfillment()
+    {
+        try {
+            // Get JSON payload from Hubtel
+            $rawInput = file_get_contents('php://input');
+            error_log("USSD Service Fulfillment Input: " . $rawInput);
+            
+            $payload = json_decode($rawInput, true);
+            
+            if (!$payload) {
+                error_log("USSD Fulfillment Error: Invalid JSON");
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid payload']);
+                return;
+            }
+            
+            $sessionId = $payload['SessionId'] ?? null;
+            $orderId = $payload['OrderId'] ?? null;
+            $orderInfo = $payload['OrderInfo'] ?? null;
+            
+            if (!$sessionId || !$orderId || !$orderInfo) {
+                error_log("USSD Fulfillment Error: Missing required fields");
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+                return;
+            }
+            
+            // Check payment status
+            $paymentStatus = $orderInfo['Status'] ?? null;
+            $paymentInfo = $orderInfo['Payment'] ?? null;
+            
+            if ($paymentStatus !== 'Paid' || !$paymentInfo || !$paymentInfo['IsSuccessful']) {
+                error_log("USSD Fulfillment: Payment not successful - Status: {$paymentStatus}");
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Payment not successful']);
+                return;
+            }
+            
+            // Get session data
+            $session = $this->sessionService->getSession($sessionId);
+            if (!$session) {
+                error_log("USSD Fulfillment Error: Session not found - {$sessionId}");
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Session not found']);
+                return;
+            }
+            
+            $sessionData = json_decode($session->session_data, true);
+            $paymentId = $sessionData['payment_id'] ?? null;
+            
+            if (!$paymentId) {
+                error_log("USSD Fulfillment Error: Payment ID not found in session");
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Payment not found']);
+                return;
+            }
+            
+            // Update payment to success
+            $this->paymentModel->update($paymentId, [
+                'status' => 'success',
+                'gateway_reference' => $orderId,
+                'paid_at' => date('Y-m-d H:i:s')
+            ]);
+            
+            // Generate tickets
+            require_once '../app/services/TicketGeneratorService.php';
+            require_once '../app/services/RevenueAllocationService.php';
+            
+            $ticketService = new \App\Services\TicketGeneratorService();
+            $revenueService = new \App\Services\RevenueAllocationService();
+            
+            // Prepare payment data for services
+            $paymentData = [
+                'payment_id' => $paymentId,
+                'player_id' => $sessionData['player_id'] ?? null,
+                'campaign_id' => $sessionData['campaign_id'],
+                'station_id' => $sessionData['station_id'],
+                'programme_id' => $sessionData['programme_id'] ?? null,
+                'amount' => $sessionData['total_amount']
+            ];
+            
+            // Generate tickets
+            $ticketResult = $ticketService->generateTickets($paymentData);
+            
+            // Allocate revenue
+            $revenueService->allocate($paymentData);
+            
+            error_log("USSD Fulfillment: Tickets generated successfully - Payment: {$paymentId}");
+            
+            // Return success response to Hubtel
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Payment processed successfully',
+                'payment_id' => $paymentId
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("USSD Fulfillment Exception: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Fulfillment processing failed: ' . $e->getMessage()
+            ]);
         }
     }
     
