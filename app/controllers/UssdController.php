@@ -28,56 +28,90 @@ class UssdController extends Controller
      */
     public function index()
     {
-        // Get USSD parameters (format depends on gateway)
-        // Support multiple parameter names used by different gateways
-        $sessionId = $_POST['sessionId'] ?? $_POST['SessionId'] ?? $_GET['sessionId'] ?? $_GET['SessionId'] ?? '';
+        // Get raw JSON input from Hubtel
+        $rawInput = file_get_contents('php://input');
+        error_log('USSD Raw Input: ' . $rawInput);
         
-        // Try different phone number parameter names
-        $phoneNumber = $_POST['phoneNumber'] ?? $_POST['PhoneNumber'] ?? $_POST['msisdn'] ?? $_POST['MSISDN'] ?? 
-                      $_GET['phoneNumber'] ?? $_GET['PhoneNumber'] ?? $_GET['msisdn'] ?? $_GET['MSISDN'] ?? '';
+        // Decode JSON request from Hubtel
+        $request = json_decode($rawInput, true);
         
-        // Try different text parameter names
-        $text = $_POST['text'] ?? $_POST['Text'] ?? $_POST['input'] ?? $_POST['Input'] ?? 
-               $_GET['text'] ?? $_GET['Text'] ?? $_GET['input'] ?? $_GET['Input'] ?? '';
+        if (!$request) {
+            error_log('USSD Error: Invalid JSON received');
+            $this->sendHubtelResponse('', 'release', 'Service temporarily unavailable.', 'Error', 'display', 'text');
+            return;
+        }
         
-        // Debug log - show all POST/GET parameters
-        error_log('USSD Request - POST: ' . json_encode($_POST));
-        error_log('USSD Request - GET: ' . json_encode($_GET));
-        error_log('USSD Request - Raw Phone: ' . $phoneNumber . ', Text: ' . $text);
+        // Extract Hubtel parameters
+        $sessionId = $request['SessionId'] ?? '';
+        $phoneNumber = $request['Mobile'] ?? '';
+        $message = $request['Message'] ?? '';
+        $type = $request['Type'] ?? '';
+        $sequence = $request['Sequence'] ?? 1;
+        $clientState = $request['ClientState'] ?? '';
+        
+        error_log("USSD Request - SessionId: $sessionId, Phone: $phoneNumber, Message: $message, Type: $type, Sequence: $sequence");
         
         // Clean phone number
         $phoneNumber = $this->cleanPhoneNumber($phoneNumber);
         
-        // Debug log after cleaning
-        error_log('USSD Request - Cleaned Phone: ' . $phoneNumber);
-        
         // Get or create session
         $session = $this->sessionService->getOrCreateSession($sessionId, $phoneNumber);
         
-        // Parse user input
-        $textArray = explode('*', $text);
-        $userInput = end($textArray);
+        // Parse user input from message
+        // For Initiation, message is the USSD code (e.g., "*713#")
+        // For Response, message is the user's input (e.g., "1", "2", etc.)
+        $userInput = '';
+        if ($type === 'Response') {
+            $userInput = trim($message);
+        }
         
-        // If text is empty, this is the first dial - show main menu
-        if (empty($text)) {
-            $response = $this->menuService->buildMainMenu();
+        // Route request
+        if ($type === 'Initiation' || $sequence == 1) {
+            // First request - show main menu
+            $menuText = $this->menuService->buildMainMenu();
+            $this->sendHubtelResponse($sessionId, 'response', substr($menuText, 4), 'Main Menu', 'input', 'text', $clientState);
+        } elseif ($type === 'Timeout') {
+            // Session timeout
+            $this->sendHubtelResponse($sessionId, 'release', 'Session timed out. Please try again.', 'Timeout', 'display', 'text');
         } else {
-            // Route to appropriate handler
+            // Handle user response
             $response = $this->routeRequest($session, $userInput, $phoneNumber);
+            
+            // Parse response to determine type and message
+            if (strpos($response, 'END ') === 0) {
+                // End session
+                $message = substr($response, 4);
+                $this->sendHubtelResponse($sessionId, 'release', $message, 'Complete', 'display', 'text');
+            } else {
+                // Continue session
+                $message = substr($response, 4); // Remove "CON " prefix
+                $this->sendHubtelResponse($sessionId, 'response', $message, 'Menu', 'input', 'text', $clientState);
+            }
+        }
+    }
+    
+    /**
+     * Send response in Hubtel format
+     */
+    private function sendHubtelResponse($sessionId, $type, $message, $label, $dataType, $fieldType, $clientState = '')
+    {
+        $response = [
+            'SessionId' => $sessionId,
+            'Type' => $type,
+            'Message' => $message,
+            'Label' => $label,
+            'DataType' => $dataType,
+            'FieldType' => $fieldType
+        ];
+        
+        if (!empty($clientState)) {
+            $response['ClientState'] = $clientState;
         }
         
-        // Ensure response has CON or END prefix
-        if (!preg_match('/^(CON|END)\s/', $response)) {
-            error_log('USSD Response missing prefix: ' . $response);
-            $response = 'CON ' . $response;
-        }
+        error_log('USSD Response: ' . json_encode($response));
         
-        // Log response for debugging
-        error_log('USSD Response: ' . substr($response, 0, 100));
-        
-        // Output response
-        header('Content-Type: text/plain');
-        echo $response;
+        header('Content-Type: application/json');
+        echo json_encode($response);
     }
     
     /**
