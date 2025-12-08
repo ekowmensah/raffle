@@ -531,8 +531,8 @@ class UssdController extends Controller
                 
                 // Return success message
                 return "END Amt: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
-                       "Qty: {$sessionData['quantity']} ticket(s)\n\n" .
-                       "Approve prompt on your phone.";
+                       "Entries: {$sessionData['quantity']}\n\n" .
+                       "Approve prompt on your phone or Dial *170# and go to Approval";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
@@ -594,7 +594,7 @@ class UssdController extends Controller
                 
                 return "END Payment Successful!\n" .
                        "Amount: GHS " . number_format($sessionData['total_amount'], 2) . "\n" .
-                       "Quantity: {$sessionData['quantity']} ticket(s)\n" .
+                       "Entries: {$sessionData['quantity']}\n" .
                        "Code: " . implode(', ', $ticketCodes) . "\n\n" .
                        "Good luck!";
             }

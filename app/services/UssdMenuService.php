@@ -167,7 +167,7 @@ class UssdMenuService
     public function buildPaymentConfirmation($quantity, $totalAmount, $phoneNumber)
     {
         return "CON Confirm Purchase:\n" .
-               "Tickets: {$quantity}\n" .
+               "Entries: {$quantity}\n" .
                "Total: GHS " . number_format($totalAmount, 2) . "\n" .
                "Phone: {$phoneNumber}\n\n" .
                "1. Confirm & Pay\n" .
@@ -233,7 +233,7 @@ class UssdMenuService
         
         foreach ($tickets as $ticket) {
             $menu .= "Code: {$ticket->ticket_code}\n";
-            $menu .= "Qty: {$ticket->quantity} ticket(s)\n";
+            $menu .= "Entries: {$ticket->quantity}\n";
             $menu .= "Status: {$ticket->status}\n";
             $menu .= "Campaign: {$ticket->campaign_name}\n";
             $menu .= "Date: " . date('d M Y', strtotime($ticket->created_at)) . "\n\n";
