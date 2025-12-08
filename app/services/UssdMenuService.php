@@ -190,7 +190,7 @@ class UssdMenuService
      */
     public function buildTicketList($phoneNumber, $page = 1)
     {
-        $perPage = 3;
+        $perPage = 1;
         $offset = ($page - 1) * $perPage;
         
         // Get total count
