@@ -119,6 +119,29 @@ class UssdController extends Controller
     }
     
     /**
+     * Send AddToCart response for Hubtel payment collection
+     * This triggers immediate mobile money prompt
+     */
+    private function sendAddToCartResponse($sessionId, $message, $item)
+    {
+        $response = [
+            'SessionId' => $sessionId,
+            'Type' => 'AddToCart',
+            'Message' => $message,
+            'Label' => 'Payment',
+            'DataType' => 'display',
+            'FieldType' => 'text',
+            'Item' => $item
+        ];
+        
+        error_log('USSD AddToCart Response: ' . json_encode($response));
+        
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+    
+    /**
      * Route request based on current step
      */
     private function routeRequest($session, $userInput, $phoneNumber)
@@ -468,8 +491,8 @@ class UssdController extends Controller
         }
         
         if ($input == '1') {
-            // Use current number
-            return $this->processPayment($sessionId, $sessionData, $phoneNumber, $phoneNumber);
+            // Use current number - Use AddToCart for immediate prompt
+            return $this->initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $phoneNumber);
         } elseif ($input == '2') {
             // Ask for different number
             $this->sessionService->updateSession($sessionId, 'enter_payment_number');
@@ -491,12 +514,77 @@ class UssdController extends Controller
             return "CON Invalid phone number.\nEnter Mobile Money Number:\n(e.g., 0241234567)";
         }
         
-        // Process payment with the entered number
-        return $this->processPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber);
+        // Process payment with the entered number using AddToCart
+        return $this->initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber);
     }
     
     /**
-     * Process payment with Hubtel
+     * Initiate payment using Hubtel's AddToCart feature
+     * This triggers immediate mobile money prompt
+     */
+    private function initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber)
+    {
+        // Validate phone number
+        if (empty($phoneNumber)) {
+            $this->sessionService->closeSession($sessionId);
+            return "END Error: Phone number not available.\nPlease try again.";
+        }
+        
+        // Get or create player
+        $player = $this->playerModel->getByPhone($phoneNumber);
+        if (!$player) {
+            $playerId = $this->playerModel->create([
+                'name' => 'USSD User',
+                'phone' => $phoneNumber
+            ]);
+            $player = $this->playerModel->findById($playerId);
+        } else {
+            $playerId = $player->id;
+        }
+        
+        // Create payment record
+        $reference = 'USSD' . time() . rand(1000, 9999);
+        
+        $paymentData = [
+            'player_id' => $playerId,
+            'campaign_id' => $sessionData['campaign_id'],
+            'station_id' => $sessionData['station_id'],
+            'programme_id' => $sessionData['programme_id'] ?? null,
+            'amount' => $sessionData['total_amount'],
+            'gateway' => 'hubtel',
+            'gateway_reference' => $reference,
+            'internal_reference' => $reference,
+            'status' => 'pending',
+            'channel' => 'ussd'
+        ];
+        
+        $paymentId = $this->paymentModel->create($paymentData);
+        
+        // Store payment info in session for fulfillment callback
+        $this->sessionService->updateSession($sessionId, 'awaiting_payment', array_merge($sessionData, [
+            'payment_id' => $paymentId,
+            'payment_reference' => $reference,
+            'payment_number' => $paymentNumber
+        ]));
+        
+        // Build AddToCart item
+        $item = [
+            'ItemName' => 'Raffle Ticket - ' . ($sessionData['campaign_name'] ?? 'Campaign'),
+            'ItemQuantity' => $sessionData['quantity'],
+            'ItemPrice' => $sessionData['ticket_price'],
+            'ItemSubtotal' => $sessionData['total_amount'],
+            'ItemTotalAmount' => $sessionData['total_amount']
+        ];
+        
+        $message = "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
+                   "Approve the mobile money prompt on your phone";
+        
+        // Use AddToCart response - this triggers immediate prompt!
+        $this->sendAddToCartResponse($sessionId, $message, $item);
+    }
+    
+    /**
+     * Process payment with Hubtel (fallback method)
      */
     private function processPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber)
     {
