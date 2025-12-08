@@ -49,8 +49,22 @@ class UssdController extends Controller
         $textArray = explode('*', $text);
         $userInput = end($textArray);
         
-        // Route to appropriate handler
-        $response = $this->routeRequest($session, $userInput, $phoneNumber);
+        // If text is empty, this is the first dial - show main menu
+        if (empty($text)) {
+            $response = $this->menuService->buildMainMenu();
+        } else {
+            // Route to appropriate handler
+            $response = $this->routeRequest($session, $userInput, $phoneNumber);
+        }
+        
+        // Ensure response has CON or END prefix
+        if (!preg_match('/^(CON|END)\s/', $response)) {
+            error_log('USSD Response missing prefix: ' . $response);
+            $response = 'CON ' . $response;
+        }
+        
+        // Log response for debugging
+        error_log('USSD Response: ' . substr($response, 0, 100));
         
         // Output response
         header('Content-Type: text/plain');

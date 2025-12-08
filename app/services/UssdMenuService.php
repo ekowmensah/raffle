@@ -34,6 +34,10 @@ class UssdMenuService
         $this->db->query("SELECT id, name FROM stations WHERE is_active = 1 ORDER BY name");
         $stations = $this->db->resultSet();
         
+        if (empty($stations)) {
+            return "END No active stations available.";
+        }
+        
         $menu = "CON Select Station:\n";
         $index = 1;
         
