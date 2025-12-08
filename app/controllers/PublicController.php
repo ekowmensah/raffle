@@ -52,6 +52,11 @@ class PublicController extends Controller
             $this->redirect('public');
         }
 
+        // Get station name
+        $stationModel = $this->model('Station');
+        $station = $stationModel->findById($campaign->station_id);
+        $campaign->station_name = $station ? $station->name : 'N/A';
+
         $stats = $this->campaignModel->getStats($id);
 
         $data = [
@@ -60,7 +65,7 @@ class PublicController extends Controller
             'stats' => $stats
         ];
 
-        $this->view('public/campaign', $data);
+        $this->view('public/campaign-info', $data);
     }
 
     public function buyTicket()
