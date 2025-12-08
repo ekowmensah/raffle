@@ -29,6 +29,13 @@
                 </div>
             <?php endif; ?>
 
+            <?php if (flash('error')): ?>
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="icon fas fa-ban"></i> <?= flash('error') ?>
+                </div>
+            <?php endif; ?>
+
             <!-- Stats Row -->
             <div class="row">
                 <div class="col-lg-3 col-6">
