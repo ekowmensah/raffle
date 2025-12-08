@@ -93,8 +93,8 @@
         <?php endif; ?>
 
         <div class="mt-4">
-            <a href="<?= url('public/campaign/' . $campaign->id) ?>" class="btn btn-primary btn-lg mr-2">
-                <i class="fas fa-arrow-left"></i> Back to Campaign
+            <a href="<?= url('public/buyTicket') ?>" class="btn btn-primary btn-lg mr-2">
+                <i class="fas fa-ticket-alt"></i> Buy More Tickets
             </a>
             <a href="<?= url('public') ?>" class="btn btn-outline-primary btn-lg">
                 <i class="fas fa-home"></i> Home

@@ -1346,8 +1346,8 @@
                                     </div>
                                 </div>
                                 
-                                <a href="<?= url('public/campaign/' . $campaign->id) ?>" class="btn btn-campaign">
-                                    <i class="fas fa-play-circle"></i> Play Now
+                                <a href="<?= url('public/buyTicket?campaign=' . $campaign->id) ?>" class="btn btn-campaign">
+                                    <i class="fas fa-ticket-alt"></i> Buy Tickets
                                 </a>
                             </div>
                         </div>

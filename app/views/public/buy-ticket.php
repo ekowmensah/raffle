@@ -496,24 +496,23 @@
             <div id="step1" class="step-content">
                 <h4 class="mb-4">Step 1: Select Your Station</h4>
                 
-                <?php foreach ($stations as $station): ?>
-                    <div class="campaign-option" onclick="selectStation(<?= $station->id ?>, '<?= htmlspecialchars($station->name) ?>')">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">
-                                    <i class="fas fa-broadcast-tower text-primary"></i>
-                                    <?= htmlspecialchars($station->name) ?>
-                                </h5>
-                                <p class="text-muted mb-0">
-                                    <small><?= htmlspecialchars($station->location ?? '') ?></small>
-                                </p>
-                            </div>
-                            <i class="fas fa-chevron-right text-muted"></i>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                <div class="form-group">
+                    <label for="station_id">Choose a Station <span class="text-danger">*</span></label>
+                    <select name="station_id" id="station_id" class="form-control form-control-lg" required>
+                        <option value="">-- Select a station --</option>
+                        <?php foreach ($stations as $station): ?>
+                            <option value="<?= $station->id ?>" data-name="<?= htmlspecialchars($station->name) ?>">
+                                <?= htmlspecialchars($station->name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 
-                <input type="hidden" name="station_id" id="station_id" required>
+                <div class="mt-4">
+                    <button type="button" class="btn btn-next float-right" id="station-next-btn" disabled>
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Step 2: Choose Campaign Type -->
@@ -536,8 +535,12 @@
                 
                 <!-- Station-wide campaigns section -->
                 <div id="station-campaigns-section">
-                    <div id="station-campaigns-container">
-                        <!-- Station-wide campaigns will be loaded here -->
+                    <h5 class="mb-3">Select Campaign:</h5>
+                    <div class="form-group">
+                        <select name="station_campaign_select" id="station_campaign_select" class="form-control form-control-lg">
+                            <option value="">-- Select a campaign --</option>
+                        </select>
+                        <small class="form-text text-muted" id="station-campaign-price"></small>
                     </div>
                 </div>
                 
@@ -545,15 +548,20 @@
                 <div id="programme-campaigns-section" class="hidden">
                     <div id="programme-selection">
                         <h5 class="mb-3">Select Programme:</h5>
-                        <div id="programmes-container">
-                            <!-- Programmes will be loaded here -->
+                        <div class="form-group">
+                            <select name="programme_id_select" id="programme_id_select" class="form-control form-control-lg">
+                                <option value="">-- Select a programme --</option>
+                            </select>
                         </div>
                     </div>
                     
                     <div id="programme-campaigns-container" class="hidden mt-4">
-                        <h5 class="mb-3">Programme Campaigns:</h5>
-                        <div id="programme-campaigns-list">
-                            <!-- Programme-specific campaigns will be loaded here -->
+                        <h5 class="mb-3">Select Campaign:</h5>
+                        <div class="form-group">
+                            <select name="programme_campaign_select" id="programme_campaign_select" class="form-control form-control-lg">
+                                <option value="">-- First select a programme --</option>
+                            </select>
+                            <small class="form-text text-muted" id="programme-campaign-price"></small>
                         </div>
                     </div>
                 </div>
@@ -577,15 +585,19 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" class="form-control form-control-lg" id="phone" name="phone" placeholder="0241234567" required>
-                    <small class="form-text text-muted">Enter your mobile money number</small>
+                    <label for="phone">Phone Number <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control form-control-lg" id="phone" name="phone" placeholder="0241234567" required pattern="[0-9]{10}" minlength="10" maxlength="10">
+                    <small class="form-text text-muted">Enter your 10-digit mobile money number (e.g., 0241234567)</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="ticket_count">Number of Tickets</label>
                     <input type="number" class="form-control form-control-lg" id="ticket_count" name="ticket_count" min="1" value="1" required>
                     <small class="form-text text-muted">Price per ticket: <span id="ticket-price-display">GHS 0.00</span></small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-trophy"></i> <strong>Pro Tip:</strong> Buy more tickets to increase your chances of winning! The more tickets you have, the higher your odds!
                 </div>
                 
                 <div class="alert alert-success">
@@ -596,7 +608,7 @@
                     <button type="button" class="btn btn-back" onclick="goToStep(2)">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
-                    <button type="button" class="btn btn-next float-right" onclick="goToStep(4)">
+                    <button type="button" class="btn btn-next float-right" onclick="validateStep3()">
                         Continue <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
@@ -636,13 +648,76 @@
     </div>
 </div>
 
+<!-- Validation Modal -->
+<div class="modal fade" id="validationModal" tabindex="-1" role="dialog" aria-labelledby="validationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: rgba(15, 15, 35, 0.95); border: 2px solid rgba(102, 126, 234, 0.5); border-radius: 20px;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(102, 126, 234, 0.3);">
+                <h5 class="modal-title" id="validationModalLabel" style="color: #f093fb;">
+                    <i class="fas fa-exclamation-circle"></i> <span id="modalTitle">Validation Error</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="color: rgba(255,255,255,0.9);">
+                <p id="modalMessage"></p>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(102, 126, 234, 0.3);">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none;">
+                    <i class="fas fa-check"></i> Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="background: linear-gradient(135deg, rgba(15, 15, 35, 0.98), rgba(30, 20, 50, 0.98)); border: 3px solid rgba(240, 147, 251, 0.6); border-radius: 25px; box-shadow: 0 0 40px rgba(240, 147, 251, 0.4);">
+            <div class="modal-header" style="border-bottom: 2px solid rgba(240, 147, 251, 0.3); background: rgba(102, 126, 234, 0.1);">
+                <h4 class="modal-title" id="confirmationModalLabel" style="color: #f093fb; font-weight: 800;">
+                    <i class="fas fa-hand-paper" style="color: #ffd700;"></i> <span id="confirmTitle">Wait! Before You Continue...</span>
+                </h4>
+            </div>
+            <div class="modal-body text-center" style="color: rgba(255,255,255,0.95); padding: 2rem;">
+                <div id="confirmMessage"></div>
+            </div>
+            <div class="modal-footer" style="border-top: 2px solid rgba(240, 147, 251, 0.3); justify-content: center; padding: 1.5rem;">
+                <button type="button" class="btn btn-lg" id="goBackBtn" style="background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 12px 30px; font-weight: 700; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+                    <i class="fas fa-plus-circle"></i> Yes, Add More Tickets!
+                </button>
+                <button type="button" class="btn btn-lg" id="continueBtn" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none; padding: 12px 30px; font-weight: 700; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                    <i class="fas fa-arrow-right"></i> No, Continue to Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="<?= vendor('jquery/jquery.min.js') ?>"></script>
 <script src="<?= vendor('bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
 <script>
 let selectedStationId = null;
+let selectedStationName = null;
 let selectedCampaign = null;
 let currentStep = 1;
 let currentCampaignType = 'station';
+
+// Helper function to escape HTML for safe display
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper function to format currency
+function formatCurrency(amount, currency = 'GHS') {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return `${currency} 0.00`;
+    return `${currency} ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function goToStep(step) {
     // Hide all steps
@@ -663,6 +738,38 @@ function goToStep(step) {
     currentStep = step;
 }
 
+// Handle station selection
+$('#station_id').on('change', function() {
+    const stationId = $(this).val();
+    const stationName = $(this).find('option:selected').data('name');
+    
+    if (stationId) {
+        $('#station-next-btn').prop('disabled', false);
+        selectedStationId = stationId;
+        selectedStationName = stationName;
+    } else {
+        $('#station-next-btn').prop('disabled', true);
+        selectedStationId = null;
+        selectedStationName = null;
+    }
+});
+
+// Handle station next button
+$('#station-next-btn').on('click', function() {
+    if (selectedStationId) {
+        // Reset campaign type to station-wide
+        currentCampaignType = 'station';
+        $('input[name="campaign_type_choice"][value="station"]').prop('checked', true).parent().addClass('active');
+        $('input[name="campaign_type_choice"][value="programme"]').prop('checked', false).parent().removeClass('active');
+        $('#station-campaigns-section').show();
+        $('#programme-campaigns-section').hide();
+        
+        // Load station-wide campaigns
+        loadStationCampaigns();
+        goToStep(2);
+    }
+});
+
 // Handle campaign type toggle
 $('input[name="campaign_type_choice"]').on('change', function() {
     currentCampaignType = $(this).val();
@@ -676,32 +783,21 @@ $('input[name="campaign_type_choice"]').on('change', function() {
         $('#programme-campaigns-section').show();
         
         // Load programmes if not already loaded
-        if (selectedStationId && $('#programmes-container').children().length === 0) {
+        if (selectedStationId && $('#programme_id_select option').length <= 1) {
             loadProgrammes();
         }
     }
 });
 
-function selectStation(stationId, stationName) {
-    selectedStationId = stationId;
-    document.getElementById('station_id').value = stationId;
-    
-    // Reset campaign type to station-wide
-    currentCampaignType = 'station';
-    $('input[name="campaign_type_choice"][value="station"]').prop('checked', true).parent().addClass('active');
-    $('input[name="campaign_type_choice"][value="programme"]').prop('checked', false).parent().removeClass('active');
-    $('#station-campaigns-section').show();
-    $('#programme-campaigns-section').hide();
-    
-    // Load station-wide campaigns
+function loadStationCampaigns(callback) {
     $.ajax({
-        url: '<?= url('public/getCampaignsByStation') ?>/' + stationId,
+        url: '<?= url('public/getCampaignsByStation') ?>/' + selectedStationId,
         method: 'GET',
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                displayStationCampaigns(response.campaigns, stationName);
-                goToStep(2);
+                displayStationCampaigns(response.campaigns, selectedStationName);
+                if (callback) callback();
             }
         },
         error: function() {
@@ -711,35 +807,43 @@ function selectStation(stationId, stationName) {
 }
 
 function displayStationCampaigns(campaigns, stationName) {
-    let html = '<h5 class="mb-3"><i class="fas fa-broadcast-tower"></i> ' + stationName + ' Campaigns</h5>';
+    const select = $('#station_campaign_select');
+    select.html('<option value="">-- Select a campaign --</option>');
     
     if (campaigns.length === 0) {
-        html += '<div class="alert alert-warning">No station-wide campaigns available. Please browse by programme.</div>';
+        select.html('<option value="">No station-wide campaigns available</option>');
     } else {
         campaigns.forEach(function(campaign) {
-            html += `
-                <div class="campaign-option" onclick="selectCampaign(${campaign.id}, '${campaign.name}', ${campaign.ticket_price}, '${campaign.currency}', null)">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="campaign-type-badge badge-station-wide">
-                                <i class="fas fa-star"></i> Station-Wide
-                            </span>
-                            <h5 class="mt-2 mb-1">${campaign.name}</h5>
-                            <p class="text-muted mb-0">
-                                <strong>${campaign.currency} ${parseFloat(campaign.ticket_price).toFixed(2)}</strong> per ticket
-                            </p>
-                        </div>
-                        <i class="fas fa-chevron-right text-muted"></i>
-                    </div>
-                </div>
-            `;
+            const optionText = `${campaign.name} - ${formatCurrency(campaign.ticket_price, campaign.currency)}`;
+            const option = $('<option></option>')
+                .val(campaign.id)
+                .text(optionText)
+                .data('name', campaign.name)
+                .data('price', campaign.ticket_price)
+                .data('currency', campaign.currency);
+            select.append(option);
         });
     }
-    
-    document.getElementById('station-campaigns-container').innerHTML = html;
 }
 
-function loadProgrammes() {
+// Handle station campaign selection from dropdown
+$('#station_campaign_select').on('change', function() {
+    const campaignId = $(this).val();
+    const option = $(this).find('option:selected');
+    
+    if (campaignId) {
+        const campaignName = option.data('name');
+        const ticketPrice = option.data('price');
+        const currency = option.data('currency');
+        
+        $('#station-campaign-price').text(`Price per ticket: ${formatCurrency(ticketPrice, currency)}`);
+        selectCampaign(campaignId, campaignName, ticketPrice, currency, null);
+    } else {
+        $('#station-campaign-price').text('');
+    }
+});
+
+function loadProgrammes(callback) {
     $.ajax({
         url: '<?= url('public/getProgrammesByStation') ?>/' + selectedStationId,
         method: 'GET',
@@ -747,6 +851,7 @@ function loadProgrammes() {
         success: function(response) {
             if (response.success) {
                 displayProgrammes(response.programmes);
+                if (callback) callback();
             }
         },
         error: function() {
@@ -755,33 +860,21 @@ function loadProgrammes() {
     });
 }
 
-function displayProgrammes(programmes) {
-    let html = '';
+// Handle programme selection from dropdown
+$('#programme_id_select').on('change', function() {
+    const programmeId = $(this).val();
+    const programmeName = $(this).find('option:selected').text();
     
-    if (programmes.length === 0) {
-        html = '<div class="alert alert-warning">No programmes available for this station.</div>';
+    if (programmeId) {
+        loadProgrammeCampaigns(programmeId, programmeName);
     } else {
-        programmes.forEach(function(programme) {
-            html += `
-                <div class="campaign-option" onclick="selectProgramme(${programme.id}, '${programme.name}')">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-microphone text-primary"></i>
-                                ${programme.name}
-                            </h5>
-                        </div>
-                        <i class="fas fa-chevron-right text-muted"></i>
-                    </div>
-                </div>
-            `;
-        });
+        $('#programme-campaigns-container').addClass('hidden');
+        $('#programme_campaign_select').html('<option value="">-- First select a programme --</option>');
+        $('#programme-campaign-price').text('');
     }
-    
-    document.getElementById('programmes-container').innerHTML = html;
-}
+});
 
-function selectProgramme(programmeId, programmeName) {
+function loadProgrammeCampaigns(programmeId, programmeName) {
     $.ajax({
         url: '<?= url('public/getCampaignsByProgramme') ?>/' + programmeId,
         method: 'GET',
@@ -789,7 +882,7 @@ function selectProgramme(programmeId, programmeName) {
         success: function(response) {
             if (response.success) {
                 displayProgrammeCampaigns(response.campaigns, programmeName, programmeId);
-                document.getElementById('programme-campaigns-container').classList.remove('hidden');
+                $('#programme-campaigns-container').removeClass('hidden');
             }
         },
         error: function() {
@@ -798,34 +891,60 @@ function selectProgramme(programmeId, programmeName) {
     });
 }
 
+function displayProgrammes(programmes) {
+    const select = $('#programme_id_select');
+    select.html('<option value="">-- Select a programme --</option>');
+    
+    if (programmes.length === 0) {
+        select.html('<option value="">No programmes available</option>');
+    } else {
+        programmes.forEach(function(programme) {
+            select.append(`<option value="${programme.id}">${programme.name}</option>`);
+        });
+    }
+}
+
+
 function displayProgrammeCampaigns(campaigns, programmeName, programmeId) {
-    let html = '<h6><i class="fas fa-microphone"></i> ' + programmeName + '</h6>';
+    const select = $('#programme_campaign_select');
+    select.html('<option value="">-- Select a campaign --</option>');
     
     if (campaigns.length === 0) {
-        html += '<div class="alert alert-warning">No campaigns available for this programme.</div>';
+        select.html('<option value="">No campaigns available for this programme</option>');
     } else {
         campaigns.forEach(function(campaign) {
-            html += `
-                <div class="campaign-option" onclick="selectCampaign(${campaign.id}, '${campaign.name}', ${campaign.ticket_price}, '${campaign.currency}', ${programmeId})">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="campaign-type-badge badge-programme">
-                                <i class="fas fa-microphone"></i> Programme
-                            </span>
-                            <h5 class="mt-2 mb-1">${campaign.name}</h5>
-                            <p class="text-muted mb-0">
-                                <strong>${campaign.currency} ${parseFloat(campaign.ticket_price).toFixed(2)}</strong> per ticket
-                            </p>
-                        </div>
-                        <i class="fas fa-chevron-right text-muted"></i>
-                    </div>
-                </div>
-            `;
+            const optionText = `${campaign.name} - ${formatCurrency(campaign.ticket_price, campaign.currency)}`;
+            const option = $('<option></option>')
+                .val(campaign.id)
+                .text(optionText)
+                .data('name', campaign.name)
+                .data('price', campaign.ticket_price)
+                .data('currency', campaign.currency)
+                .data('programme', programmeId);
+            select.append(option);
         });
     }
     
-    document.getElementById('programme-campaigns-list').innerHTML = html;
+    $('#programme-campaigns-container').removeClass('hidden');
 }
+
+// Handle programme campaign selection from dropdown
+$('#programme_campaign_select').on('change', function() {
+    const campaignId = $(this).val();
+    const option = $(this).find('option:selected');
+    
+    if (campaignId) {
+        const campaignName = option.data('name');
+        const ticketPrice = option.data('price');
+        const currency = option.data('currency');
+        const programmeId = option.data('programme');
+        
+        $('#programme-campaign-price').text(`Price per ticket: ${formatCurrency(ticketPrice, currency)}`);
+        selectCampaign(campaignId, campaignName, ticketPrice, currency, programmeId);
+    } else {
+        $('#programme-campaign-price').text('');
+    }
+});
 
 function selectCampaign(campaignId, campaignName, ticketPrice, currency, programmeId) {
     selectedCampaign = {
@@ -838,13 +957,13 @@ function selectCampaign(campaignId, campaignName, ticketPrice, currency, program
     
     document.getElementById('campaign_id').value = campaignId;
     document.getElementById('programme_id').value = programmeId || '';
-    document.getElementById('ticket-price-display').textContent = currency + ' ' + ticketPrice;
+    document.getElementById('ticket-price-display').textContent = formatCurrency(ticketPrice, currency);
     
     // Display selected campaign info
     let campaignType = programmeId ? '<span class="badge badge-info">Programme Campaign</span>' : '<span class="badge badge-primary">Station-Wide Campaign</span>';
     document.getElementById('selected-campaign-info').innerHTML = `
         <h5>${campaignType}</h5>
-        <p class="mb-0"><strong>${campaignName}</strong> - ${currency} ${parseFloat(ticketPrice).toFixed(2)} per ticket</p>
+        <p class="mb-0"><strong>${escapeHtml(campaignName)}</strong> - ${formatCurrency(ticketPrice, currency)} per ticket</p>
     `;
     
     updateTotalAmount();
@@ -855,14 +974,14 @@ function updateTotalAmount() {
     if (selectedCampaign) {
         let quantity = parseInt(document.getElementById('ticket_count').value) || 1;
         let total = selectedCampaign.price * quantity;
-        document.getElementById('total-amount-display').textContent = selectedCampaign.currency + ' ' + total.toFixed(2);
+        document.getElementById('total-amount-display').textContent = formatCurrency(total, selectedCampaign.currency);
         
         // Update payment summary
         document.getElementById('payment-summary').innerHTML = `
             <h5>Payment Summary</h5>
-            <p><strong>Campaign:</strong> ${selectedCampaign.name}</p>
-            <p><strong>Tickets:</strong> ${quantity} × ${selectedCampaign.currency} ${selectedCampaign.price.toFixed(2)}</p>
-            <p class="mb-0"><strong>Total:</strong> <span class="h4">${selectedCampaign.currency} ${total.toFixed(2)}</span></p>
+            <p><strong>Campaign:</strong> ${escapeHtml(selectedCampaign.name)}</p>
+            <p><strong>Tickets:</strong> ${quantity} × ${formatCurrency(selectedCampaign.price, selectedCampaign.currency)}</p>
+            <p class="mb-0"><strong>Total:</strong> <span class="h4">${formatCurrency(total, selectedCampaign.currency)}</span></p>
         `;
     }
 }
@@ -871,6 +990,153 @@ function updateTotalAmount() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('ticket_count').addEventListener('input', updateTotalAmount);
 });
+
+// Show validation modal
+function showValidationModal(title, message, focusElement) {
+    $('#modalTitle').text(title);
+    $('#modalMessage').html(message);
+    $('#validationModal').modal('show');
+    
+    // Focus on the element when modal is closed
+    $('#validationModal').on('hidden.bs.modal', function () {
+        if (focusElement) {
+            document.getElementById(focusElement).focus();
+        }
+    });
+}
+
+// Show confirmation modal with dynamic messaging based on ticket count
+function showConfirmationModal(ticketCount) {
+    let message = '';
+    let title = 'Wait! Before You Continue...';
+    
+    if (ticketCount === 1) {
+        title = '⚠️ Only 1 Ticket? Think Again!';
+        message = `
+            <div style="animation: pulse 2s infinite;">
+                <i class="fas fa-exclamation-triangle fa-4x mb-3" style="color: #ffd700;"></i>
+            </div>
+            <h3 style="color: #f093fb; font-weight: 800; margin-bottom: 20px;">You're Buying Only 1 Ticket!</h3>
+            <p style="font-size: 1.1em; line-height: 1.8;">With just <strong style="color: #ff6b6b;">1 ticket</strong>, your chances of winning are <strong style="color: #ff6b6b;">very low</strong>.</p>
+            <div class="alert" style="background: rgba(255, 107, 107, 0.2); border: 2px solid rgba(255, 107, 107, 0.5); margin: 20px 0; padding: 20px;">
+                <i class="fas fa-chart-line fa-2x mb-2" style="color: #ffd700;"></i>
+                <h5 style="color: #fff; margin-top: 10px;">Increase Your Odds!</h5>
+                <p style="margin: 10px 0;">📊 <strong>5 tickets</strong> = 5x better chance<br>📊 <strong>10 tickets</strong> = 10x better chance<br>📊 <strong>20 tickets</strong> = 20x better chance</p>
+            </div>
+            <p style="font-size: 1.2em; color: #10b981; font-weight: 700; margin-top: 20px;">
+                <i class="fas fa-trophy"></i> Winners usually buy multiple tickets!
+            </p>
+            <style>
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                }
+            </style>
+        `;
+    } else if (ticketCount >= 2 && ticketCount <= 4) {
+        title = '💡 Good Start! Want Even Better Odds?';
+        message = `
+            <i class="fas fa-thumbs-up fa-4x mb-3" style="color: #667eea;"></i>
+            <h3 style="color: #f093fb; font-weight: 800; margin-bottom: 20px;">You're Buying ${ticketCount} Tickets</h3>
+            <p style="font-size: 1.1em; line-height: 1.8;">That's a good start! But you could <strong style="color: #10b981;">double or triple</strong> your chances with just a few more tickets.</p>
+            <div class="alert" style="background: rgba(102, 126, 234, 0.2); border: 2px solid rgba(102, 126, 234, 0.5); margin: 20px 0; padding: 20px;">
+                <i class="fas fa-lightbulb fa-2x mb-2" style="color: #ffd700;"></i>
+                <h5 style="color: #fff; margin-top: 10px;">Smart Players Buy More!</h5>
+                <p style="margin: 10px 0;">🎯 Current odds: <strong>${ticketCount}x</strong><br>🎯 With 10 tickets: <strong>10x better!</strong><br>🎯 With 20 tickets: <strong>20x better!</strong></p>
+            </div>
+            <p style="font-size: 1.1em; color: #ffd700; font-weight: 700;">
+                <i class="fas fa-star"></i> Small investment, BIG potential return!
+            </p>
+        `;
+    } else if (ticketCount >= 5 && ticketCount <= 9) {
+        title = '🎉 Great Choice! Go Even Bigger?';
+        message = `
+            <i class="fas fa-fire fa-4x mb-3" style="color: #ff6b6b;"></i>
+            <h3 style="color: #f093fb; font-weight: 800; margin-bottom: 20px;">You're Buying ${ticketCount} Tickets - Nice!</h3>
+            <p style="font-size: 1.1em; line-height: 1.8;">You're on the right track! Many winners bought <strong style="color: #10b981;">10-20 tickets</strong> to maximize their chances.</p>
+            <div class="alert" style="background: rgba(16, 185, 129, 0.2); border: 2px solid rgba(16, 185, 129, 0.5); margin: 20px 0; padding: 20px;">
+                <i class="fas fa-trophy fa-2x mb-2" style="color: #ffd700;"></i>
+                <h5 style="color: #fff; margin-top: 10px;">You're Almost There!</h5>
+                <p style="margin: 10px 0;">🏆 Round up to <strong>10 tickets</strong> for double-digit odds!<br>🏆 Or go for <strong>20 tickets</strong> to be a serious contender!</p>
+            </div>
+            <p style="font-size: 1.1em; color: #10b981; font-weight: 700;">
+                <i class="fas fa-gem"></i> You're so close to optimal odds!
+            </p>
+        `;
+    } else {
+        title = '🔥 Excellent! You\'re a Serious Player!';
+        message = `
+            <i class="fas fa-crown fa-4x mb-3" style="color: #ffd700;"></i>
+            <h3 style="color: #10b981; font-weight: 800; margin-bottom: 20px;">You're Buying ${ticketCount} Tickets - Fantastic!</h3>
+            <p style="font-size: 1.1em; line-height: 1.8;">You're playing smart! With <strong style="color: #10b981;">${ticketCount} tickets</strong>, you have a <strong>serious chance</strong> of winning!</p>
+            <div class="alert" style="background: rgba(255, 215, 0, 0.2); border: 2px solid rgba(255, 215, 0, 0.5); margin: 20px 0; padding: 20px;">
+                <i class="fas fa-medal fa-2x mb-2" style="color: #ffd700;"></i>
+                <h5 style="color: #ffd700; margin-top: 10px;">Winner's Mindset!</h5>
+                <p style="margin: 10px 0; color: #fff;">✨ You're in the <strong>top tier</strong> of players<br>✨ Your odds are <strong>${ticketCount}x better</strong> than single-ticket buyers<br>✨ This is how champions play!</p>
+            </div>
+            <p style="font-size: 1.1em; color: #ffd700; font-weight: 700;">
+                <i class="fas fa-rocket"></i> Ready to claim your prize? Let's go!
+            </p>
+        `;
+    }
+    
+    $('#confirmTitle').html(title);
+    $('#confirmMessage').html(message);
+    
+    // Handle button clicks
+    $('#goBackBtn').off('click').on('click', function() {
+        $('#confirmationModal').modal('hide');
+        document.getElementById('ticket_count').focus();
+        document.getElementById('ticket_count').select();
+    });
+    
+    $('#continueBtn').off('click').on('click', function() {
+        $('#confirmationModal').modal('hide');
+        goToStep(4);
+    });
+    
+    $('#confirmationModal').modal('show');
+}
+
+// Validate Step 3 before proceeding to Step 4
+function validateStep3() {
+    const phone = document.getElementById('phone').value.trim();
+    const ticketCount = parseInt(document.getElementById('ticket_count').value);
+    
+    // Check if phone is empty
+    if (!phone) {
+        showValidationModal(
+            'Phone Number Required',
+            '<i class="fas fa-phone fa-2x mb-3" style="color: #f093fb;"></i><br>Please enter your mobile money number for payments and notifications!',
+            'phone'
+        );
+        return false;
+    }
+    
+    // Validate phone number format (10 digits)
+    const phonePattern = /^[0-9]{10}$/;
+    if (!phonePattern.test(phone)) {
+        showValidationModal(
+            'Invalid Phone Number',
+            '<i class="fas fa-mobile-alt fa-2x mb-3" style="color: #f093fb;"></i><br>Please enter a valid 10-digit Mobile Money phone number.<br><small class="text-muted">Example: 0241234567</small>',
+            'phone'
+        );
+        return false;
+    }
+    
+    // Validate ticket count
+    if (!ticketCount || ticketCount < 1) {
+        showValidationModal(
+            'Ticket Count Required',
+            '<i class="fas fa-ticket-alt fa-2x mb-3" style="color: #f093fb;"></i><br>Please enter the number of tickets you want to purchase. Remember, more tickets = higher chances of winning!',
+            'ticket_count'
+        );
+        return false;
+    }
+    
+    // Show confirmation modal before proceeding to payment
+    showConfirmationModal(ticketCount);
+}
 
 // Validate form before submission
 function validateForm() {
@@ -897,6 +1163,14 @@ function validateForm() {
         return false;
     }
     
+    // Validate phone number format (10 digits)
+    const phonePattern = /^[0-9]{10}$/;
+    if (!phonePattern.test(phone)) {
+        alert('Please enter a valid 10-digit phone number');
+        goToStep(3);
+        return false;
+    }
+    
     if (!ticketCount || ticketCount < 1) {
         alert('Please enter a valid number of tickets');
         goToStep(3);
@@ -905,6 +1179,91 @@ function validateForm() {
     
     return true;
 }
+
+// Get URL parameter
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
+// Pre-select campaign if campaign ID is in URL
+function preselectCampaign(campaignId) {
+    if (!campaignId) return;
+    
+    // Fetch campaign details to get station info
+    $.ajax({
+        url: '<?= url('public/getCampaignDetails') ?>/' + campaignId,
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.campaign) {
+                const campaign = response.campaign;
+                
+                // Select the station
+                $('#station_id').val(campaign.station_id);
+                selectedStationId = campaign.station_id;
+                selectedStationName = campaign.station_name;
+                $('#station-next-btn').prop('disabled', false);
+                
+                // Automatically go to step 2
+                setTimeout(function() {
+                    // Determine if it's a station-wide or programme campaign
+                    if (campaign.programme_id) {
+                        // Programme campaign
+                        currentCampaignType = 'programme';
+                        $('input[name="campaign_type_choice"][value="programme"]').prop('checked', true).parent().addClass('active');
+                        $('input[name="campaign_type_choice"][value="station"]').prop('checked', false).parent().removeClass('active');
+                        $('#station-campaigns-section').hide();
+                        $('#programme-campaigns-section').show();
+                        
+                        // Load programmes and then select the campaign
+                        loadProgrammes(function() {
+                            $('#programme_id_select').val(campaign.programme_id).trigger('change');
+                            
+                            // Wait for campaigns to load, then select the specific campaign
+                            setTimeout(function() {
+                                $('#programme_campaign_select').val(campaignId).trigger('change');
+                            }, 500);
+                        });
+                    } else {
+                        // Station-wide campaign
+                        currentCampaignType = 'station';
+                        $('input[name="campaign_type_choice"][value="station"]').prop('checked', true).parent().addClass('active');
+                        $('input[name="campaign_type_choice"][value="programme"]').prop('checked', false).parent().removeClass('active');
+                        $('#station-campaigns-section').show();
+                        $('#programme-campaigns-section').hide();
+                        
+                        // Load station campaigns and then select the specific one
+                        loadStationCampaigns(function() {
+                            $('#station_campaign_select').val(campaignId).trigger('change');
+                        });
+                    }
+                    
+                    goToStep(2);
+                }, 300);
+            }
+        },
+        error: function() {
+            console.error('Error loading campaign details for pre-selection');
+        }
+    });
+}
+
+// Initialize on page load
+$(document).ready(function() {
+    // Enable/disable station next button based on selection
+    if ($('#station_id').val()) {
+        $('#station-next-btn').prop('disabled', false);
+    }
+    
+    // Check for campaign parameter and pre-select
+    const campaignId = getUrlParameter('campaign');
+    if (campaignId) {
+        preselectCampaign(campaignId);
+    }
+});
 </script>
 
 </body>

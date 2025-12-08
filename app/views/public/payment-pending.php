@@ -197,7 +197,7 @@
                     } else if (data.success && data.status === 'failed') {
                         // Payment failed
                         alert('Payment failed. Please try again.');
-                        window.location.href = '<?= BASE_URL ?>/public/campaign/<?= $data['campaign']->id ?>';
+                        window.location.href = '<?= BASE_URL ?>/public/buyTicket';
                     }
                     // If still pending, continue checking
                 })

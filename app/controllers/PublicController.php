@@ -151,6 +151,32 @@ class PublicController extends Controller
         exit;
     }
 
+    public function getCampaignDetails($campaignId)
+    {
+        header('Content-Type: application/json');
+        
+        // Get campaign with station and programme info
+        $campaign = $this->campaignModel->findById($campaignId);
+        
+        if ($campaign) {
+            // Get station name
+            $stationModel = $this->model('Station');
+            $station = $stationModel->findById($campaign->station_id);
+            $campaign->station_name = $station ? $station->name : '';
+            
+            echo json_encode([
+                'success' => true,
+                'campaign' => $campaign
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Campaign not found'
+            ]);
+        }
+        exit;
+    }
+
     public function processPayment()
     {
         // Debug: Log that we reached this method

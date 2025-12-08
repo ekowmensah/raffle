@@ -65,7 +65,17 @@ function sanitize($data)
     if (is_array($data)) {
         return array_map('sanitize', $data);
     }
-    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+    // Trim whitespace
+    $data = trim($data);
+    
+    // Remove actual HTML tags (more precise than strip_tags)
+    // This regex removes <tag> and </tag> but preserves quotes and other characters
+    $data = preg_replace('/<[^>]*>/', '', $data);
+    
+    // Remove any remaining < or > characters that might be used for XSS
+    $data = str_replace(['<', '>'], '', $data);
+    
+    return $data;
 }
 
 function formatDate($date, $format = 'M d, Y h:i A')
