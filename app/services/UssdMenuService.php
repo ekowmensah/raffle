@@ -101,31 +101,34 @@ class UssdMenuService
     }
     
     /**
-     * Build campaign selection menu for station (includes station-wide campaigns)
+     * Build campaign selection menu for station (ALL campaigns under the station)
      */
     public function buildStationCampaignMenu($stationId)
     {
-        // Get station-wide campaigns only
+        // Get ALL campaigns for this station (both station-wide and programme-specific)
         $this->db->query("SELECT rc.id, rc.name, rc.ticket_price, rc.currency, rc.end_date
                          FROM raffle_campaigns rc
                          WHERE rc.station_id = :station_id
                          AND rc.status = 'active'
                          AND rc.end_date >= CURDATE()
-                         AND rc.id NOT IN (SELECT campaign_id FROM campaign_programme_access WHERE programme_id IS NOT NULL)
                          ORDER BY rc.name");
         $this->db->bind(':station_id', $stationId);
         $campaigns = $this->db->resultSet();
+        
+        if (empty($campaigns)) {
+            return "END No active campaigns available for this station.";
+        }
         
         $menu = "CON Select Campaign:\n";
         $index = 1;
         
         foreach ($campaigns as $campaign) {
-            $menu .= "{$index}. {$campaign->name} ({$campaign->currency} {$campaign->ticket_price})\n";
+            $menu .= "{$index}. {$campaign->name} (GHS " . number_format($campaign->ticket_price, 2) . ")\n";
             $index++;
         }
         
-        // Add option to browse by programme
-        $menu .= "{$index}. Browse by Programme\n";
+        // Add option to filter by programme
+        $menu .= "\n{$index}. Filter by Programme\n";
         $menu .= "0. Back";
         
         return $menu;
