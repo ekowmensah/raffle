@@ -81,7 +81,7 @@ class UssdController extends Controller
             if (strpos($response, 'END ') === 0) {
                 // End session
                 $message = substr($response, 4);
-                $this->sendHubtelResponse($sessionId, 'release', $message, 'Complete', 'display', 'text');
+                $this->sendHubtelResponse($sessionId, 'release', $message, 'Complete', null, null);
             } else {
                 // Continue session
                 $message = substr($response, 4); // Remove "CON " prefix
@@ -421,6 +421,7 @@ class UssdController extends Controller
         }
         
         $totalAmount = $quantity * $ticketPrice;
+        
         $this->sessionService->updateSession($sessionId, 'confirm_payment', array_merge($sessionData, [
             'quantity' => $quantity,
             'total_amount' => $totalAmount
@@ -580,11 +581,9 @@ class UssdController extends Controller
                 $this->sessionService->closeSession($sessionId);
                 
                 // Return success message
-                return "END Payment initiated successfully!\n\n" .
-                       "Amount: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
-                       "Entries: {$sessionData['quantity']}\n\n" .
-                       "Please approve the mobile money prompt on your phone.\n\n" .
-                       "Or dial *170# and go to Approvals.";
+                return "END Payment initiated!\n\n" .
+                       "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
+                       "Approve the prompt on your phone or dial *170#";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
