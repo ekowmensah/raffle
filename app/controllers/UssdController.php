@@ -497,8 +497,8 @@ class UssdController extends Controller
         }
         
         if ($input == '1') {
-            // Use current number - Use AddToCart for immediate prompt
-            return $this->initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $phoneNumber);
+            // Use current number
+            return $this->processPayment($sessionId, $sessionData, $phoneNumber, $phoneNumber);
         } elseif ($input == '2') {
             // Ask for different number
             $this->sessionService->updateSession($sessionId, 'enter_payment_number');
@@ -520,8 +520,8 @@ class UssdController extends Controller
             return "CON Invalid phone number.\nEnter Mobile Money Number:\n(e.g., 0241234567)";
         }
         
-        // Process payment with the entered number using AddToCart
-        return $this->initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber);
+        // Process payment with the entered number
+        return $this->processPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber);
     }
     
     /**
