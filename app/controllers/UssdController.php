@@ -585,7 +585,7 @@ class UssdController extends Controller
         error_log('USSD AddToCart Item: ' . json_encode($item));
         
         $message = "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
-                   "Approve the mobile money prompt on your phone";
+                   "Approve the Prompt or Dial *170#";
         
         // Use AddToCart response - this triggers immediate prompt!
         $this->sendAddToCartResponse($sessionId, $message, $item);
@@ -680,7 +680,7 @@ class UssdController extends Controller
                 // This frees the phone to receive mobile money prompt
                 return "END Payment initiated!\n\n" .
                        "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
-                       "Approve the prompt on your phone";
+                       "Approve the prompt or Dial *170#";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
