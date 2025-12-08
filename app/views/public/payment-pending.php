@@ -197,14 +197,14 @@
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 15px;
+            margin: 15px 0;
         }
         
         .info {
             background: rgba(102, 126, 234, 0.1);
             border: 2px solid rgba(102, 126, 234, 0.3);
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             text-align: left;
         }
@@ -212,7 +212,8 @@
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
+            align-items: center;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(102, 126, 234, 0.2);
         }
         
@@ -224,12 +225,15 @@
             font-weight: 600;
             color: rgba(255,255,255,0.7);
             font-size: 0.85rem;
+            flex-shrink: 0;
         }
         
         .info-value {
             color: #f093fb;
             font-weight: 700;
             font-size: 0.9rem;
+            text-align: right;
+            word-break: break-word;
         }
         
         .instructions {
@@ -373,55 +377,193 @@
             50% { background: #667eea; transform: scale(1.3); }
         }
         
+        /* Mobile info grid - 3 columns */
+        .info-grid-mobile {
+            display: none;
+        }
+        
         @media (max-width: 992px) {
             .content-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 12px;
             }
         }
         
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
             .container {
-                padding: 20px 15px;
+                padding: 15px;
                 max-height: 98vh;
+                width: 100%;
             }
+            
             h1 {
-                font-size: 1.5rem;
-                margin-bottom: 8px;
+                font-size: 1.4rem;
+                margin-bottom: 5px;
             }
+            
             .subtitle {
-                font-size: 0.9rem;
-                margin-bottom: 15px;
-            }
-            .phone-animation {
-                width: 60px;
-                height: 60px;
+                font-size: 0.85rem;
                 margin-bottom: 10px;
             }
+            
+            .phone-animation {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 8px;
+            }
+            
             .phone-icon {
-                font-size: 45px;
+                font-size: 40px;
             }
+            
+            .ripple {
+                width: 50px;
+                height: 50px;
+            }
+            
+            @keyframes ripple {
+                0% {
+                    width: 50px;
+                    height: 50px;
+                    opacity: 1;
+                }
+                100% {
+                    width: 100px;
+                    height: 100px;
+                    opacity: 0;
+                }
+            }
+            
             .status {
-                padding: 12px;
-                font-size: 1rem;
-            }
-            .motivation {
-                padding: 12px;
-            }
-            .motivation h4 {
+                padding: 10px;
                 font-size: 0.95rem;
+                margin: 10px 0;
             }
+            
+            .progress-dots {
+                margin: 8px 0;
+            }
+            
+            .dot {
+                width: 10px;
+                height: 10px;
+            }
+            
+            .motivation {
+                padding: 10px;
+                margin: 10px 0;
+            }
+            
+            .motivation h4 {
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+            }
+            
             .motivation p {
-                font-size: 0.85rem;
+                font-size: 0.8rem;
+                line-height: 1.4;
             }
+            
+            /* Mobile: Show 3-column grid for payment info */
+            .info {
+                display: none;
+            }
+            
+            .info-grid-mobile {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                background: rgba(102, 126, 234, 0.1);
+                border: 2px solid rgba(102, 126, 234, 0.3);
+                padding: 12px;
+                border-radius: 12px;
+            }
+            
+            .info-item-mobile {
+                background: rgba(15, 15, 35, 0.6);
+                padding: 8px;
+                border-radius: 8px;
+                border: 1px solid rgba(102, 126, 234, 0.2);
+            }
+            
+            .info-item-mobile.full-width {
+                grid-column: 1 / -1;
+            }
+            
+            .info-label-mobile {
+                font-size: 0.7rem;
+                color: rgba(255,255,255,0.6);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 3px;
+                font-weight: 600;
+            }
+            
+            .info-value-mobile {
+                font-size: 0.85rem;
+                color: #f093fb;
+                font-weight: 700;
+                word-break: break-word;
+            }
+            
             .instructions {
-                padding: 15px;
+                padding: 12px;
             }
+            
             .instructions h3 {
-                font-size: 1rem;
+                font-size: 0.95rem;
+                margin-bottom: 10px;
             }
+            
+            .instructions ol {
+                margin-left: 15px;
+            }
+            
             .instructions li {
-                font-size: 0.85rem;
+                font-size: 0.8rem;
+                margin: 8px 0;
+                padding-left: 25px;
+                line-height: 1.4;
+            }
+            
+            .instructions li::before {
+                width: 20px;
+                height: 20px;
+                font-size: 0.7rem;
+            }
+            
+            .btn {
+                padding: 10px 25px;
+                font-size: 0.8rem;
+                margin-top: 10px;
+            }
+            
+            .auto-check {
+                font-size: 0.75rem;
+                padding: 8px;
+                margin-top: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2rem;
+            }
+            
+            .status {
+                font-size: 0.9rem;
+            }
+            
+            .info-grid-mobile {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-item-mobile.full-width {
+                grid-column: 1;
             }
         }
     </style>
@@ -459,6 +601,7 @@
         </div>
         
         <div class="content-grid">
+            <!-- Desktop/Tablet View -->
             <div class="info">
                 <div class="info-row">
                     <span class="info-label">Payment ID:</span>
@@ -475,6 +618,26 @@
                 <div class="info-row">
                     <span class="info-label">Campaign:</span>
                     <span class="info-value"><?= htmlspecialchars($data['campaign']->name) ?></span>
+                </div>
+            </div>
+            
+            <!-- Mobile View - Grid Layout -->
+            <div class="info-grid-mobile">
+                <div class="info-item-mobile">
+                    <div class="info-label-mobile">Payment ID</div>
+                    <div class="info-value-mobile"><?= htmlspecialchars($data['payment']->id) ?></div>
+                </div>
+                <div class="info-item-mobile">
+                    <div class="info-label-mobile">Amount</div>
+                    <div class="info-value-mobile">GHS <?= number_format($data['payment']->amount, 2) ?></div>
+                </div>
+                <div class="info-item-mobile full-width">
+                    <div class="info-label-mobile">Reference</div>
+                    <div class="info-value-mobile"><?= htmlspecialchars($data['payment']->internal_reference) ?></div>
+                </div>
+                <div class="info-item-mobile full-width">
+                    <div class="info-label-mobile">Campaign</div>
+                    <div class="info-value-mobile"><?= htmlspecialchars($data['campaign']->name) ?></div>
                 </div>
             </div>
             
