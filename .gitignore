@@ -78,3 +78,5 @@ database/migrations/fix_audit_logs_table.sql
 public/.htaccess
 public/.htaccess
 app/config/config.php
+app/config/config.php
+.env
