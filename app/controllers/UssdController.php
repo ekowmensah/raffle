@@ -551,10 +551,19 @@ class UssdController extends Controller
             'callback_url' => $this->getCallbackUrl()
         ];
             
-            // Debug log
-            error_log('Hubtel payment data: ' . json_encode($hubtelData));
+            // Debug log - detailed
+            error_log('=== USSD Payment Initiation ===');
+            error_log('User Phone: ' . $phoneNumber);
+            error_log('Payment Phone: ' . $paymentNumber);
+            error_log('Amount: ' . $sessionData['total_amount']);
+            error_log('Reference: ' . $reference);
+            error_log('Campaign: ' . ($campaign->name ?? 'Unknown'));
+            error_log('Hubtel Data: ' . json_encode($hubtelData));
             
             $hubtelResponse = $hubtelService->initiatePayment($hubtelData);
+            
+            // Log response
+            error_log('Hubtel Response: ' . json_encode($hubtelResponse));
             
             if ($hubtelResponse['success']) {
                 // Update payment with gateway reference
