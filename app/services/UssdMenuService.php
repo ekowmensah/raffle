@@ -249,10 +249,12 @@ class UssdMenuService
     /**
      * Build payment method menu
      */
-    public function buildPaymentMethodMenu()
+    public function buildPaymentMethodMenu($phoneNumber)
     {
         return "CON Select Payment Method:\n" .
-               "1. Mobile Money (All Networks)\n" .
+               "Pay with:\n" .
+               "1. This Number ({$phoneNumber})\n" .
+               "2. Different Number\n" .
                "0. Cancel";
     }
     

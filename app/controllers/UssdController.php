@@ -150,6 +150,9 @@ class UssdController extends Controller
             case 'select_payment_method':
                 return $this->handlePaymentMethod($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
+            case 'enter_payment_number':
+                return $this->handlePaymentNumberInput($session->session_id, $userInput, $sessionData, $phoneNumber);
+                
             case 'view_tickets':
                 return $this->handleTicketNavigation($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
@@ -487,7 +490,7 @@ class UssdController extends Controller
         
         if ($input == '1') {
             $this->sessionService->updateSession($sessionId, 'select_payment_method');
-            return $this->menuService->buildPaymentMethodMenu();
+            return $this->menuService->buildPaymentMethodMenu($phoneNumber);
         }
         
         return "CON Invalid selection.\n" . 
@@ -508,14 +511,39 @@ class UssdController extends Controller
             return "END Purchase cancelled.";
         }
         
-        // Only Mobile Money payment is available
-        if ($input != '1') {
-            return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu(), 4);
+        if ($input == '1') {
+            // Use current number
+            return $this->processPayment($sessionId, $sessionData, $phoneNumber, $phoneNumber);
+        } elseif ($input == '2') {
+            // Ask for different number
+            $this->sessionService->updateSession($sessionId, 'enter_payment_number');
+            return "CON Enter Mobile Money Number:\n(e.g., 0241234567)";
+        } else {
+            return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu($phoneNumber), 4);
+        }
+    }
+    
+    /**
+     * Handle payment number input
+     */
+    private function handlePaymentNumberInput($sessionId, $input, $sessionData, $phoneNumber)
+    {
+        // Clean and validate the entered number
+        $paymentNumber = $this->cleanPhoneNumber($input);
+        
+        if (empty($paymentNumber) || strlen($paymentNumber) < 10) {
+            return "CON Invalid phone number.\nEnter Mobile Money Number:\n(e.g., 0241234567)";
         }
         
-        $gateway = 'hubtel';
-        $useHubtel = true;
-        
+        // Process payment with the entered number
+        return $this->processPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber);
+    }
+    
+    /**
+     * Process payment with Hubtel
+     */
+    private function processPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber)
+    {
         // Validate phone number
         if (empty($phoneNumber)) {
             $this->sessionService->closeSession($sessionId);
@@ -537,6 +565,7 @@ class UssdController extends Controller
         
         // Create payment record
         $reference = 'USSD' . time() . rand(1000, 9999);
+        $gateway = 'hubtel';
         
         $paymentData = [
             'player_id' => $playerId,
@@ -553,24 +582,23 @@ class UssdController extends Controller
         
         $paymentId = $this->paymentModel->create($paymentData);
         
-        // If Hubtel payment, initiate mobile money payment
-        if ($useHubtel) {
-            require_once '../app/services/PaymentGateway/HubtelService.php';
-            $hubtelService = new \App\Services\PaymentGateway\HubtelService();
-            
-            // Get campaign for description
-            $campaignModel = $this->model('Campaign');
-            $campaign = $campaignModel->findById($sessionData['campaign_id']);
-            
-            // Initiate Hubtel payment
-            $hubtelData = [
-                'phone' => $phoneNumber,
-                'amount' => $sessionData['total_amount'],
-                'reference' => $reference,
-                'player_name' => $player->name ?? 'USSD User',
-                'description' => 'Raffle Ticket: ' . ($campaign->name ?? 'Campaign'),
-                'callback_url' => $this->getCallbackUrl()
-            ];
+        // Initiate mobile money payment via Hubtel
+        require_once '../app/services/PaymentGateway/HubtelService.php';
+        $hubtelService = new \App\Services\PaymentGateway\HubtelService();
+        
+        // Get campaign for description
+        $campaignModel = $this->model('Campaign');
+        $campaign = $campaignModel->findById($sessionData['campaign_id']);
+        
+        // Initiate Hubtel payment with the payment number (may be different from user's number)
+        $hubtelData = [
+            'phone' => $paymentNumber,  // Use the payment number (could be different)
+            'amount' => $sessionData['total_amount'],
+            'reference' => $reference,
+            'player_name' => $player->name ?? 'USSD User',
+            'description' => 'Raffle Ticket: ' . ($campaign->name ?? 'Campaign'),
+            'callback_url' => $this->getCallbackUrl()
+        ];
             
             // Debug log
             error_log('Hubtel payment data: ' . json_encode($hubtelData));
@@ -605,7 +633,6 @@ class UssdController extends Controller
                        "Please try again or contact support.\n" .
                        "Reference: {$reference}";
             }
-        }
     }
     
     /**
