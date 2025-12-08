@@ -141,9 +141,6 @@ class UssdController extends Controller
             case 'select_quantity':
                 return $this->handleQuantitySelection($session->session_id, $userInput, $sessionData);
                 
-            case 'enter_custom_quantity':
-                return $this->handleCustomQuantity($session->session_id, $userInput, $sessionData);
-                
             case 'confirm_payment':
                 return $this->handlePaymentConfirmation($session->session_id, $userInput, $sessionData, $phoneNumber);
                 
@@ -403,69 +400,23 @@ class UssdController extends Controller
     }
     
     /**
-     * Handle quantity selection
+     * Handle quantity selection (direct number input)
      */
     private function handleQuantitySelection($sessionId, $input, $sessionData)
     {
-        if ($input == '0') {
-            $this->sessionService->updateSession($sessionId, 'select_campaign');
-            return $this->menuService->buildCampaignMenu(
-                $sessionData['station_id'],
-                $sessionData['programme_id']
-            );
-        }
-        
-        $ticketPrice = $sessionData['ticket_price'];
-        $quantity = 0;
-        
-        switch ($input) {
-            case '1':
-                $quantity = 10;
-                break;
-            case '2':
-                $quantity = 50;
-                break;
-            case '3':
-                $quantity = 100;
-                break;
-            case '4':
-                $this->sessionService->updateSession($sessionId, 'enter_custom_quantity');
-                return "CON Enter number of Entries (1-1000):";
-            default:
-                return "CON Invalid selection.\n" . 
-                       substr($this->menuService->buildQuantityMenu(
-                           $sessionData['campaign_name'],
-                           $ticketPrice
-                       ), 4); // Remove CON prefix to avoid duplication
-        }
-        
-        $totalAmount = $quantity * $ticketPrice;
-        $this->sessionService->updateSession($sessionId, 'confirm_payment', array_merge($sessionData, [
-            'quantity' => $quantity,
-            'total_amount' => $totalAmount
-        ]));
-        
-        return $this->menuService->buildPaymentConfirmation(
-            $quantity,
-            $totalAmount,
-            $sessionData['phone_number'] ?? ''
-        );
-    }
-    
-    /**
-     * Handle custom quantity input
-     */
-    private function handleCustomQuantity($sessionId, $input, $sessionData)
-    {
         $quantity = (int)$input;
+        $ticketPrice = $sessionData['ticket_price'];
         
+        // Validate quantity
         if ($quantity < 1 || $quantity > 1000) {
-            return "CON Invalid quantity. Enter 1-1000:";
+            return "CON Invalid quantity. Enter 1-1000:\n" .
+                   substr($this->menuService->buildQuantityMenu(
+                       $sessionData['campaign_name'],
+                       $ticketPrice
+                   ), 4);
         }
         
-        $ticketPrice = $sessionData['ticket_price'];
         $totalAmount = $quantity * $ticketPrice;
-        
         $this->sessionService->updateSession($sessionId, 'confirm_payment', array_merge($sessionData, [
             'quantity' => $quantity,
             'total_amount' => $totalAmount

@@ -225,12 +225,8 @@ class UssdMenuService
     {
         return "CON {$campaignName}\n" .
                "Ticket Price: ₵" . number_format($ticketPrice, 2) . "\n\n" .
-               "How many tickets?\n" .
-               "1. 10 - ₵" . number_format($ticketPrice * 10, 2) . "\n" .
-               "2. 50 - ₵" . number_format($ticketPrice * 50, 2) . "\n" .
-               "3. 100 - ₵" . number_format($ticketPrice * 100, 2) . "\n" .
-               "4. Custom Amount\n" .
-               "0. Back";
+               "Enter number of entries:\n" .
+               "(1-1000)";
     }
     
     /**
