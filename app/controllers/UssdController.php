@@ -99,10 +99,14 @@ class UssdController extends Controller
             'SessionId' => $sessionId,
             'Type' => $type,
             'Message' => $message,
-            'Label' => $label,
-            'DataType' => $dataType,
-            'FieldType' => $fieldType
+            'Label' => $label
         ];
+        
+        // Only add DataType and FieldType for interactive messages
+        if ($type !== 'release') {
+            $response['DataType'] = $dataType;
+            $response['FieldType'] = $fieldType;
+        }
         
         if (!empty($clientState)) {
             $response['ClientState'] = $clientState;

@@ -234,11 +234,11 @@ class UssdMenuService
      */
     public function buildPaymentConfirmation($quantity, $totalAmount, $phoneNumber)
     {
-        return "CON Confirm Purchase:\n" .
-               "Entries: {$quantity} - ₵" . number_format($totalAmount, 2) . "\n" .
-               "Phone: {$phoneNumber}\n\n" .
-               "1. Confirm\n" .
-               "0. Cancel";
+        return "CON Confirm:\n" .
+               "{$quantity} entries - ₵" . number_format($totalAmount, 2) . "\n" .
+               "{$phoneNumber}\n\n" .
+               "1. Yes\n" .
+               "0. No";
     }
     
     /**
