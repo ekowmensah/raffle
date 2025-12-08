@@ -22,17 +22,22 @@
     <section class="content">
         <div class="container-fluid">
             
-            <?php if (flash('success')): ?>
+            <?php 
+            $successMsg = flash('success');
+            $errorMsg = flash('error');
+            ?>
+            
+            <?php if ($successMsg): ?>
                 <div class="alert alert-success alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="icon fas fa-check"></i> <?= flash('success') ?>
+                    <i class="icon fas fa-check"></i> <?= htmlspecialchars($successMsg) ?>
                 </div>
             <?php endif; ?>
 
-            <?php if (flash('error')): ?>
+            <?php if ($errorMsg): ?>
                 <div class="alert alert-danger alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="icon fas fa-ban"></i> <?= htmlspecialchars(flash('error') ?? '') ?>
+                    <i class="icon fas fa-ban"></i> <?= htmlspecialchars($errorMsg) ?>
                 </div>
             <?php endif; ?>
 
