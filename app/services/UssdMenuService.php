@@ -174,7 +174,10 @@ class UssdMenuService
         if ($page > 1) {
             $menu .= "6. Previous Page\n";
         }
-        $menu .= "7. Filter by Programme\n";
+        // Only show "Filter by Programme" on the last page
+        if ($page == $totalPages) {
+            $menu .= "7. Filter by Programme\n";
+        }
         $menu .= "0. Back";
         
         return $menu;
@@ -250,7 +253,6 @@ class UssdMenuService
     {
         return "CON Select Payment Method:\n" .
                "1. Mobile Money (All Networks)\n" .
-               "2. Manual Payment (Test)\n" .
                "0. Cancel";
     }
     

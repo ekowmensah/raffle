@@ -508,22 +508,13 @@ class UssdController extends Controller
             return "END Purchase cancelled.";
         }
         
-        $gateway = '';
-        $isManual = false;
-        $useHubtel = false;
-        
-        switch ($input) {
-            case '1':
-                $gateway = 'hubtel';
-                $useHubtel = true;
-                break;
-            case '2':
-                $gateway = 'manual';
-                $isManual = true;
-                break;
-            default:
-                return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu(), 4);
+        // Only Mobile Money payment is available
+        if ($input != '1') {
+            return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu(), 4);
         }
+        
+        $gateway = 'hubtel';
+        $useHubtel = true;
         
         // Validate phone number
         if (empty($phoneNumber)) {
@@ -615,65 +606,6 @@ class UssdController extends Controller
                        "Reference: {$reference}";
             }
         }
-        
-        // If manual payment, process immediately
-        if ($isManual) {
-            // Update payment to success
-            $this->paymentModel->update($paymentId, [
-                'status' => 'success',
-                'paid_at' => date('Y-m-d H:i:s')
-            ]);
-            
-            // Generate tickets
-            require_once '../app/services/TicketGeneratorService.php';
-            require_once '../app/services/RevenueAllocationService.php';
-            
-            $ticketService = new \App\Services\TicketGeneratorService();
-            $revenueService = new \App\Services\RevenueAllocationService();
-            
-            $campaignModel = $this->model('Campaign');
-            $campaign = $campaignModel->findById($sessionData['campaign_id']);
-            
-            // Prepare payment data for services
-            $paymentData = [
-                'payment_id' => $paymentId,
-                'player_id' => $playerId,
-                'campaign_id' => $sessionData['campaign_id'],
-                'station_id' => $sessionData['station_id'],
-                'programme_id' => $sessionData['programme_id'] ?? null, // Can be null for station-wide campaigns
-                'amount' => $sessionData['total_amount']
-            ];
-            
-            // Generate tickets
-            $ticketResult = $ticketService->generateTickets($paymentData);
-            
-            // Allocate revenue
-            $revenueService->allocate($paymentData);
-            
-            // Close session
-            $this->sessionService->closeSession($sessionId);
-            
-            // Return success with ticket codes
-            if ($ticketResult && isset($ticketResult['tickets'])) {
-                $ticketCodes = array_map(function($t) { 
-                    return is_array($t) ? $t['ticket_code'] : $t->ticket_code; 
-                }, $ticketResult['tickets']);
-                
-                return "END Payment Successful!\n" .
-                       "Amount: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
-                       "Entries: {$sessionData['quantity']}\n" .
-                       "Code: " . implode(', ', $ticketCodes) . "\n\n" .
-                       "Good luck!";
-            }
-            
-            return "END Payment processed but ticket generation failed.\n" .
-                   "Please contact support.\n" .
-                   "Reference: PAY{$paymentId}";
-        }
-        
-        // This should not be reached anymore (all cases handled above)
-        $this->sessionService->closeSession($sessionId);
-        return "END Payment processing error. Please try again.";
     }
     
     /**
