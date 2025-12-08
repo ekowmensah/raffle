@@ -18,7 +18,7 @@ class UssdMenuService
      */
     public function buildMainMenu()
     {
-        return "CON Welcome to Raffle System\n" .
+        return "CON Be A Winner Today\n" .
                "1. Buy Ticket\n" .
                "2. Check My Tickets\n" .
                "3. Check Winners\n" .
