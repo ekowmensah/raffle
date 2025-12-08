@@ -199,10 +199,10 @@ class CampaignController extends Controller
             $this->redirect('campaign/show/' . $id);
         }
 
-        // Check if campaign has tickets sold
-        $ticketCount = $campaign->total_tickets ?? 0;
+        // Check if campaign has tickets sold - fetch count explicitly
+        $ticketCount = $this->ticketModel->countByCampaign($id);
         if ($ticketCount > 0) {
-            flash('error', 'Cannot edit campaign - tickets have already been sold. Create a new campaign instead.');
+            flash('error', 'Cannot edit campaign - ' . $ticketCount . ' ticket(s) have already been sold. Create a new campaign instead.');
             $this->redirect('campaign/show/' . $id);
         }
 
