@@ -150,7 +150,8 @@
                                     <label for="item_name">Item Name <span class="text-danger item-required">*</span></label>
                                     <input type="text" class="form-control" id="item_name" name="item_name" 
                                            value="<?= htmlspecialchars($campaign->item_name ?? '') ?>"
-                                           placeholder="e.g., iPhone 15 Pro Max 256GB">
+                                           placeholder="e.g., iPhone 15 Pro Max 256GB"
+                                           <?= ($campaign->campaign_type ?? 'cash') == 'item' ? 'required' : '' ?>>
                                     <small class="form-text text-muted">Full name of the prize item</small>
                                 </div>
                             </div>
@@ -163,7 +164,8 @@
                                         </div>
                                         <input type="number" class="form-control" id="item_value" name="item_value" 
                                                value="<?= $campaign->item_value ?? '' ?>" step="0.01" min="0"
-                                               placeholder="5000.00">
+                                               placeholder="5000.00"
+                                               <?= ($campaign->campaign_type ?? 'cash') == 'item' ? 'required' : '' ?>>
                                     </div>
                                     <small class="form-text text-muted">Retail/market value of the item</small>
                                 </div>
@@ -181,7 +183,8 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="winner_selection_type">Winner Selection Type <span class="text-danger item-required">*</span></label>
-                                    <select class="form-control" id="winner_selection_type" name="winner_selection_type">
+                                    <select class="form-control" id="winner_selection_type" name="winner_selection_type"
+                                            <?= ($campaign->campaign_type ?? 'cash') == 'item' ? 'required' : '' ?>>
                                         <option value="single" <?= ($campaign->winner_selection_type ?? 'single') == 'single' ? 'selected' : '' ?>>
                                             <i class="fas fa-user"></i> Single Winner
                                         </option>
