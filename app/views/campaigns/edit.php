@@ -907,6 +907,9 @@ $(document).ready(function() {
         $(this).next('.custom-file-label').text(fileName);
     });
     
+    // Initialize campaign type on page load
+    toggleCampaignType();
+    
     // Initialize winner selection type on page load
     handleWinnerSelectionChange();
     
