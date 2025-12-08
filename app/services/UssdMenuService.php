@@ -153,11 +153,11 @@ class UssdMenuService
         return "CON {$campaignName}\n" .
                "Ticket Price: GHS " . number_format($ticketPrice, 2) . "\n\n" .
                "How many tickets?\n" .
-               "1. 1 ticket (GHS " . number_format($ticketPrice, 2) . ")\n" .
-               "2. 2 tickets (GHS " . number_format($ticketPrice * 2, 2) . ")\n" .
-               "3. 3 tickets (GHS " . number_format($ticketPrice * 3, 2) . ")\n" .
-               "4. 5 tickets (GHS " . number_format($ticketPrice * 5, 2) . ")\n" .
-               "5. Enter custom amount\n" .
+               "1. 10 (GHS " . number_format($ticketPrice * 10, 2) . ")\n" .
+               "2. 20 (GHS " . number_format($ticketPrice * 20, 2) . ")\n" .
+               "3. 30 (GHS " . number_format($ticketPrice * 30, 2) . ")\n" .
+               "4. 50 (GHS " . number_format($ticketPrice * 50, 2) . ")\n" .
+               "5. Custom Amount\n" .
                "0. Back";
     }
     
