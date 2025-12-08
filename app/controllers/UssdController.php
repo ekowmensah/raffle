@@ -425,7 +425,7 @@ class UssdController extends Controller
         return $this->menuService->buildPaymentConfirmation(
             $quantity,
             $totalAmount,
-            $sessionData['phone_number'] ?? ''
+            $this->formatPhoneForDisplay($sessionData['phone_number'] ?? '')
         );
     }
     
@@ -441,7 +441,7 @@ class UssdController extends Controller
         
         if ($input == '1') {
             $this->sessionService->updateSession($sessionId, 'select_payment_method');
-            return $this->menuService->buildPaymentMethodMenu($phoneNumber);
+            return $this->menuService->buildPaymentMethodMenu($this->formatPhoneForDisplay($phoneNumber));
         }
         
         return "CON Invalid selection.\n" . 
@@ -470,7 +470,7 @@ class UssdController extends Controller
             $this->sessionService->updateSession($sessionId, 'enter_payment_number');
             return "CON Enter Mobile Money Number:\n(e.g., 0241234567)";
         } else {
-            return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu($phoneNumber), 4);
+            return "CON Invalid selection.\n" . substr($this->menuService->buildPaymentMethodMenu($this->formatPhoneForDisplay($phoneNumber)), 4);
         }
     }
     
@@ -576,9 +576,11 @@ class UssdController extends Controller
                 $this->sessionService->closeSession($sessionId);
                 
                 // Return success message
-                return "END Amt: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
+                return "END Payment initiated successfully!\n\n" .
+                       "Amount: ₵" . number_format($sessionData['total_amount'], 2) . "\n" .
                        "Entries: {$sessionData['quantity']}\n\n" .
-                       "Approve prompt on your phone or Dial *170# and go to Approval";
+                       "Please approve the mobile money prompt on your phone.\n\n" .
+                       "Or dial *170# and go to Approvals.";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
@@ -596,7 +598,7 @@ class UssdController extends Controller
     }
     
     /**
-     * Clean phone number to standard format
+     * Clean phone number to standard format (233XXXXXXXXX)
      */
     private function cleanPhoneNumber($phone)
     {
@@ -608,6 +610,32 @@ class UssdController extends Controller
             $phone = '233' . substr($phone, 1);
         } elseif (substr($phone, 0, 1) != '+' && strlen($phone) == 9) {
             $phone = '233' . $phone;
+        }
+        
+        return $phone;
+    }
+    
+    /**
+     * Format phone number for display (0XXXXXXXXX)
+     */
+    private function formatPhoneForDisplay($phone)
+    {
+        // Remove spaces, dashes, etc.
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        
+        // Convert 233XXXXXXXXX to 0XXXXXXXXX
+        if (substr($phone, 0, 3) == '233') {
+            return '0' . substr($phone, 3);
+        }
+        
+        // If already starts with 0, return as is
+        if (substr($phone, 0, 1) == '0') {
+            return $phone;
+        }
+        
+        // If 9 digits, add 0 prefix
+        if (strlen($phone) == 9) {
+            return '0' . $phone;
         }
         
         return $phone;
