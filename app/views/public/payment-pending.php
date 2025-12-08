@@ -18,11 +18,11 @@
             background: #0f0f23;
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 20px;
+            padding: 40px 20px;
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;
         }
         
         body::before {
@@ -57,16 +57,14 @@
             background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
             border: 3px solid rgba(102, 126, 234, 0.5);
-            border-radius: 25px;
+            border-radius: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(102, 126, 234, 0.3);
-            max-width: 1100px;
-            width: 95%;
-            padding: 30px;
+            padding: 50px 40px;
+            max-width: 900px;
+            width: 100%;
             text-align: center;
             position: relative;
-            overflow: hidden;
-            animation: slideIn 0.5s ease-out;
-            max-height: 95vh;
+            overflow: visible;
         }
         
         @keyframes slideIn {
@@ -93,20 +91,23 @@
         /* Animated phone icon */
         .phone-animation {
             position: relative;
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 15px;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .phone-icon {
-            font-size: 60px;
-            background: linear-gradient(135deg, #667eea, #f093fb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: pulse 2s ease-in-out infinite;
+            font-size: 80px;
+            color: #667eea;
+            z-index: 2;
+            animation: phonePulse 2s ease-in-out infinite;
         }
         
-        @keyframes pulse {
+        @keyframes phonePulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.1); opacity: 0.8; }
         }
@@ -116,11 +117,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            border: 2px solid #667eea;
+            width: 100px;
+            height: 100px;
+            border: 3px solid #667eea;
             border-radius: 50%;
-            animation: ripple 2s ease-out infinite;
+            animation: ripple 1.5s ease-out infinite;
         }
         
         .ripple:nth-child(2) {
@@ -133,25 +134,24 @@
         
         @keyframes ripple {
             0% {
-                width: 80px;
-                height: 80px;
+                width: 100px;
+                height: 100px;
                 opacity: 1;
             }
             100% {
-                width: 140px;
-                height: 140px;
+                width: 200px;
+                height: 200px;
                 opacity: 0;
             }
         }
         
         h1 {
-            background: linear-gradient(135deg, #fff, #f093fb);
+            background: linear-gradient(135deg, #fff, #667eea);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 900;
-            animation: glow 2s ease-in-out infinite;
+            margin-bottom: 15px;
         }
         
         @keyframes glow {
@@ -160,27 +160,20 @@
         }
         
         .subtitle {
-            color: rgba(255,255,255,0.8);
-            font-size: 1rem;
-            margin-bottom: 20px;
-            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
         }
         
         .status {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
-            border: 2px solid rgba(255, 193, 7, 0.5);
-            color: #ffd700;
-            padding: 15px;
-            border-radius: 12px;
-            margin: 15px 0;
-            font-size: 1.1rem;
-            font-weight: 700;
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes statusPulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.3); }
-            50% { box-shadow: 0 0 30px rgba(255, 193, 7, 0.6); }
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 25px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f093fb;
         }
         
         .status i {
@@ -193,27 +186,25 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Horizontal layout for content */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
+        /* Vertical layout for content */
+        .content-section {
+            margin: 30px 0;
         }
         
         .info {
             background: rgba(102, 126, 234, 0.1);
             border: 2px solid rgba(102, 126, 234, 0.3);
-            padding: 15px;
-            border-radius: 12px;
+            padding: 25px;
+            border-radius: 15px;
             text-align: left;
+            margin-bottom: 30px;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 15px 0;
             border-bottom: 1px solid rgba(102, 126, 234, 0.2);
         }
         
@@ -224,14 +215,14 @@
         .info-label {
             font-weight: 600;
             color: rgba(255,255,255,0.7);
-            font-size: 0.85rem;
+            font-size: 1rem;
             flex-shrink: 0;
         }
         
         .info-value {
             color: #f093fb;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             text-align: right;
             word-break: break-word;
         }
@@ -240,65 +231,65 @@
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
             border: 2px solid rgba(16, 185, 129, 0.4);
             border-left: 5px solid #10b981;
-            padding: 20px;
+            padding: 30px;
             text-align: left;
-            border-radius: 12px;
+            border-radius: 15px;
         }
         
         .instructions h3 {
             color: #10b981;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
             font-weight: 700;
         }
         
         .instructions ol {
-            margin-left: 20px;
-            counter-reset: item;
+            margin: 0;
+            padding-left: 0;
             list-style: none;
         }
         
         .instructions li {
-            margin: 10px 0;
             color: rgba(255,255,255,0.9);
-            font-size: 0.9rem;
-            line-height: 1.5;
-            counter-increment: item;
+            margin: 18px 0;
+            font-size: 1rem;
+            line-height: 1.7;
             position: relative;
-            padding-left: 30px;
+            padding-left: 45px;
         }
         
         .instructions li::before {
-            content: counter(item);
+            content: attr(data-number);
             position: absolute;
             left: 0;
             top: 0;
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            width: 22px;
-            height: 22px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.75rem;
+            font-size: 0.95rem;
         }
         
         .btn {
             display: inline-block;
-            padding: 12px 30px;
+            padding: 15px 40px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            text-decoration: none;
+            border: none;
             border-radius: 50px;
             font-weight: 700;
-            margin-top: 15px;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 30px;
             transition: all 0.3s;
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
             text-transform: uppercase;
             letter-spacing: 1px;
-            font-size: 0.85rem;
         }
         
         .btn:hover {
@@ -309,13 +300,13 @@
         }
         
         .auto-check {
-            color: rgba(255,255,255,0.6);
-            font-size: 0.85rem;
-            margin-top: 15px;
-            padding: 10px;
             background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 15px;
             border-radius: 10px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            margin-top: 25px;
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.7);
         }
         
         .auto-check i {
@@ -326,12 +317,11 @@
         
         /* Motivational messages */
         .motivation {
-            background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(118, 75, 162, 0.15));
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(102, 126, 234, 0.15));
             border: 2px solid rgba(240, 147, 251, 0.4);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-            animation: fadeIn 1s ease-in;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
         }
         
         @keyframes fadeIn {
@@ -341,31 +331,31 @@
         
         .motivation h4 {
             color: #f093fb;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
             font-weight: 700;
-            margin-bottom: 8px;
         }
         
         .motivation p {
             color: rgba(255,255,255,0.8);
             line-height: 1.5;
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         
         /* Progress dots */
         .progress-dots {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin: 12px 0;
+            gap: 12px;
+            margin: 20px 0;
         }
         
         .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+            width: 14px;
+            height: 14px;
             background: rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
             animation: dotPulse 1.5s ease-in-out infinite;
         }
         
@@ -377,193 +367,63 @@
             50% { background: #667eea; transform: scale(1.3); }
         }
         
-        /* Mobile info grid - 3 columns */
-        .info-grid-mobile {
-            display: none;
-        }
-        
         @media (max-width: 992px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
+            body {
+                padding: 20px 15px;
             }
         }
         
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 20px 15px;
             }
             
             .container {
-                padding: 15px;
-                max-height: 98vh;
-                width: 100%;
+                padding: 30px 20px;
             }
             
             h1 {
-                font-size: 1.4rem;
-                margin-bottom: 5px;
+                font-size: 1.8rem;
             }
             
             .subtitle {
-                font-size: 0.85rem;
-                margin-bottom: 10px;
+                font-size: 1rem;
             }
             
             .phone-animation {
-                width: 50px;
-                height: 50px;
-                margin-bottom: 8px;
+                width: 80px;
+                height: 80px;
             }
             
             .phone-icon {
-                font-size: 40px;
+                font-size: 60px;
             }
             
-            .ripple {
-                width: 50px;
-                height: 50px;
-            }
-            
-            @keyframes ripple {
-                0% {
-                    width: 50px;
-                    height: 50px;
-                    opacity: 1;
-                }
-                100% {
-                    width: 100px;
-                    height: 100px;
-                    opacity: 0;
-                }
-            }
-            
-            .status {
-                padding: 10px;
-                font-size: 0.95rem;
-                margin: 10px 0;
-            }
-            
-            .progress-dots {
-                margin: 8px 0;
-            }
-            
-            .dot {
-                width: 10px;
-                height: 10px;
-            }
-            
-            .motivation {
-                padding: 10px;
-                margin: 10px 0;
-            }
-            
-            .motivation h4 {
-                font-size: 0.9rem;
-                margin-bottom: 5px;
-            }
-            
-            .motivation p {
-                font-size: 0.8rem;
-                line-height: 1.4;
-            }
-            
-            /* Mobile: Show 3-column grid for payment info */
             .info {
-                display: none;
-            }
-            
-            .info-grid-mobile {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                background: rgba(102, 126, 234, 0.1);
-                border: 2px solid rgba(102, 126, 234, 0.3);
-                padding: 12px;
-                border-radius: 12px;
-            }
-            
-            .info-item-mobile {
-                background: rgba(15, 15, 35, 0.6);
-                padding: 8px;
-                border-radius: 8px;
-                border: 1px solid rgba(102, 126, 234, 0.2);
-            }
-            
-            .info-item-mobile.full-width {
-                grid-column: 1 / -1;
-            }
-            
-            .info-label-mobile {
-                font-size: 0.7rem;
-                color: rgba(255,255,255,0.6);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 3px;
-                font-weight: 600;
-            }
-            
-            .info-value-mobile {
-                font-size: 0.85rem;
-                color: #f093fb;
-                font-weight: 700;
-                word-break: break-word;
+                padding: 20px;
             }
             
             .instructions {
-                padding: 12px;
-            }
-            
-            .instructions h3 {
-                font-size: 0.95rem;
-                margin-bottom: 10px;
-            }
-            
-            .instructions ol {
-                margin-left: 15px;
-            }
-            
-            .instructions li {
-                font-size: 0.8rem;
-                margin: 8px 0;
-                padding-left: 25px;
-                line-height: 1.4;
-            }
-            
-            .instructions li::before {
-                width: 20px;
-                height: 20px;
-                font-size: 0.7rem;
-            }
-            
-            .btn {
-                padding: 10px 25px;
-                font-size: 0.8rem;
-                margin-top: 10px;
-            }
-            
-            .auto-check {
-                font-size: 0.75rem;
-                padding: 8px;
-                margin-top: 10px;
+                padding: 20px;
             }
         }
         
         @media (max-width: 480px) {
+            .container {
+                padding: 25px 15px;
+            }
+            
             h1 {
-                font-size: 1.2rem;
+                font-size: 1.5rem;
             }
             
-            .status {
-                font-size: 0.9rem;
+            .phone-animation {
+                width: 70px;
+                height: 70px;
             }
             
-            .info-grid-mobile {
-                grid-template-columns: 1fr;
-            }
-            
-            .info-item-mobile.full-width {
-                grid-column: 1;
+            .phone-icon {
+                font-size: 50px;
             }
         }
     </style>
@@ -600,8 +460,7 @@
             <p>Your tickets are reserved and waiting for you. Complete the payment now to secure your chance to win amazing prizes!</p>
         </div>
         
-        <div class="content-grid">
-            <!-- Desktop/Tablet View -->
+        <div class="content-section">
             <div class="info">
                 <div class="info-row">
                     <span class="info-label">Payment ID:</span>
@@ -621,33 +480,13 @@
                 </div>
             </div>
             
-            <!-- Mobile View - Grid Layout -->
-            <div class="info-grid-mobile">
-                <div class="info-item-mobile">
-                    <div class="info-label-mobile">Payment ID</div>
-                    <div class="info-value-mobile"><?= htmlspecialchars($data['payment']->id) ?></div>
-                </div>
-                <div class="info-item-mobile">
-                    <div class="info-label-mobile">Amount</div>
-                    <div class="info-value-mobile">GHS <?= number_format($data['payment']->amount, 2) ?></div>
-                </div>
-                <div class="info-item-mobile full-width">
-                    <div class="info-label-mobile">Reference</div>
-                    <div class="info-value-mobile"><?= htmlspecialchars($data['payment']->internal_reference) ?></div>
-                </div>
-                <div class="info-item-mobile full-width">
-                    <div class="info-label-mobile">Campaign</div>
-                    <div class="info-value-mobile"><?= htmlspecialchars($data['campaign']->name) ?></div>
-                </div>
-            </div>
-            
             <div class="instructions">
                 <h3><i class="fas fa-mobile-alt"></i> Complete Payment on Your Phone</h3>
                 <ol>
-                    <li>Check your phone for a mobile money prompt</li>
-                    <li>Enter your mobile money PIN to approve the payment</li>
-                    <li>Wait for the confirmation SMS</li>
-                    <li>This page will automatically redirect when payment is confirmed</li>
+                    <li data-number="1">Check your phone for a mobile money prompt</li>
+                    <li data-number="2">Enter your mobile money PIN to approve the payment</li>
+                    <li data-number="3">Wait for the confirmation SMS</li>
+                    <li data-number="4">This page will automatically redirect when payment is confirmed</li>
                 </ol>
             </div>
         </div>

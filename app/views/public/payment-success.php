@@ -203,6 +203,11 @@
             transition: all 0.3s;
             animation: slideIn 0.5s ease-out;
             animation-fill-mode: both;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
         .ticket-card:hover {
