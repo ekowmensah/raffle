@@ -808,8 +808,13 @@ function handleWinnerSelectionChange() {
         tieredSection.slideUp();
         singleImageSection.slideDown();
         
-        // Make single item fields required
-        $('#item_name, #item_value').attr('required', true);
+        // Make single item fields required ONLY if campaign type is item
+        const campaignType = $('#campaign_type').val();
+        if (campaignType === 'item') {
+            $('#item_name, #item_value').attr('required', true);
+        } else {
+            $('#item_name, #item_value').attr('required', false);
+        }
         
         // Make tier fields not required
         $('input[name^="tier_"]').attr('required', false);
@@ -817,7 +822,9 @@ function handleWinnerSelectionChange() {
         // Show/hide quantity field based on selection type
         if (selectionType === 'multiple') {
             quantityGroup.slideDown();
-            $('#item_quantity').attr('required', true);
+            if (campaignType === 'item') {
+                $('#item_quantity').attr('required', true);
+            }
         } else {
             quantityGroup.slideUp();
             $('#item_quantity').attr('required', false);
