@@ -583,7 +583,7 @@ class UssdController extends Controller
                 // Return success message
                 return "END Payment initiated!\n\n" .
                        "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
-                       "Approve the prompt on your phone or dial *170#";
+                       "If prompt fails, Dial *170# to approve payment";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [

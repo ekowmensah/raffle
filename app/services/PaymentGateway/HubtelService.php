@@ -83,7 +83,8 @@ class HubtelService
             'Amount' => round((float) $data['amount'], 2), // Round to 2 decimal places to avoid floating-point precision issues
             'PrimaryCallbackUrl' => $data['callback_url'] ?? $this->getDefaultCallbackUrl(),
             'Description' => $data['description'] ?? 'Raffle Ticket Purchase',
-            'ClientReference' => $data['reference']
+            'ClientReference' => $data['reference'],
+            'FeesOnCustomer' => true // Customer pays transaction fees
         ];
         
         try {
