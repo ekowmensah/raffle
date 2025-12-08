@@ -673,13 +673,14 @@ class UssdController extends Controller
                     'status' => $hubtelResponse['status'] // 'pending' or 'success'
                 ]);
                 
-                // Close session
+                // Close session immediately to allow mobile money prompt
                 $this->sessionService->closeSession($sessionId);
                 
-                // Return success message
+                // Return END message to close USSD session
+                // This frees the phone to receive mobile money prompt
                 return "END Payment initiated!\n\n" .
                        "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
-                       "If prompt fails, Dial *170# to approve payment";
+                       "Approve the prompt on your phone";
             } else {
                 // Payment initiation failed
                 $this->paymentModel->update($paymentId, [
