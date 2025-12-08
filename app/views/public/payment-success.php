@@ -20,7 +20,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
             position: relative;
             overflow-x: hidden;
         }
@@ -60,8 +60,8 @@
             border: 3px solid rgba(16, 185, 129, 0.5);
             border-radius: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(16, 185, 129, 0.3);
-            padding: 40px;
-            max-width: 900px;
+            padding: 30px;
+            max-width: 1000px;
             width: 100%;
             text-align: center;
             position: relative;
@@ -97,7 +97,7 @@
         }
         
         .success-icon {
-            font-size: 100px;
+            font-size: 80px;
             background: linear-gradient(135deg, #10b981, #34d399);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -120,9 +120,9 @@
             background: linear-gradient(135deg, #fff, #10b981);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            margin: 20px 0 10px;
+            margin: 15px 0 8px;
             animation: fadeIn 0.8s ease-out 0.3s both;
         }
         
@@ -133,8 +133,8 @@
         
         .lead {
             color: rgba(255,255,255,0.9);
-            font-size: 1.2rem;
-            margin-bottom: 30px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
             animation: fadeIn 0.8s ease-out 0.5s both;
         }
         
@@ -142,16 +142,16 @@
             background: rgba(16, 185, 129, 0.1);
             border: 2px solid rgba(16, 185, 129, 0.3);
             border-radius: 15px;
-            padding: 20px;
-            margin: 30px 0;
+            padding: 15px;
+            margin: 20px 0;
             animation: fadeIn 0.8s ease-out 0.7s both;
         }
         
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 10px;
         }
         
         .summary-item {
@@ -177,29 +177,29 @@
         }
         
         .tickets-section {
-            margin: 30px 0;
+            margin: 20px 0;
             animation: fadeIn 0.8s ease-out 0.9s both;
         }
         
         .tickets-title {
             color: #10b981;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .tickets-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
         }
         
         .ticket-card {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
             border: 2px solid rgba(16, 185, 129, 0.4);
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             transition: all 0.3s;
             animation: slideIn 0.5s ease-out;
             animation-fill-mode: both;
@@ -223,20 +223,20 @@
         }
         
         .ticket-icon {
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: #10b981;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .ticket-code {
             background: rgba(15, 15, 35, 0.8);
-            padding: 12px;
+            padding: 10px;
             border-radius: 10px;
             font-family: 'Courier New', monospace;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #10b981;
-            margin: 10px 0;
+            margin: 8px 0;
             letter-spacing: 2px;
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
@@ -255,8 +255,8 @@
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
             border: 2px solid rgba(102, 126, 234, 0.4);
             border-radius: 15px;
-            padding: 20px;
-            margin: 30px 0;
+            padding: 15px;
+            margin: 20px 0;
             animation: fadeIn 0.8s ease-out 1.1s both;
         }
         
@@ -273,10 +273,10 @@
         
         .action-buttons {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
-            margin: 30px 0;
+            margin: 20px 0 15px;
             animation: fadeIn 0.8s ease-out 1.3s both;
         }
         
@@ -322,8 +322,8 @@
         
         .good-luck {
             color: rgba(255,255,255,0.7);
-            font-size: 0.95rem;
-            margin-top: 30px;
+            font-size: 0.9rem;
+            margin-top: 15px;
             animation: fadeIn 0.8s ease-out 1.5s both;
         }
         
