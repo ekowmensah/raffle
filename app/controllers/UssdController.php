@@ -172,7 +172,7 @@ class UssdController extends Controller
                 $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => 1]);
                 return $this->menuService->buildTicketList($phoneNumber, 1);
                 
-            case '3': // Check Winners
+            case '3': // Check Winnings
                 $this->sessionService->closeSession($sessionId);
                 return $this->menuService->buildWinnerCheck($phoneNumber);
                 

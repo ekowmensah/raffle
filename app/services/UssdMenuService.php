@@ -21,7 +21,7 @@ class UssdMenuService
         return "CON Be A Winner Today\n" .
                "1. Buy Ticket\n" .
                "2. Check My Tickets\n" .
-               "3. Check Winners\n" .
+               "3. Check Winnings\n" .
                "4. My Balance\n" .
                "0. Exit";
     }
