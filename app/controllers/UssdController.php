@@ -244,10 +244,10 @@ class UssdController extends Controller
         
         $message = "Please complete payment:\n\n" .
                    "Item: {$campaignName}\n" .
-                   "Quantity: {$quantity}\n" .
-                   "Unit Price: GHS " . number_format($unitPrice, 2) . "\n" .
+                   "Entries: {$quantity}\n" .
+                   "Price: GHS " . number_format($unitPrice, 2) . "\n" .
                    "Total: GHS " . number_format($totalAmount, 2) . "\n\n" .
-                   "You will receive a payment prompt.";
+                   "Approve payment prompt or Dial *170#";
         
         $this->sendResponse(
             $sessionId,
