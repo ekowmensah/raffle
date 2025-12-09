@@ -95,11 +95,14 @@
                                             $statusClass = [
                                                 'draft' => 'secondary',
                                                 'active' => 'success',
-                                                'closed' => 'warning',
+                                                'paused' => 'warning',
+                                                'inactive' => 'dark',
+                                                'closed' => 'danger',
                                                 'draw_done' => 'info'
                                             ];
                                             ?>
-                                            <span class="badge badge-<?= $statusClass[$campaign->status] ?? 'secondary' ?>">
+                                            <span class="badge badge-<?= $statusClass[$campaign->status] ?? 'secondary' ?>" 
+                                                  title="Raw status: '<?= htmlspecialchars($campaign->status) ?>'">
                                                 <?= ucfirst($campaign->status) ?>
                                             </span>
                                         </td>
@@ -118,6 +121,28 @@
                                                     <i class="fas fa-lock"></i>
                                                 </button>
                                             <?php endif; ?>
+                                            
+                                            <?php if ($campaign->status === 'active'): ?>
+                                                <a href="<?= url('campaign/pause/' . $campaign->id) ?>" 
+                                                   class="btn btn-warning btn-sm" 
+                                                   title="Pause Campaign"
+                                                   onclick="return confirm('Pause this campaign? No new tickets can be purchased while paused.')">
+                                                    <i class="fas fa-pause"></i>
+                                                </a>
+                                            <?php elseif ($campaign->status === 'paused' || $campaign->status === 'inactive'): ?>
+                                                <a href="<?= url('campaign/resume/' . $campaign->id) ?>" 
+                                                   class="btn btn-success btn-sm" 
+                                                   title="<?= $campaign->status === 'inactive' ? 'Reactivate Campaign' : 'Resume Campaign' ?>"
+                                                   onclick="return confirm('<?= $campaign->status === 'inactive' ? 'Reactivate this campaign? Make sure the station and programme are active.' : 'Resume this campaign? Tickets will be available for purchase.' ?>')">
+                                                    <i class="fas fa-play"></i>
+                                                </a>
+                                            <?php elseif ($campaign->status !== 'closed' && $campaign->status !== 'draw_done' && $campaign->status !== 'draft'): ?>
+                                                <!-- Debug: Status is '<?= htmlspecialchars($campaign->status) ?>' - Migration may be needed -->
+                                                <span class="badge badge-warning" title="Unknown status: <?= htmlspecialchars($campaign->status) ?>. Run migration to add 'paused' and 'inactive' statuses.">
+                                                    <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($campaign->status) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            
                                             <?php if (($campaign->total_tickets ?? 0) == 0): ?>
                                                 <button type="button" class="btn btn-danger btn-sm" 
                                                         onclick="confirmDelete(<?= $campaign->id ?>, '<?= htmlspecialchars($campaign->name, ENT_QUOTES) ?>')"

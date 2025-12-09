@@ -170,4 +170,65 @@ class StationController extends Controller
 
         $this->redirect('station');
     }
+    
+    public function toggleStatus($id)
+    {
+        $this->requireAuth();
+        
+        if (!hasRole(['super_admin'])) {
+            flash('error', 'You do not have permission to change station status');
+            $this->redirect('station');
+            return;
+        }
+        
+        $station = $this->stationModel->findById($id);
+        
+        if (!$station) {
+            flash('error', 'Station not found');
+            $this->redirect('station');
+            return;
+        }
+        
+        $newStatus = $station->is_active ? 0 : 1;
+        
+        if ($this->stationModel->update($id, ['is_active' => $newStatus])) {
+            $action = $newStatus ? 'activated' : 'deactivated';
+            flash('success', "Station {$action} successfully");
+            
+            // If deactivating, also deactivate all programmes and campaigns
+            if (!$newStatus) {
+                $programmeModel = $this->model('Programme');
+                $campaignModel = $this->model('Campaign');
+                
+                $programmeCount = 0;
+                $campaignCount = 0;
+                
+                // Deactivate programmes
+                $programmes = $programmeModel->getByStation($id);
+                foreach ($programmes as $programme) {
+                    if ($programme->is_active) {
+                        $programmeModel->update($programme->id, ['is_active' => 0]);
+                        $programmeCount++;
+                    }
+                }
+                
+                // Deactivate campaigns (both active and paused)
+                $campaigns = $campaignModel->getByStation($id);
+                foreach ($campaigns as $campaign) {
+                    if ($campaign->status === 'active' || $campaign->status === 'paused') {
+                        $campaignModel->update($campaign->id, ['status' => 'inactive']);
+                        $campaignCount++;
+                    }
+                }
+                
+                if ($programmeCount > 0 || $campaignCount > 0) {
+                    flash('info', "Deactivated {$programmeCount} programme(s) and {$campaignCount} campaign(s) under this station");
+                }
+            }
+        } else {
+            flash('error', 'Failed to update station status');
+        }
+        
+        $this->redirect('station');
+    }
 }

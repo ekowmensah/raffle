@@ -80,3 +80,13 @@ public/.htaccess
 app/config/config.php
 app/config/config.php
 .env
+README_USSD_REFACTORING.md
+USSD_PROMPT_ISSUE.md
+database/migrations/add_item_fields_to_draw_winners.sql
+docs/HUBTEL_QUICK_REFERENCE.md
+docs/HUBTEL_USSD_IMPLEMENTATION.md
+docs/IMPLEMENTATION_CHECKLIST.md
+docs/REFACTORING_SUMMARY.md
+docs/SERVICE_FULFILLMENT_FIX.md
+docs/TROUBLESHOOTING_GUIDE.md
+check_wallet_balance.php

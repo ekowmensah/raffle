@@ -533,4 +533,98 @@ class CampaignController extends Controller
 
         $this->redirect('campaign');
     }
+    
+    public function pause($id)
+    {
+        $this->requireAuth();
+        
+        $campaign = $this->campaignModel->findById($id);
+        
+        if (!$campaign) {
+            flash('error', 'Campaign not found');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if (!canEdit($campaign, 'campaign')) {
+            flash('error', 'You do not have permission to pause this campaign');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if ($campaign->status !== 'active') {
+            flash('error', 'Only active campaigns can be paused');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if ($this->campaignModel->update($id, ['status' => 'paused'])) {
+            flash('success', 'Campaign paused successfully. No new tickets can be purchased.');
+        } else {
+            flash('error', 'Failed to pause campaign');
+        }
+        
+        $this->redirect('campaign');
+    }
+    
+    public function resume($id)
+    {
+        $this->requireAuth();
+        
+        $campaign = $this->campaignModel->findById($id);
+        
+        if (!$campaign) {
+            flash('error', 'Campaign not found');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if (!canEdit($campaign, 'campaign')) {
+            flash('error', 'You do not have permission to resume this campaign');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if ($campaign->status !== 'paused' && $campaign->status !== 'inactive') {
+            flash('error', 'Only paused or inactive campaigns can be resumed/reactivated');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        // Check if station and programme are still active
+        $stationModel = $this->model('Station');
+        $station = $stationModel->findById($campaign->station_id);
+        
+        if (!$station || !$station->is_active) {
+            flash('error', 'Cannot resume campaign. The station is inactive.');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        // Check if any associated programme is active
+        $programmes = $this->accessModel->getProgrammesByCampaign($id);
+        $hasActiveProgramme = false;
+        
+        foreach ($programmes as $programme) {
+            if ($programme->is_active) {
+                $hasActiveProgramme = true;
+                break;
+            }
+        }
+        
+        if (!$hasActiveProgramme && count($programmes) > 0) {
+            flash('error', 'Cannot resume campaign. All associated programmes are inactive.');
+            $this->redirect('campaign');
+            return;
+        }
+        
+        if ($this->campaignModel->update($id, ['status' => 'active'])) {
+            $action = $campaign->status === 'inactive' ? 'reactivated' : 'resumed';
+            flash('success', "Campaign {$action} successfully. Tickets can now be purchased.");
+        } else {
+            flash('error', 'Failed to resume campaign');
+        }
+        
+        $this->redirect('campaign');
+    }
 }

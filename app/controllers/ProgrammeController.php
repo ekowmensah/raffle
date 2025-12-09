@@ -25,7 +25,7 @@ class ProgrammeController extends Controller
         if ($role === 'super_admin' || $role === 'auditor') {
             $programmes = $this->programmeModel->getAllWithStation();
         } elseif ($role === 'station_admin') {
-            $programmes = $this->programmeModel->getByStation($user->station_id);
+            $programmes = $this->programmeModel->getByStation($user->station_id, false); // Show all, including inactive
         } elseif ($role === 'programme_manager') {
             $programme = $this->programmeModel->findById($user->programme_id);
             $programmes = $programme ? [$programme] : [];
@@ -232,6 +232,54 @@ class ProgrammeController extends Controller
             flash('error', 'Failed to delete programme');
         }
 
+        $this->redirect('programme');
+    }
+    
+    public function toggleStatus($id)
+    {
+        $this->requireAuth();
+        
+        $programme = $this->programmeModel->findById($id);
+        
+        if (!$programme) {
+            flash('error', 'Programme not found');
+            $this->redirect('programme');
+            return;
+        }
+        
+        if (!canEdit($programme, 'programme')) {
+            flash('error', 'You do not have permission to change programme status');
+            $this->redirect('programme');
+            return;
+        }
+        
+        $newStatus = $programme->is_active ? 0 : 1;
+        
+        if ($this->programmeModel->update($id, ['is_active' => $newStatus])) {
+            $action = $newStatus ? 'activated' : 'deactivated';
+            flash('success', "Programme {$action} successfully");
+            
+            // If deactivating, also deactivate all campaigns under this programme
+            if (!$newStatus) {
+                $campaignModel = $this->model('Campaign');
+                $campaigns = $campaignModel->getByProgramme($id);
+                
+                $campaignCount = 0;
+                foreach ($campaigns as $campaign) {
+                    if ($campaign->status === 'active' || $campaign->status === 'paused') {
+                        $campaignModel->update($campaign->id, ['status' => 'inactive']);
+                        $campaignCount++;
+                    }
+                }
+                
+                if ($campaignCount > 0) {
+                    flash('info', "Deactivated {$campaignCount} campaign(s) under this programme");
+                }
+            }
+        } else {
+            flash('error', 'Failed to update programme status');
+        }
+        
         $this->redirect('programme');
     }
 

@@ -77,9 +77,17 @@
                                             <a href="<?= url('station/show/' . $station->id) ?>" class="btn btn-info btn-sm" title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="<?= url('station/edit/' . $station->id) ?>" class="btn btn-warning btn-sm">
+                                            <a href="<?= url('station/edit/' . $station->id) ?>" class="btn btn-warning btn-sm" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <?php if (hasRole(['super_admin'])): ?>
+                                                <a href="<?= url('station/toggleStatus/' . $station->id) ?>" 
+                                                   class="btn btn-<?= $station->is_active ? 'secondary' : 'success' ?> btn-sm" 
+                                                   title="<?= $station->is_active ? 'Deactivate' : 'Activate' ?>"
+                                                   onclick="return confirm('<?= $station->is_active ? 'Deactivate this station? All programmes and campaigns will be affected.' : 'Activate this station?' ?>')">
+                                                    <i class="fas fa-<?= $station->is_active ? 'ban' : 'check-circle' ?>"></i>
+                                                </a>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -85,4 +85,16 @@ class CampaignProgrammeAccess extends Model
         $this->db->bind(':programme_id', $programmeId);
         return $this->db->single();
     }
+    
+    public function getProgrammesByCampaign($campaignId)
+    {
+        $this->db->query("SELECT p.*, s.name as station_name
+                         FROM {$this->table} cpa
+                         INNER JOIN programmes p ON cpa.programme_id = p.id
+                         LEFT JOIN stations s ON p.station_id = s.id
+                         WHERE cpa.campaign_id = :campaign_id
+                         ORDER BY s.name, p.name");
+        $this->db->bind(':campaign_id', $campaignId);
+        return $this->db->resultSet();
+    }
 }

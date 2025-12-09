@@ -92,9 +92,11 @@
                                             <a href="<?= url('programme/edit/' . $programme->id) ?>" class="btn btn-warning btn-sm" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="<?= url('programme/delete/' . $programme->id) ?>" class="btn btn-danger btn-sm" title="Delete" 
-                                               onclick="return confirm('Are you sure you want to delete this programme?')">
-                                                <i class="fas fa-trash"></i>
+                                            <a href="<?= url('programme/toggleStatus/' . $programme->id) ?>" 
+                                               class="btn btn-<?= $programme->is_active ? 'secondary' : 'success' ?> btn-sm" 
+                                               title="<?= $programme->is_active ? 'Deactivate' : 'Activate' ?>"
+                                               onclick="return confirm('<?= $programme->is_active ? 'Deactivate this programme? All campaigns will be deactivated.' : 'Activate this programme?' ?>')">
+                                                <i class="fas fa-<?= $programme->is_active ? 'ban' : 'check-circle' ?>"></i>
                                             </a>
                                         </td>
                                     </tr>
