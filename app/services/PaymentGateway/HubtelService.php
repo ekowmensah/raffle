@@ -310,6 +310,22 @@ class HubtelService
         }
         
         try {
+            // Check if this is a Service Fulfillment callback (Programmable Services)
+            // Service Fulfillment has SessionId and OrderInfo
+            if (isset($payload['SessionId']) && isset($payload['OrderInfo'])) {
+                error_log("Hubtel webhook: Detected Service Fulfillment callback - redirecting to USSD handler");
+                
+                // This should be handled by UssdController::handleServiceFulfillment()
+                // Return a special code to indicate this needs different handling
+                return [
+                    'success' => false,
+                    'message' => 'This is a Service Fulfillment callback - should be sent to USSD endpoint',
+                    'error_code' => 'WRONG_ENDPOINT',
+                    'redirect_to' => 'ussd'
+                ];
+            }
+            
+            // Handle Direct Receive Money API webhook (old format)
             $responseCode = $payload['ResponseCode'] ?? '';
             $data = $payload['Data'] ?? [];
             

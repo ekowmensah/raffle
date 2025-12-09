@@ -44,11 +44,14 @@ class WebhookController extends Controller
 
     public function hubtel()
     {
+        // Get raw input
+        $rawInput = file_get_contents('php://input');
+        
         // Log webhook received
-        error_log('Hubtel webhook received: ' . file_get_contents('php://input'));
+        error_log('Hubtel webhook received: ' . $rawInput);
         
         // Handle Hubtel webhook
-        $payload = json_decode(file_get_contents('php://input'), true);
+        $payload = json_decode($rawInput, true);
         
         if (!$payload) {
             error_log('Hubtel webhook: Invalid JSON payload');
@@ -57,6 +60,19 @@ class WebhookController extends Controller
             return;
         }
         
+        // Check if this is a Service Fulfillment callback (Programmable Services USSD)
+        // Service Fulfillment has SessionId and OrderInfo
+        if (isset($payload['SessionId']) && isset($payload['OrderInfo'])) {
+            error_log('Hubtel webhook: Detected Service Fulfillment callback - forwarding to USSD controller');
+            
+            // Forward to USSD controller's handleServiceFulfillment method
+            require_once '../app/controllers/UssdController.php';
+            $ussdController = new \App\Controllers\UssdController();
+            $ussdController->handleServiceFulfillment();
+            return;
+        }
+        
+        // Handle Direct Receive Money API webhook (old format)
         require_once '../app/services/PaymentGateway/HubtelService.php';
         $service = new \App\Services\PaymentGateway\HubtelService();
         
