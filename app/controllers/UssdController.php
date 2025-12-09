@@ -243,7 +243,7 @@ class UssdController extends Controller
         // Price = total amount (not unit price)
         // Qty = 1 (to avoid confusion)
         $item = [
-            'ItemName' => $campaignName . ' (' . $quantity . ' ' . ($quantity == 1 ? 'entry' : 'entries') . ')',
+            'ItemName' => $campaignName,
             'Qty' => 1,
             'Price' => (float)$totalAmount
         ];
