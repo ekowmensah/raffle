@@ -378,7 +378,7 @@ class DrawService
             $rankText = '3rd Prize: ';
         }
         
-        $message = "🎉 CONGRATULATIONS! You won {$rankText}{$itemName} (worth GHS " . number_format($itemValue, 2) . ") in {$campaignName}! Ticket: {$ticketCode}. We'll contact you for delivery details.";
+        $message = "CONGRATULATIONS! You won {$rankText}{$itemName} (worth GHS " . number_format($itemValue, 2) . ") in {$campaignName}! Ticket: {$ticketCode}. We'll contact you for delivery details.";
         
         return $this->smsService->send($phone, $message, 'item_winner');
     }
