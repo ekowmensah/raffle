@@ -70,7 +70,7 @@
                                 <small class="form-text text-muted">You can only schedule draws for your station</small>
                             <?php else: ?>
                                 <select class="form-control" id="station_id" name="station_id" required onchange="onStationChange()">
-                                    <option value="">Select Station</option>
+                                    <option value="">Select Platform</option>
                                     <?php
                                     $stationModel = new \App\Models\Station();
                                     $stations = $stationModel->getActive();

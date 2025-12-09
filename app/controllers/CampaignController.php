@@ -29,6 +29,9 @@ class CampaignController extends Controller
         $user = $_SESSION['user'];
         $role = $user->role_name ?? '';
         
+        // Get status filter from query parameter
+        $statusFilter = $_GET['status'] ?? 'all';
+        
         if ($role === 'super_admin') {
             $campaigns = $this->campaignModel->getAllWithDetails();
         } elseif ($role === 'station_admin') {
@@ -41,10 +44,42 @@ class CampaignController extends Controller
         } else {
             $campaigns = [];
         }
+        
+        // Filter by status if not 'all'
+        if ($statusFilter !== 'all') {
+            $campaigns = array_filter($campaigns, function($campaign) use ($statusFilter) {
+                return $campaign->status === $statusFilter;
+            });
+        }
+        
+        // Count campaigns by status
+        $allCampaigns = $role === 'super_admin' || $role === 'auditor' 
+            ? $this->campaignModel->getAllWithDetails()
+            : ($role === 'station_admin' 
+                ? $this->campaignModel->getByStation($user->station_id)
+                : $this->campaignModel->getByProgramme($user->programme_id));
+        
+        $statusCounts = [
+            'all' => count($allCampaigns),
+            'active' => 0,
+            'paused' => 0,
+            'inactive' => 0,
+            'draft' => 0,
+            'closed' => 0,
+            'draw_done' => 0
+        ];
+        
+        foreach ($allCampaigns as $camp) {
+            if (isset($statusCounts[$camp->status])) {
+                $statusCounts[$camp->status]++;
+            }
+        }
 
         $data = [
             'title' => 'Campaigns',
-            'campaigns' => $campaigns
+            'campaigns' => $campaigns,
+            'statusFilter' => $statusFilter,
+            'statusCounts' => $statusCounts
         ];
 
         $this->view('campaigns/index', $data);

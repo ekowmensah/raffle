@@ -51,7 +51,7 @@ class UssdMenuService
         
         $totalPages = ceil($totalStations / $perPage);
         
-        $menu = "CON Select Station (Page {$page}/{$totalPages}):\n";
+        $menu = "CON Choose Platform (Page {$page}/{$totalPages}):\n";
         $index = 1;
         
         foreach ($stations as $station) {

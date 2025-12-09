@@ -46,7 +46,7 @@
                                         <small class="form-text text-muted">You can only create programmes for your station</small>
                                     <?php else: ?>
                                         <select class="form-control" id="station_id" name="station_id" required>
-                                            <option value="">Select Station</option>
+                                            <option value="">Select Platform</option>
                                             <?php foreach ($stations as $station): ?>
                                                 <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
                                                     <?= htmlspecialchars($station->name) ?>

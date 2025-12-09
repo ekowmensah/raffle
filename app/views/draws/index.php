@@ -43,7 +43,7 @@
                             <div class="col-md-4">
                                 <label>Programme</label>
                                 <select name="programme" id="programmeFilter" class="form-control" disabled onchange="loadCampaignsFilter()">
-                                    <option value="">Select station first...</option>
+                                    <option value="">Select platform first...</option>
                                 </select>
                             </div>
                             <div class="col-md-4">

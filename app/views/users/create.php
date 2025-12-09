@@ -98,7 +98,7 @@
                                         <small class="form-text text-muted">You can only create users for your station</small>
                                     <?php else: ?>
                                         <select class="form-control" id="station_id" name="station_id">
-                                            <option value="">Select Station</option>
+                                            <option value="">Select Platform</option>
                                             <?php foreach ($stations as $station): ?>
                                                 <option value="<?= $station->id ?>" <?= old('station_id') == $station->id ? 'selected' : '' ?>>
                                                     <?= htmlspecialchars($station->name) ?>
@@ -189,7 +189,7 @@ roleSelect.addEventListener('change', function() {
     if (requirements.programme) {
         document.querySelector('.programme-required').style.display = 'inline';
         programmeSelect.required = true;
-        document.querySelector('.programme-help').textContent = 'Required for this role - select station first';
+        document.querySelector('.programme-help').textContent = 'Required for this role - select platform first';
         programmeField.style.display = 'block';
     } else {
         document.querySelector('.programme-required').style.display = 'none';

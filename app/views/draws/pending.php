@@ -59,13 +59,13 @@
                             <div class="col-md-3" id="programmeFilterField">
                                 <label>Programme</label>
                                 <select name="programme" id="programmeFilter" class="form-control" disabled onchange="loadCampaignsFilter()">
-                                    <option value="">Select station first...</option>
+                                    <option value="">Select Platform first...</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label>Campaign</label>
                                 <select name="campaign" id="campaignFilter" class="form-control" disabled onchange="this.form.submit()">
-                                    <option value="">Select station first...</option>
+                                    <option value="">Select Platform first...</option>
                                 </select>
                             </div>
                         </div>

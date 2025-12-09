@@ -48,7 +48,62 @@
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
+                
+                <!-- Status Filter Tabs -->
+                <div class="card-body pb-0">
+                    <ul class="nav nav-pills mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'all' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=all') ?>">
+                                All <span class="badge badge-light ml-1"><?= $statusCounts['all'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'active' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=active') ?>">
+                                <i class="fas fa-check-circle"></i> Active 
+                                <span class="badge badge-success ml-1"><?= $statusCounts['active'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'paused' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=paused') ?>">
+                                <i class="fas fa-pause-circle"></i> Paused 
+                                <span class="badge badge-warning ml-1"><?= $statusCounts['paused'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'inactive' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=inactive') ?>">
+                                <i class="fas fa-ban"></i> Inactive 
+                                <span class="badge badge-dark ml-1"><?= $statusCounts['inactive'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'draft' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=draft') ?>">
+                                <i class="fas fa-file"></i> Draft 
+                                <span class="badge badge-secondary ml-1"><?= $statusCounts['draft'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'closed' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=closed') ?>">
+                                <i class="fas fa-lock"></i> Closed 
+                                <span class="badge badge-danger ml-1"><?= $statusCounts['closed'] ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $statusFilter === 'draw_done' ? 'active' : '' ?>" 
+                               href="<?= url('campaign?status=draw_done') ?>">
+                                <i class="fas fa-trophy"></i> Draw Done 
+                                <span class="badge badge-info ml-1"><?= $statusCounts['draw_done'] ?></span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-body table-responsive p-0">
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>

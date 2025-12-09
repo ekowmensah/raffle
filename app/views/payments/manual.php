@@ -64,7 +64,7 @@
                                 <div class="form-group">
                                     <label>Station <span class="text-danger">*</span></label>
                                     <select name="station_id" class="form-control" required>
-                                        <option value="">Select Station</option>
+                                        <option value="">Select Platform</option>
                                         <?php foreach ($stations as $station): ?>
                                             <option value="<?= $station->id ?>"><?= htmlspecialchars($station->name) ?></option>
                                         <?php endforeach; ?>

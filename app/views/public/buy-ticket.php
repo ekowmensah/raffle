@@ -505,12 +505,12 @@
             
             <!-- Step 1: Select Station -->
             <div id="step1" class="step-content">
-                <h4 class="mb-4">Step 1: Select Your Station</h4>
+                <h4 class="mb-4">Step 1: Select Platform</h4>
                 
                 <div class="form-group">
-                    <label for="station_id">Choose a Station <span class="text-danger">*</span></label>
+                    <label for="station_id">Choose a Platform <span class="text-danger">*</span></label>
                     <select name="station_id" id="station_id" class="form-control form-control-lg" required>
-                        <option value="">-- Select a station --</option>
+                        <option value="">-- Select a Platform --</option>
                         <?php foreach ($stations as $station): ?>
                             <option value="<?= $station->id ?>" data-name="<?= htmlspecialchars($station->name) ?>">
                                 <?= htmlspecialchars($station->name) ?>

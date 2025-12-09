@@ -351,7 +351,7 @@ class UssdController extends Controller
                     $sessionId,
                     'response',
                     substr($menuText, 4),
-                    'Select Station',
+                    'Select Platform',
                     'input',
                     'text',
                     'select_station'
@@ -456,7 +456,7 @@ class UssdController extends Controller
                 $sessionId,
                 'response',
                 substr($menuText, 4),
-                'Select Station',
+                'Select Platform',
                 'input',
                 'text',
                 'select_station'
@@ -473,7 +473,7 @@ class UssdController extends Controller
                 $sessionId,
                 'response',
                 substr($menuText, 4),
-                'Select Station',
+                'Select Platform',
                 'input',
                 'text',
                 'select_station'
@@ -493,7 +493,7 @@ class UssdController extends Controller
                 $sessionId,
                 'response',
                 "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
-                'Select Station',
+                'Select Platform',
                 'input',
                 'text',
                 'select_station'
@@ -536,7 +536,7 @@ class UssdController extends Controller
                 $sessionId,
                 'response',
                 substr($menuText, 4),
-                'Select Station',
+                'Select Platform',
                 'input',
                 'text',
                 'select_station'

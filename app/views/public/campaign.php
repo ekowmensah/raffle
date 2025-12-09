@@ -637,7 +637,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Select Station <span class="text-danger">*</span></label>
+                            <label>Select Platform <span class="text-danger">*</span></label>
                             <select name="station_id" id="stationSelect" class="form-control form-control-lg" required>
                                 <option value="">Choose a station...</option>
                                 <?php

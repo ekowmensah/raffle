@@ -88,7 +88,7 @@
                                 <div class="form-group">
                                     <label for="station_id">Station (Optional)</label>
                                     <select class="form-control" id="station_id" name="station_id">
-                                        <option value="">Select Station</option>
+                                        <option value="">Select Platform</option>
                                         <?php foreach ($stations as $station): ?>
                                             <option value="<?= $station->id ?>" <?= $user->station_id == $station->id ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($station->name) ?>
