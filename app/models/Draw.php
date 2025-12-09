@@ -22,9 +22,13 @@ class Draw extends Model
     public function getWithWinners($drawId)
     {
         $this->db->query("SELECT d.*, 
+                         c.campaign_type,
+                         c.item_name,
+                         c.item_value,
                          COUNT(dw.id) as winner_count,
                          SUM(dw.prize_amount) as total_prizes
                          FROM {$this->table} d
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
                          LEFT JOIN draw_winners dw ON d.id = dw.draw_id
                          WHERE d.id = :draw_id
                          GROUP BY d.id");
