@@ -228,18 +228,24 @@ class UssdController extends Controller
      * Send AddToCart response for Hubtel payment collection
      * This triggers the checkout flow and payment prompt
      * 
-     * According to API spec, Item must contain:
-     * - ItemName: string
-     * - Qty: integer
-     * - Price: float (unit price)
+     * NOTE: Despite API documentation suggesting Qty × Price calculation,
+     * Hubtel actually charges the Price field directly as the total amount.
+     * Therefore, we send total amount in Price field and Qty as 1.
+     * 
+     * Item must contain:
+     * - ItemName: string (campaign name with quantity)
+     * - Qty: integer (always 1)
+     * - Price: float (total amount to charge)
      */
     private function sendAddToCartResponse($sessionId, $campaignName, $quantity, $unitPrice, $totalAmount)
     {
-        // Build Item according to Hubtel API specification
+        // Build Item according to actual Hubtel behavior
+        // Price = total amount (not unit price)
+        // Qty = 1 (to avoid confusion)
         $item = [
-            'ItemName' => $campaignName,
-            'Qty' => (int)$quantity,
-            'Price' => (float)$unitPrice
+            'ItemName' => $campaignName . ' (' . $quantity . ' ' . ($quantity == 1 ? 'entry' : 'entries') . ')',
+            'Qty' => 1,
+            'Price' => (float)$totalAmount
         ];
         
         $message = "Please complete payment:\n\n" .
