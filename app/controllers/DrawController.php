@@ -559,12 +559,23 @@ class DrawController extends Controller
                     if ($player && $ticket && $campaign) {
                         require_once '../app/services/SMS/HubtelSmsService.php';
                         $smsService = new \App\Services\SMS\HubtelSmsService();
-                        $smsService->sendPrizePaidNotification(
-                            $player->phone,
-                            $ticket->ticket_code,
-                            $winner->prize_amount,
-                            $campaign->name
-                        );
+                        
+                        // Different notification for item vs cash campaigns
+                        if ($campaign->campaign_type === 'item') {
+                            $smsService->sendItemDeliveredNotification(
+                                $player->phone,
+                                $ticket->ticket_code,
+                                $winner->item_name ?? $campaign->item_name,
+                                $campaign->name
+                            );
+                        } else {
+                            $smsService->sendPrizePaidNotification(
+                                $player->phone,
+                                $ticket->ticket_code,
+                                $winner->prize_amount,
+                                $campaign->name
+                            );
+                        }
                     }
                 }
                 

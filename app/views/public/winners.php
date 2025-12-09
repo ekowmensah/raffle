@@ -443,7 +443,13 @@
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="prize-amount">GHS <?= number_format($winner->prize_amount, 2) ?></div>
+                        <div class="prize-amount">
+                            <?php if (!empty($winner->item_name)): ?>
+                                <i class="fas fa-gift"></i> <?= htmlspecialchars($winner->item_name) ?>
+                            <?php else: ?>
+                                GHS <?= number_format($winner->prize_amount, 2) ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     
                     <div class="winner-details">

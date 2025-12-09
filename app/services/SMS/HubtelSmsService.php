@@ -98,6 +98,20 @@ class HubtelSmsService
     }
     
     /**
+     * Send item delivered notification SMS
+     */
+    public function sendItemDeliveredNotification($phoneNumber, $ticketCode, $itemName, $campaignName)
+    {
+        $message = "PRIZE DELIVERED!\n";
+        $message .= "Campaign: {$campaignName}\n";
+        $message .= "Ticket: {$ticketCode}\n";
+        $message .= "Item: {$itemName}\n";
+        $message .= "Your prize has been delivered. Congratulations and thank you for playing!";
+        
+        return $this->send($phoneNumber, $message, 'item_delivered');
+    }
+    
+    /**
      * Send draw results notification SMS
      */
     public function sendDrawResultsNotification($phoneNumber, $campaignName, $drawDate, $drawType, $hasWon = false)

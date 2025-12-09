@@ -144,10 +144,13 @@ class DrawWinner extends Model
                             d.draw_date,
                             d.draw_type,
                             c.name as campaign_name,
+                            c.campaign_type,
                             s.name as station_name,
                             pr.name as programme_name,
                             t.ticket_code,
-                            p.phone as phone_number
+                            p.phone as phone_number,
+                            dw.item_name,
+                            dw.item_value
                          FROM {$this->table} dw
                          INNER JOIN draws d ON dw.draw_id = d.id
                          INNER JOIN raffle_campaigns c ON d.campaign_id = c.id
