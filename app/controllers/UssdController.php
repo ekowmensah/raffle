@@ -232,27 +232,40 @@ class UssdController extends Controller
      * Hubtel actually charges the Price field directly as the total amount.
      * Therefore, we send total amount in Price field and Qty as 1.
      * 
+     * Transaction fees (2%) are added to the total, so customer pays fees.
+     * 
      * Item must contain:
      * - ItemName: string (campaign name with quantity)
      * - Qty: integer (always 1)
-     * - Price: float (total amount to charge)
+     * - Price: float (total amount to charge including fees)
      */
     private function sendAddToCartResponse($sessionId, $campaignName, $quantity, $unitPrice, $totalAmount)
     {
+        // Calculate amount including transaction fees
+        // Hubtel charges approximately 2% transaction fee
+        $transactionFeeRate = 0.02; // 2%
+        $amountWithFees = $totalAmount / (1 - $transactionFeeRate);
+        $amountWithFees = round($amountWithFees, 2); // Round to 2 decimal places
+        $transactionFee = $amountWithFees - $totalAmount;
+        
+        error_log("AddToCart - Base Amount: $totalAmount, Transaction Fee: $transactionFee, Total with Fees: $amountWithFees");
+        
         // Build Item according to actual Hubtel behavior
-        // Price = total amount (not unit price)
+        // Price = total amount including fees
         // Qty = 1 (to avoid confusion)
         $item = [
             'ItemName' => $campaignName,
             'Qty' => 1,
-            'Price' => (float)$totalAmount
+            'Price' => (float)$amountWithFees
         ];
         
         $message = "Please complete payment:\n\n" .
                    "Item: {$campaignName}\n" .
                    "Entries: {$quantity}\n" .
                    "Price: GHS " . number_format($unitPrice, 2) . "\n" .
-                   "Total: GHS " . number_format($totalAmount, 2) . "\n\n" .
+                   "Subtotal: GHS " . number_format($totalAmount, 2) . "\n" .
+                   "Transaction Fee: GHS " . number_format($transactionFee, 2) . "\n" .
+                   "Total: GHS " . number_format($amountWithFees, 2) . "\n\n" .
                    "Approve payment prompt or Dial *170#";
         
         $this->sendResponse(
@@ -1343,6 +1356,13 @@ class UssdController extends Controller
             $ticketService = new \App\Services\TicketGeneratorService();
             $revenueService = new \App\Services\RevenueAllocationService();
             
+            // Use original quantity from session since customer paid fees
+            // AmountAfterCharges should match the expected total_amount
+            $expectedAmount = $sessionData['total_amount'] ?? 0;
+            $actualQuantity = $sessionData['quantity'] ?? 1;
+            
+            error_log("Ticket generation - Expected: $expectedAmount, Received: $amountAfterCharges, Quantity: $actualQuantity");
+            
             // Prepare payment data for services
             $paymentData = [
                 'payment_id' => $paymentId,
@@ -1351,7 +1371,7 @@ class UssdController extends Controller
                 'station_id' => $sessionData['station_id'],
                 'programme_id' => $sessionData['programme_id'] ?? null,
                 'amount' => $amountAfterCharges,
-                'quantity' => $sessionData['quantity'] ?? 1
+                'quantity' => $actualQuantity
             ];
             
             // Generate tickets
