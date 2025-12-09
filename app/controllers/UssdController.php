@@ -259,14 +259,14 @@ class UssdController extends Controller
             'Price' => (float)$amountWithFees
         ];
         
-        $message = "Please complete payment:\n\n" .
+        $message = "Confirm:\n\n" .
                    "Item: {$campaignName}\n" .
                    "Entries: {$quantity}\n" .
                    "Price: GHS " . number_format($unitPrice, 2) . "\n" .
                    "Subtotal: GHS " . number_format($totalAmount, 2) . "\n" .
-                   "Transaction Fee: GHS " . number_format($transactionFee, 2) . "\n" .
+                   "Fee: GHS " . number_format($transactionFee, 2) . "\n" .
                    "Total: GHS " . number_format($amountWithFees, 2) . "\n\n" .
-                   "Approve payment prompt or Dial *170#";
+                   "Approve prompt or Dial *170#";
         
         $this->sendResponse(
             $sessionId,
