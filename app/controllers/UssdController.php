@@ -24,20 +24,21 @@ class UssdController extends Controller
     }
     
     /**
-     * Main USSD entry point
+     * Main USSD entry point - Service Interaction URL
+     * Handles all USSD interactions according to Hubtel Programmable Services API
      */
     public function index()
     {
         // Get raw JSON input from Hubtel
         $rawInput = file_get_contents('php://input');
-        error_log('USSD Raw Input: ' . $rawInput);
+        error_log('=== USSD REQUEST ===' . PHP_EOL . $rawInput);
         
         // Decode JSON request from Hubtel
         $request = json_decode($rawInput, true);
         
         if (!$request) {
             error_log('USSD Error: Invalid JSON received');
-            $this->sendHubtelResponse('', 'release', 'Service temporarily unavailable.', 'Error', 'display', 'text');
+            $this->sendErrorResponse('', 'Service temporarily unavailable.');
             return;
         }
         
@@ -47,100 +48,161 @@ class UssdController extends Controller
             return $this->handleServiceFulfillment();
         }
         
-        // Extract Hubtel parameters
+        // Extract Hubtel parameters according to API spec
         $sessionId = $request['SessionId'] ?? '';
         $phoneNumber = $request['Mobile'] ?? '';
         $message = $request['Message'] ?? '';
-        $type = $request['Type'] ?? '';
+        $type = $request['Type'] ?? ''; // Initiation, Response, Timeout
         $sequence = $request['Sequence'] ?? 1;
         $clientState = $request['ClientState'] ?? '';
+        $serviceCode = $request['ServiceCode'] ?? '';
+        $operator = $request['Operator'] ?? '';
+        $platform = $request['Platform'] ?? 'USSD';
         
-        error_log("USSD Request - SessionId: $sessionId, Phone: $phoneNumber, Message: $message, Type: $type, Sequence: $sequence");
+        error_log("USSD Request - Type: $type, SessionId: $sessionId, Phone: $phoneNumber, Message: $message, Sequence: $sequence, Platform: $platform");
         
-        // Clean phone number
-        $phoneNumber = $this->cleanPhoneNumber($phoneNumber);
-        
-        // Get or create session
-        $session = $this->sessionService->getOrCreateSession($sessionId, $phoneNumber);
-        
-        // Parse user input from message
-        // For Initiation, message is the USSD code (e.g., "*713#")
-        // For Response, message is the user's input (e.g., "1", "2", etc.)
-        $userInput = '';
-        if ($type === 'Response') {
-            $userInput = trim($message);
+        // Validate required fields
+        if (empty($sessionId) || empty($phoneNumber)) {
+            error_log('USSD Error: Missing required fields (SessionId or Mobile)');
+            $this->sendErrorResponse($sessionId, 'Invalid request. Please try again.');
+            return;
         }
         
-        // Route request
-        if ($type === 'Initiation' || $sequence == 1) {
-            // First request - show main menu
-            $menuText = $this->menuService->buildMainMenu();
-            $this->sendHubtelResponse($sessionId, 'response', substr($menuText, 4), 'Main Menu', 'input', 'text', $clientState);
-        } elseif ($type === 'Timeout') {
-            // Session timeout
-            $this->sendHubtelResponse($sessionId, 'release', 'Session timed out. Please try again.', 'Timeout', 'display', 'text');
-        } else {
-            // Handle user response
-            $response = $this->routeRequest($session, $userInput, $phoneNumber);
-            
-            // Parse response to determine type and message
-            if (strpos($response, 'END ') === 0) {
-                // End session
-                $message = substr($response, 4);
-                $this->sendHubtelResponse($sessionId, 'release', $message, 'Complete', null, null);
+        // Clean phone number to standard format
+        $phoneNumber = $this->cleanPhoneNumber($phoneNumber);
+        
+        // Handle different request types
+        try {
+            if ($type === 'Initiation') {
+                $this->handleInitiation($sessionId, $phoneNumber, $platform, $operator);
+            } elseif ($type === 'Timeout') {
+                $this->handleTimeout($sessionId);
+            } elseif ($type === 'Response') {
+                $this->handleResponse($sessionId, $phoneNumber, $message, $clientState, $sequence, $platform);
             } else {
-                // Continue session
-                $message = substr($response, 4); // Remove "CON " prefix
-                $this->sendHubtelResponse($sessionId, 'response', $message, 'Menu', 'input', 'text', $clientState);
+                error_log("USSD Error: Unknown request type: $type");
+                $this->sendErrorResponse($sessionId, 'Invalid request type.');
             }
+        } catch (\Exception $e) {
+            error_log('USSD Exception: ' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+            $this->sendErrorResponse($sessionId, 'An error occurred. Please try again.');
         }
     }
     
     /**
-     * Send response in Hubtel format
+     * Handle Initiation request - first interaction
      */
-    private function sendHubtelResponse($sessionId, $type, $message, $label, $dataType, $fieldType, $clientState = '')
+    private function handleInitiation($sessionId, $phoneNumber, $platform, $operator)
     {
+        error_log("USSD Initiation - SessionId: $sessionId, Phone: $phoneNumber, Platform: $platform");
+        
+        // Create new session
+        $session = $this->sessionService->getOrCreateSession($sessionId, $phoneNumber);
+        
+        // Store platform and operator info
+        $this->sessionService->updateSession($sessionId, 'main_menu', [
+            'platform' => $platform,
+            'operator' => $operator
+        ]);
+        
+        // Show main menu
+        $menuText = $this->menuService->buildMainMenu();
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4), // Remove "CON " prefix
+            'Main Menu',
+            'input',
+            'text',
+            'main_menu' // ClientState to track current step
+        );
+    }
+    
+    /**
+     * Handle Timeout request - user took too long
+     */
+    private function handleTimeout($sessionId)
+    {
+        error_log("USSD Timeout - SessionId: $sessionId");
+        
+        // Close session
+        $this->sessionService->closeSession($sessionId);
+        
+        // Send release response
+        $this->sendResponse(
+            $sessionId,
+            'release',
+            'Session timed out. Please dial again to continue.',
+            'Timeout',
+            'display',
+            'text'
+        );
+    }
+    
+    /**
+     * Handle Response request - user provided input
+     */
+    private function handleResponse($sessionId, $phoneNumber, $userInput, $clientState, $sequence, $platform)
+    {
+        error_log("USSD Response - SessionId: $sessionId, Input: $userInput, ClientState: $clientState, Sequence: $sequence");
+        
+        // Get session
+        $session = $this->sessionService->getSession($sessionId);
+        
+        if (!$session) {
+            error_log("USSD Error: Session not found - $sessionId");
+            $this->sendErrorResponse($sessionId, 'Session expired. Please dial again.');
+            return;
+        }
+        
+        // Use ClientState if provided, otherwise use session's current_step
+        $currentStep = !empty($clientState) ? $clientState : $session->current_step;
+        $sessionData = json_decode($session->session_data, true) ?: [];
+        
+        // Route to appropriate handler
+        $this->routeRequest($sessionId, $currentStep, $userInput, $phoneNumber, $sessionData, $platform);
+    }
+    
+    /**
+     * Send response in Hubtel Programmable Services API format
+     * 
+     * @param string $sessionId - Unique session identifier
+     * @param string $type - response|release|AddToCart
+     * @param string $message - Text to display (supports \n for new lines)
+     * @param string $label - Title for Web/Mobile channels
+     * @param string $dataType - display|input
+     * @param string $fieldType - text|phone|email|number|decimal|textarea
+     * @param string $clientState - State data to pass back in next request
+     * @param array $item - Item data for AddToCart type
+     */
+    private function sendResponse($sessionId, $type, $message, $label, $dataType = 'display', $fieldType = 'text', $clientState = '', $item = null)
+    {
+        // Build response according to Hubtel API spec
         $response = [
             'SessionId' => $sessionId,
             'Type' => $type,
             'Message' => $message,
-            'Label' => $label
+            'Label' => $label,
+            'DataType' => $dataType,
+            'FieldType' => $fieldType
         ];
         
-        // Only add DataType and FieldType for interactive messages
-        if ($type !== 'release') {
-            $response['DataType'] = $dataType;
-            $response['FieldType'] = $fieldType;
-        }
-        
+        // Add ClientState if provided (for session continuity)
         if (!empty($clientState)) {
             $response['ClientState'] = $clientState;
         }
         
-        error_log('USSD Response: ' . json_encode($response));
+        // Add Item for AddToCart type
+        if ($type === 'AddToCart' && $item !== null) {
+            $response['Item'] = $item;
+        }
         
-        header('Content-Type: application/json');
-        echo json_encode($response);
-    }
-    
-    /**
-     * Send AddToCart response for Hubtel payment collection
-     * This triggers immediate mobile money prompt
-     */
-    private function sendAddToCartResponse($sessionId, $message, $item)
-    {
-        $response = [
-            'SessionId' => $sessionId,
-            'Type' => 'AddToCart',
-            'Message' => $message,
-            'Label' => 'Payment',
-            'DataType' => 'display',
-            'FieldType' => 'text',
-            'Item' => $item
-        ];
+        // Remove DataType and FieldType for release type (optional per API)
+        if ($type === 'release') {
+            // Keep them for consistency, but they're optional
+        }
         
-        error_log('USSD AddToCart Response: ' . json_encode($response));
+        error_log('=== USSD RESPONSE ===' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
         
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($response);
@@ -148,90 +210,219 @@ class UssdController extends Controller
     }
     
     /**
-     * Route request based on current step
+     * Send error response
      */
-    private function routeRequest($session, $userInput, $phoneNumber)
+    private function sendErrorResponse($sessionId, $message)
     {
-        $currentStep = $session->current_step;
-        $sessionData = json_decode($session->session_data, true) ?: [];
+        $this->sendResponse(
+            $sessionId,
+            'release',
+            $message,
+            'Error',
+            'display',
+            'text'
+        );
+    }
+    
+    /**
+     * Send AddToCart response for Hubtel payment collection
+     * This triggers the checkout flow and payment prompt
+     * 
+     * According to API spec, Item must contain:
+     * - ItemName: string
+     * - Qty: integer
+     * - Price: float (unit price)
+     */
+    private function sendAddToCartResponse($sessionId, $campaignName, $quantity, $unitPrice, $totalAmount)
+    {
+        // Build Item according to Hubtel API specification
+        $item = [
+            'ItemName' => $campaignName,
+            'Qty' => (int)$quantity,
+            'Price' => (float)$unitPrice
+        ];
+        
+        $message = "Please complete payment:\n\n" .
+                   "Item: {$campaignName}\n" .
+                   "Quantity: {$quantity}\n" .
+                   "Unit Price: GHS " . number_format($unitPrice, 2) . "\n" .
+                   "Total: GHS " . number_format($totalAmount, 2) . "\n\n" .
+                   "You will receive a payment prompt.";
+        
+        $this->sendResponse(
+            $sessionId,
+            'AddToCart',
+            $message,
+            'Payment Checkout',
+            'display',
+            'text',
+            '', // No ClientState needed - session ends after AddToCart
+            $item
+        );
+    }
+    
+    /**
+     * Route request based on current step
+     * Updated to work with new response structure
+     */
+    private function routeRequest($sessionId, $currentStep, $userInput, $phoneNumber, $sessionData, $platform)
+    {
+        error_log("Routing request - Step: $currentStep, Input: $userInput");
         
         switch ($currentStep) {
             case 'main_menu':
-                return $this->handleMainMenu($session->session_id, $userInput, $phoneNumber);
+                $this->handleMainMenu($sessionId, $userInput, $phoneNumber, $platform);
+                break;
                 
             case 'select_station':
-                return $this->handleStationSelection($session->session_id, $userInput, $sessionData);
+                $this->handleStationSelection($sessionId, $userInput, $sessionData, $platform);
+                break;
                 
             case 'select_station_campaign':
-                return $this->handleStationCampaignSelection($session->session_id, $userInput, $sessionData, $phoneNumber);
+                $this->handleStationCampaignSelection($sessionId, $userInput, $sessionData, $phoneNumber, $platform);
+                break;
                 
             case 'select_programme':
-                return $this->handleProgrammeSelection($session->session_id, $userInput, $sessionData);
+                $this->handleProgrammeSelection($sessionId, $userInput, $sessionData, $platform);
+                break;
                 
             case 'select_campaign':
-                return $this->handleCampaignSelection($session->session_id, $userInput, $sessionData, $phoneNumber);
+                $this->handleCampaignSelection($sessionId, $userInput, $sessionData, $phoneNumber, $platform);
+                break;
                 
             case 'select_quantity':
-                return $this->handleQuantitySelection($session->session_id, $userInput, $sessionData);
+                $this->handleQuantitySelection($sessionId, $userInput, $sessionData, $platform);
+                break;
                 
             case 'confirm_payment':
-                return $this->handlePaymentConfirmation($session->session_id, $userInput, $sessionData, $phoneNumber);
-                
-            case 'select_payment_method':
-                return $this->handlePaymentMethod($session->session_id, $userInput, $sessionData, $phoneNumber);
-                
-            case 'enter_payment_number':
-                return $this->handlePaymentNumberInput($session->session_id, $userInput, $sessionData, $phoneNumber);
+                $this->handlePaymentConfirmation($sessionId, $userInput, $sessionData, $phoneNumber, $platform);
+                break;
                 
             case 'view_tickets':
-                return $this->handleTicketNavigation($session->session_id, $userInput, $sessionData, $phoneNumber);
+                $this->handleTicketNavigation($sessionId, $userInput, $sessionData, $phoneNumber, $platform);
+                break;
                 
             default:
-                return $this->menuService->buildMainMenu();
+                error_log("Unknown step: $currentStep, showing main menu");
+                $menuText = $this->menuService->buildMainMenu();
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'Main Menu',
+                    'input',
+                    'text',
+                    'main_menu'
+                );
         }
     }
     
     /**
      * Handle main menu selection
      */
-    private function handleMainMenu($sessionId, $input, $phoneNumber)
+    private function handleMainMenu($sessionId, $input, $phoneNumber, $platform)
     {
         switch ($input) {
             case '1': // Buy Ticket
                 $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => 1]);
-                return $this->menuService->buildStationMenu(1);
+                $menuText = $this->menuService->buildStationMenu(1);
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'Select Station',
+                    'input',
+                    'text',
+                    'select_station'
+                );
+                break;
                 
             case '2': // Check My Tickets
                 $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => 1]);
-                return $this->menuService->buildTicketList($phoneNumber, 1);
+                $menuText = $this->menuService->buildTicketList($phoneNumber, 1);
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'My Tickets',
+                    'input',
+                    'text',
+                    'view_tickets'
+                );
+                break;
                 
             case '3': // Check Winnings
                 $this->sessionService->closeSession($sessionId);
-                return $this->menuService->buildWinnerCheck($phoneNumber);
+                $menuText = $this->menuService->buildWinnerCheck($phoneNumber);
+                $this->sendResponse(
+                    $sessionId,
+                    'release',
+                    substr($menuText, 4),
+                    'Winnings',
+                    'display',
+                    'text'
+                );
+                break;
                 
             case '4': // My Balance
                 $this->sessionService->closeSession($sessionId);
-                return $this->menuService->buildBalanceInquiry($phoneNumber);
+                $menuText = $this->menuService->buildBalanceInquiry($phoneNumber);
+                $this->sendResponse(
+                    $sessionId,
+                    'release',
+                    substr($menuText, 4),
+                    'Balance',
+                    'display',
+                    'text'
+                );
+                break;
                 
             case '0': // Exit
                 $this->sessionService->closeSession($sessionId);
-                return "END Thank you for using Raffle System!";
+                $this->sendResponse(
+                    $sessionId,
+                    'release',
+                    'Thank you for using Raffle System!',
+                    'Goodbye',
+                    'display',
+                    'text'
+                );
+                break;
                 
             default:
-                return $this->menuService->buildMainMenu();
+                $menuText = $this->menuService->buildMainMenu();
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'Main Menu',
+                    'input',
+                    'text',
+                    'main_menu'
+                );
         }
     }
     
     /**
      * Handle station selection with pagination
      */
-    private function handleStationSelection($sessionId, $input, $sessionData = [])
+    private function handleStationSelection($sessionId, $input, $sessionData = [], $platform = 'USSD')
     {
         $currentPage = $sessionData['station_page'] ?? 1;
         
         if ($input == '0') {
             $this->sessionService->updateSession($sessionId, 'main_menu');
-            return $this->menuService->buildMainMenu();
+            $menuText = $this->menuService->buildMainMenu();
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Main Menu',
+                'input',
+                'text',
+                'main_menu'
+            );
+            return;
         }
         
         // Handle pagination
@@ -239,14 +430,34 @@ class UssdController extends Controller
             // Next page
             $newPage = $currentPage + 1;
             $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => $newPage]);
-            return $this->menuService->buildStationMenu($newPage);
+            $menuText = $this->menuService->buildStationMenu($newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Station',
+                'input',
+                'text',
+                'select_station'
+            );
+            return;
         }
         
         if ($input == '6') {
             // Previous page
             $newPage = max(1, $currentPage - 1);
             $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => $newPage]);
-            return $this->menuService->buildStationMenu($newPage);
+            $menuText = $this->menuService->buildStationMenu($newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Station',
+                'input',
+                'text',
+                'select_station'
+            );
+            return;
         }
         
         // Get stations for current page
@@ -256,8 +467,17 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($stations[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
-                   substr($this->menuService->buildStationMenu($currentPage), 4);
+            $menuText = $this->menuService->buildStationMenu($currentPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
+                'Select Station',
+                'input',
+                'text',
+                'select_station'
+            );
+            return;
         }
         
         $selectedStation = $stations[$index];
@@ -268,7 +488,16 @@ class UssdController extends Controller
         ]);
         
         // Show station-wide campaigns with option to browse by programme
-        return $this->menuService->buildStationCampaignMenu($selectedStation->id, 1);
+        $menuText = $this->menuService->buildStationCampaignMenu($selectedStation->id, 1);
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4),
+            $selectedStation->name . ' - Campaigns',
+            'input',
+            'text',
+            'select_station_campaign'
+        );
     }
     
     /**
@@ -465,25 +694,45 @@ class UssdController extends Controller
     
     /**
      * Handle payment confirmation
+     * User confirms they want to proceed with payment
      */
-    private function handlePaymentConfirmation($sessionId, $input, $sessionData, $phoneNumber)
+    private function handlePaymentConfirmation($sessionId, $input, $sessionData, $phoneNumber, $platform)
     {
         if ($input == '0') {
+            // Cancel purchase
             $this->sessionService->closeSession($sessionId);
-            return "END Purchase cancelled.";
+            $this->sendResponse(
+                $sessionId,
+                'release',
+                'Purchase cancelled. Thank you!',
+                'Cancelled',
+                'display',
+                'text'
+            );
+            return;
         }
         
         if ($input == '1') {
-            $this->sessionService->updateSession($sessionId, 'select_payment_method');
-            return $this->menuService->buildPaymentMethodMenu($this->formatPhoneForDisplay($phoneNumber));
+            // Proceed with payment using AddToCart
+            $this->initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber);
+            return;
         }
         
-        return "CON Invalid selection.\n" . 
-               substr($this->menuService->buildPaymentConfirmation(
-                   $sessionData['quantity'],
-                   $sessionData['total_amount'],
-                   $phoneNumber
-               ), 4); // Remove CON prefix to avoid duplication
+        // Invalid input
+        $menuText = $this->menuService->buildPaymentConfirmation(
+            $sessionData['quantity'],
+            $sessionData['total_amount'],
+            $this->formatPhoneForDisplay($phoneNumber)
+        );
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
+            'Confirm Payment',
+            'input',
+            'text',
+            'confirm_payment'
+        );
     }
     
     /**
@@ -526,14 +775,28 @@ class UssdController extends Controller
     
     /**
      * Initiate payment using Hubtel's AddToCart feature
-     * This triggers immediate mobile money prompt
+     * This triggers the checkout flow and payment prompt
+     * 
+     * According to Hubtel API:
+     * 1. Send AddToCart response with Item details
+     * 2. Hubtel collects payment from user
+     * 3. Hubtel sends Service Fulfillment callback with OrderInfo
      */
-    private function initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber, $paymentNumber)
+    private function initiateAddToCartPayment($sessionId, $sessionData, $phoneNumber)
     {
-        // Validate phone number
+        error_log("=== INITIATING ADDTOCART PAYMENT ===");
+        
+        // Validate required data
         if (empty($phoneNumber)) {
-            $this->sessionService->closeSession($sessionId);
-            return "END Error: Phone number not available.\nPlease try again.";
+            error_log("Error: Phone number not available");
+            $this->sendErrorResponse($sessionId, 'Error: Phone number not available. Please try again.');
+            return;
+        }
+        
+        if (empty($sessionData['campaign_id']) || empty($sessionData['quantity']) || empty($sessionData['ticket_price'])) {
+            error_log("Error: Missing required session data");
+            $this->sendErrorResponse($sessionId, 'Error: Session data incomplete. Please start again.');
+            return;
         }
         
         // Get or create player
@@ -548,7 +811,8 @@ class UssdController extends Controller
             $playerId = $player->id;
         }
         
-        // Create payment record
+        // Create payment record with pending status
+        // This will be updated when Service Fulfillment callback is received
         $reference = 'USSD' . time() . rand(1000, 9999);
         
         $paymentData = [
@@ -558,7 +822,7 @@ class UssdController extends Controller
             'programme_id' => $sessionData['programme_id'] ?? null,
             'amount' => $sessionData['total_amount'],
             'gateway' => 'hubtel',
-            'gateway_reference' => $reference,
+            'gateway_reference' => $sessionId, // Use SessionId as reference for tracking
             'internal_reference' => $reference,
             'status' => 'pending',
             'channel' => 'ussd'
@@ -566,29 +830,24 @@ class UssdController extends Controller
         
         $paymentId = $this->paymentModel->create($paymentData);
         
-        // Store payment info in session for fulfillment callback
+        error_log("Payment record created - ID: $paymentId, Reference: $reference, SessionId: $sessionId");
+        
+        // Update session with payment info for Service Fulfillment callback
         $this->sessionService->updateSession($sessionId, 'awaiting_payment', array_merge($sessionData, [
             'payment_id' => $paymentId,
             'payment_reference' => $reference,
-            'payment_number' => $paymentNumber
+            'player_id' => $playerId
         ]));
         
-        // Build AddToCart item - all amounts must be properly formatted
-        $item = [
-            'ItemName' => 'Raffle Ticket - ' . ($sessionData['campaign_name'] ?? 'Campaign'),
-            'ItemQuantity' => (int)$sessionData['quantity'],
-            'ItemPrice' => round((float)$sessionData['ticket_price'], 2),
-            'ItemSubtotal' => round((float)$sessionData['total_amount'], 2),
-            'ItemTotalAmount' => round((float)$sessionData['total_amount'], 2)
-        ];
-        
-        error_log('USSD AddToCart Item: ' . json_encode($item));
-        
-        $message = "₵" . number_format($sessionData['total_amount'], 2) . " for {$sessionData['quantity']} entries\n\n" .
-                   "Approve the Prompt or Dial *170#";
-        
-        // Use AddToCart response - this triggers immediate prompt!
-        $this->sendAddToCartResponse($sessionId, $message, $item);
+        // Send AddToCart response
+        // Hubtel will handle payment collection and send Service Fulfillment callback
+        $this->sendAddToCartResponse(
+            $sessionId,
+            $sessionData['campaign_name'],
+            $sessionData['quantity'],
+            $sessionData['ticket_price'],
+            $sessionData['total_amount']
+        );
     }
     
     /**
@@ -770,71 +1029,120 @@ class UssdController extends Controller
     
     /**
      * Handle Service Fulfillment callback from Hubtel
-     * Called after user completes payment via AddToCart
+     * This is called after user completes payment via AddToCart
+     * 
+     * According to Hubtel API, the payload contains:
+     * - SessionId: Unique session identifier
+     * - OrderId: Unique order identifier from Hubtel
+     * - ExtraData: Additional data (optional)
+     * - OrderInfo: Object containing payment details
+     * 
+     * After processing, we must send Service Fulfillment Callback to Hubtel
      */
     public function handleServiceFulfillment()
     {
         try {
             // Get JSON payload from Hubtel
             $rawInput = file_get_contents('php://input');
-            error_log("USSD Service Fulfillment Input: " . $rawInput);
+            error_log("=== SERVICE FULFILLMENT REQUEST ===" . PHP_EOL . $rawInput);
             
             $payload = json_decode($rawInput, true);
             
             if (!$payload) {
-                error_log("USSD Fulfillment Error: Invalid JSON");
+                error_log("Service Fulfillment Error: Invalid JSON");
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid payload']);
+                echo json_encode(['error' => 'Invalid JSON payload']);
                 return;
             }
             
+            // Extract required fields according to API spec
             $sessionId = $payload['SessionId'] ?? null;
             $orderId = $payload['OrderId'] ?? null;
             $orderInfo = $payload['OrderInfo'] ?? null;
+            $extraData = $payload['ExtraData'] ?? [];
             
             if (!$sessionId || !$orderId || !$orderInfo) {
-                error_log("USSD Fulfillment Error: Missing required fields");
+                error_log("Service Fulfillment Error: Missing required fields");
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+                echo json_encode(['error' => 'Missing required fields: SessionId, OrderId, or OrderInfo']);
                 return;
             }
             
-            // Check payment status
-            $paymentStatus = $orderInfo['Status'] ?? null;
+            // Extract OrderInfo fields
+            $paymentStatus = $orderInfo['Status'] ?? null; // 'Paid', 'Unpaid', etc.
             $paymentInfo = $orderInfo['Payment'] ?? null;
+            $customerMobile = $orderInfo['CustomerMobileNumber'] ?? null;
+            $customerName = $orderInfo['CustomerName'] ?? null;
+            $items = $orderInfo['Items'] ?? [];
+            $subtotal = $orderInfo['Subtotal'] ?? 0;
             
-            if ($paymentStatus !== 'Paid' || !$paymentInfo || !$paymentInfo['IsSuccessful']) {
-                error_log("USSD Fulfillment: Payment not successful - Status: {$paymentStatus}");
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Payment not successful']);
+            error_log("Service Fulfillment - SessionId: $sessionId, OrderId: $orderId, Status: $paymentStatus");
+            
+            // Verify payment was successful
+            if ($paymentStatus !== 'Paid') {
+                error_log("Service Fulfillment: Payment not successful - Status: $paymentStatus");
+                // Send failure callback to Hubtel
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Payment status is not Paid'
+                ]);
+                
+                http_response_code(200); // Still return 200 to acknowledge receipt
+                echo json_encode(['status' => 'acknowledged', 'message' => 'Payment not successful']);
+                return;
+            }
+            
+            if (!$paymentInfo || !isset($paymentInfo['IsSuccessful']) || !$paymentInfo['IsSuccessful']) {
+                error_log("Service Fulfillment: Payment not successful - IsSuccessful: false");
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Payment IsSuccessful is false'
+                ]);
+                
+                http_response_code(200);
+                echo json_encode(['status' => 'acknowledged', 'message' => 'Payment not successful']);
                 return;
             }
             
             // Get session data
             $session = $this->sessionService->getSession($sessionId);
             if (!$session) {
-                error_log("USSD Fulfillment Error: Session not found - {$sessionId}");
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Session not found']);
+                error_log("Service Fulfillment Error: Session not found - $sessionId");
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Session not found'
+                ]);
+                
+                http_response_code(200);
+                echo json_encode(['status' => 'acknowledged', 'message' => 'Session not found']);
                 return;
             }
             
-            $sessionData = json_decode($session->session_data, true);
+            $sessionData = json_decode($session->session_data, true) ?: [];
             $paymentId = $sessionData['payment_id'] ?? null;
             
             if (!$paymentId) {
-                error_log("USSD Fulfillment Error: Payment ID not found in session");
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Payment not found']);
+                error_log("Service Fulfillment Error: Payment ID not found in session");
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Payment record not found in session'
+                ]);
+                
+                http_response_code(200);
+                echo json_encode(['status' => 'acknowledged', 'message' => 'Payment not found']);
                 return;
             }
             
-            // Update payment to success
+            // Update payment record with Hubtel OrderId and payment details
+            $amountPaid = $paymentInfo['AmountPaid'] ?? $subtotal;
+            $amountAfterCharges = $paymentInfo['AmountAfterCharges'] ?? $amountPaid;
+            $paymentType = $paymentInfo['PaymentType'] ?? 'mobilemoney';
+            $paymentDescription = $paymentInfo['PaymentDescription'] ?? '';
+            
             $this->paymentModel->update($paymentId, [
                 'status' => 'success',
                 'gateway_reference' => $orderId,
-                'paid_at' => date('Y-m-d H:i:s')
+                'paid_at' => date('Y-m-d H:i:s'),
+                'amount' => $amountAfterCharges // Update with actual amount after charges
             ]);
+            
+            error_log("Payment updated - ID: $paymentId, OrderId: $orderId, Amount: $amountAfterCharges");
             
             // Generate tickets
             require_once '../app/services/TicketGeneratorService.php';
@@ -850,34 +1158,117 @@ class UssdController extends Controller
                 'campaign_id' => $sessionData['campaign_id'],
                 'station_id' => $sessionData['station_id'],
                 'programme_id' => $sessionData['programme_id'] ?? null,
-                'amount' => $sessionData['total_amount']
+                'amount' => $amountAfterCharges,
+                'quantity' => $sessionData['quantity'] ?? 1
             ];
             
             // Generate tickets
             $ticketResult = $ticketService->generateTickets($paymentData);
             
+            if (!$ticketResult || !isset($ticketResult['success']) || !$ticketResult['success']) {
+                error_log("Service Fulfillment Error: Ticket generation failed");
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Ticket generation failed'
+                ]);
+                
+                http_response_code(200);
+                echo json_encode(['status' => 'acknowledged', 'message' => 'Ticket generation failed']);
+                return;
+            }
+            
             // Allocate revenue
             $revenueService->allocate($paymentData);
             
-            error_log("USSD Fulfillment: Tickets generated successfully - Payment: {$paymentId}");
+            error_log("Service Fulfillment SUCCESS - Payment: $paymentId, Tickets generated");
             
-            // Return success response to Hubtel
+            // Send success callback to Hubtel
+            $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'success', [
+                'payment_id' => $paymentId,
+                'tickets_generated' => $ticketResult['ticket_count'] ?? $sessionData['quantity']
+            ]);
+            
+            // Close session
+            $this->sessionService->closeSession($sessionId);
+            
+            // Return success response
             http_response_code(200);
             echo json_encode([
-                'success' => true,
-                'message' => 'Payment processed successfully',
-                'payment_id' => $paymentId
+                'status' => 'success',
+                'message' => 'Service fulfilled successfully',
+                'payment_id' => $paymentId,
+                'order_id' => $orderId
             ]);
             
         } catch (\Exception $e) {
-            error_log("USSD Fulfillment Exception: " . $e->getMessage());
+            error_log("Service Fulfillment Exception: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // Try to send failure callback if we have session and order IDs
+            if (isset($sessionId) && isset($orderId)) {
+                $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'failed', [
+                    'reason' => 'Exception: ' . $e->getMessage()
+                ]);
+            }
             
             http_response_code(500);
             echo json_encode([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Fulfillment processing failed: ' . $e->getMessage()
             ]);
+        }
+    }
+    
+    /**
+     * Send Service Fulfillment Callback to Hubtel
+     * This notifies Hubtel whether service was successfully delivered
+     * 
+     * According to API spec:
+     * - Endpoint: https://gs-callback.hubtel.com:9055/callback
+     * - Method: POST
+     * - Must be sent within 1 hour of receiving fulfillment
+     * - Requires IP whitelisting
+     */
+    private function sendServiceFulfillmentCallback($sessionId, $orderId, $serviceStatus, $metadata = null)
+    {
+        $callbackUrl = 'https://gs-callback.hubtel.com:9055/callback';
+        
+        $payload = [
+            'SessionId' => $sessionId,
+            'OrderId' => $orderId,
+            'ServiceStatus' => $serviceStatus, // 'success' or 'failed'
+            'MetaData' => $metadata
+        ];
+        
+        error_log("=== SENDING SERVICE FULFILLMENT CALLBACK ===" . PHP_EOL . json_encode($payload, JSON_PRETTY_PRINT));
+        
+        try {
+            $ch = curl_init($callbackUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'Cache-Control: no-cache'
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($error) {
+                error_log("Service Fulfillment Callback Error: $error");
+                return false;
+            }
+            
+            error_log("Service Fulfillment Callback Response - HTTP $httpCode: $response");
+            return $httpCode >= 200 && $httpCode < 300;
+            
+        } catch (\Exception $e) {
+            error_log("Service Fulfillment Callback Exception: " . $e->getMessage());
+            return false;
         }
     }
     
