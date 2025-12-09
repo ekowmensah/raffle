@@ -254,12 +254,19 @@
                                         $statusColors = [
                                             'draft' => 'secondary',
                                             'active' => 'success',
-                                            'closed' => 'warning',
+                                            'paused' => 'warning',
+                                            'inactive' => 'dark',
+                                            'closed' => 'danger',
                                             'draw_done' => 'info'
                                         ];
                                         $color = $statusColors[$campaign->status] ?? 'secondary';
                                         ?>
-                                        <span class="badge badge-<?= $color ?>"><?= strtoupper($campaign->status) ?></span>
+                                        <span class="badge badge-<?= $color ?> badge-lg"><?= strtoupper($campaign->status) ?></span>
+                                        <?php if ($campaign->status === 'paused'): ?>
+                                            <small class="text-muted d-block mt-1">Manually paused by admin</small>
+                                        <?php elseif ($campaign->status === 'inactive'): ?>
+                                            <small class="text-muted d-block mt-1">Deactivated due to parent entity</small>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <tr>
@@ -389,6 +396,29 @@
                         </div>
                     </div>
 
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Quick Actions</h3>
+                        </div>
+                        <div class="card-body">
+                            <?php if ($campaign->status === 'active'): ?>
+                                <a href="<?= url('campaign/pause/' . $campaign->id) ?>" 
+                                   class="btn btn-warning btn-block mb-2"
+                                   onclick="return confirm('Pause this campaign? No new tickets can be purchased while paused.')">
+                                    <i class="fas fa-pause"></i> Pause Campaign
+                                </a>
+                            <?php elseif ($campaign->status === 'paused' || $campaign->status === 'inactive'): ?>
+                                <a href="<?= url('campaign/resume/' . $campaign->id) ?>" 
+                                   class="btn btn-success btn-block mb-2"
+                                   onclick="return confirm('<?= $campaign->status === 'inactive' ? 'Reactivate this campaign? Make sure the station and programme are active.' : 'Resume this campaign? Tickets will be available for purchase.' ?>')">
+                                    <i class="fas fa-play"></i> <?= $campaign->status === 'inactive' ? 'Reactivate' : 'Resume' ?> Campaign
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Change Status -->
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Change Status</h3>
@@ -397,14 +427,18 @@
                             <form action="<?= url('campaign/updateStatus/' . $campaign->id) ?>" method="POST">
                                 <?= csrf_field() ?>
                                 <div class="form-group">
+                                    <label>Status</label>
                                     <select class="form-control" name="status">
                                         <option value="draft" <?= $campaign->status == 'draft' ? 'selected' : '' ?>>Draft</option>
                                         <option value="active" <?= $campaign->status == 'active' ? 'selected' : '' ?>>Active</option>
                                         <option value="closed" <?= $campaign->status == 'closed' ? 'selected' : '' ?>>Closed</option>
                                         <option value="draw_done" <?= $campaign->status == 'draw_done' ? 'selected' : '' ?>>Draw Done</option>
                                     </select>
+                                    <small class="form-text text-muted">
+                                        Use Quick Actions above for Pause/Resume.
+                                    </small>
                                 </div>
-                                <button type="submit" class="btn btn-success btn-block">Update Status</button>
+                                <button type="submit" class="btn btn-primary btn-block">Update Status</button>
                             </form>
                         </div>
                     </div>

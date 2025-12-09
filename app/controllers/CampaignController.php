@@ -471,11 +471,40 @@ class CampaignController extends Controller
             verify_csrf();
 
             $status = $_POST['status'];
-            $validStatuses = ['draft', 'active', 'closed', 'draw_done'];
+            $validStatuses = ['draft', 'active', 'paused', 'inactive', 'closed', 'draw_done'];
 
             if (!in_array($status, $validStatuses)) {
                 flash('error', 'Invalid status');
                 $this->redirect('campaign/show/' . $id);
+                return;
+            }
+            
+            $campaign = $this->campaignModel->findById($id);
+            
+            if (!$campaign) {
+                flash('error', 'Campaign not found');
+                $this->redirect('campaign');
+                return;
+            }
+            
+            // Validate status transitions
+            if ($status === 'paused' && $campaign->status !== 'active') {
+                flash('error', 'Only active campaigns can be paused. Use the Pause button instead.');
+                $this->redirect('campaign/show/' . $id);
+                return;
+            }
+            
+            if ($status === 'active' && ($campaign->status === 'paused' || $campaign->status === 'inactive')) {
+                flash('error', 'Use the Resume/Reactivate button to activate paused or inactive campaigns.');
+                $this->redirect('campaign/show/' . $id);
+                return;
+            }
+            
+            // Prevent manual setting of inactive status
+            if ($status === 'inactive') {
+                flash('error', 'Inactive status is set automatically when station/programme is deactivated.');
+                $this->redirect('campaign/show/' . $id);
+                return;
             }
 
             if ($this->campaignModel->updateStatus($id, $status)) {
