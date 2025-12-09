@@ -1393,6 +1393,49 @@ class UssdController extends Controller
             
             error_log("Service Fulfillment SUCCESS - Payment: $paymentId, Tickets generated");
             
+            // Send SMS notification
+            try {
+                require_once '../app/services/SMS/HubtelSmsService.php';
+                $smsService = new \App\Services\SMS\HubtelSmsService();
+                
+                // Get campaign details
+                $campaign = $this->campaignModel->findById($sessionData['campaign_id']);
+                
+                // Get player phone number
+                $playerPhone = $this->cleanPhoneNumber($customerMobile);
+                
+                // Get ticket codes from result
+                $tickets = $ticketResult['tickets'] ?? [];
+                
+                error_log("=== SENDING SMS ===");
+                error_log("Phone: $playerPhone");
+                error_log("Tickets: " . count($tickets));
+                error_log("Campaign: " . ($campaign->name ?? $sessionData['campaign_name']));
+                error_log("Amount: $amountAfterCharges");
+                
+                if (empty($tickets)) {
+                    error_log("WARNING: No tickets found in result, cannot send SMS");
+                } else {
+                    $smsResult = $smsService->sendTicketConfirmation(
+                        $playerPhone,
+                        $tickets,
+                        $campaign->name ?? $sessionData['campaign_name'],
+                        $amountAfterCharges
+                    );
+                    
+                    if ($smsResult['success']) {
+                        error_log("SMS sent successfully - MessageId: " . ($smsResult['message_id'] ?? 'N/A'));
+                    } else {
+                        error_log("SMS sending failed: " . ($smsResult['error'] ?? 'Unknown error'));
+                        error_log("SMS Response: " . ($smsResult['response'] ?? 'No response'));
+                    }
+                }
+            } catch (\Exception $smsError) {
+                error_log("SMS Exception: " . $smsError->getMessage());
+                error_log("SMS Stack trace: " . $smsError->getTraceAsString());
+                // Don't fail the whole process if SMS fails
+            }
+            
             // Send success callback to Hubtel
             $this->sendServiceFulfillmentCallback($sessionId, $orderId, 'success', [
                 'payment_id' => $paymentId,
