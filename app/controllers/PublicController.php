@@ -58,11 +58,16 @@ class PublicController extends Controller
         $campaign->station_name = $station ? $station->name : 'N/A';
 
         $stats = $this->campaignModel->getStats($id);
+        
+        // Generate SEO meta tags
+        require_once '../app/helpers/SeoHelper.php';
+        $seoMeta = \App\Helpers\SeoHelper::generateCampaignMeta($campaign);
 
         $data = [
             'title' => $campaign->name,
             'campaign' => $campaign,
-            'stats' => $stats
+            'stats' => $stats,
+            'seo_meta' => $seoMeta
         ];
 
         $this->view('public/campaign-info', $data);

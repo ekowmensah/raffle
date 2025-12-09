@@ -4,6 +4,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $title ?? 'Play & Win Big' ?> | eTickets Raffle</title>
+    <meta name="description" content="Play eTickets Raffle and win amazing cash prizes and items! Transparent draws, instant winners, secure mobile money payments. Join thousands of winners today!">
+    <meta name="keywords" content="Ghana raffle, online lottery, win cash prizes, mobile money raffle, transparent draws, instant winners, eTickets, raffle Ghana">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?= url('public') ?>">
+    <meta property="og:title" content="eTickets Raffle - Play & Win Big Prizes">
+    <meta property="og:description" content="Play eTickets Raffle and win amazing cash prizes and items! Transparent draws, instant winners, secure payments.">
+    <meta property="og:image" content="<?= url('assets/images/og-image.jpg') ?>">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="eTickets Raffle - Play & Win Big Prizes">
+    <meta name="twitter:description" content="Play eTickets Raffle and win amazing cash prizes and items! Transparent draws, instant winners, secure payments.">
+    <meta name="twitter:image" content="<?= url('assets/images/og-image.jpg') ?>">
+    
+    <link rel="canonical" href="<?= url('public') ?>">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="eTickets Raffle">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">

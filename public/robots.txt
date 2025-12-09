@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /webhook/
+Disallow: /ussd/
+
+Sitemap: https://bon.mensweb.xyz/sitemap.xml

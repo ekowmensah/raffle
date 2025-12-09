@@ -3,7 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Buy Tickets | eTickets Raffle</title>
+    
+    <?php if (isset($seo_meta)): ?>
+        <?php 
+        require_once '../app/helpers/SeoHelper.php';
+        echo \App\Helpers\SeoHelper::renderMetaTags($seo_meta);
+        echo \App\Helpers\SeoHelper::generateStructuredData($seo_meta['campaign']);
+        ?>
+    <?php else: ?>
+        <title>Buy Tickets | eTickets Raffle</title>
+        <meta name="description" content="Buy raffle tickets online and win amazing prizes! Transparent draws, instant winners, secure payments.">
+        <meta name="keywords" content="raffle, lottery, win prizes, Ghana raffle, online raffle, buy tickets">
+    <?php endif; ?>
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
