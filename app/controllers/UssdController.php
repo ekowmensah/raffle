@@ -1409,7 +1409,7 @@ class UssdController extends Controller
      * This notifies Hubtel whether service was successfully delivered
      * 
      * According to API spec:
-     * - Endpoint: https://gs-callback.hubtel.com:9055/callback
+     * - Endpoint: https://gs-callback.hubtel.com/callback
      * - Method: POST
      * - Must be sent within 1 hour of receiving fulfillment
      * - Requires IP whitelisting
