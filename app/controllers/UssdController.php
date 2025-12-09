@@ -503,40 +503,77 @@ class UssdController extends Controller
     /**
      * Handle station campaign selection (station-wide campaigns or browse by programme)
      */
-    private function handleStationCampaignSelection($sessionId, $input, $sessionData, $phoneNumber)
+    private function handleStationCampaignSelection($sessionId, $input, $sessionData, $phoneNumber, $platform)
     {
         $currentPage = $sessionData['campaign_page'] ?? 1;
         $stationId = $sessionData['station_id'];
         
         if ($input == '0') {
             $this->sessionService->updateSession($sessionId, 'select_station', ['station_page' => 1]);
-            return $this->menuService->buildStationMenu(1);
+            $menuText = $this->menuService->buildStationMenu(1);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Station',
+                'input',
+                'text',
+                'select_station'
+            );
+            return;
         }
         
         // Handle pagination
         if ($input == '5') {
-            // Next page
             $newPage = $currentPage + 1;
             $this->sessionService->updateSession($sessionId, 'select_station_campaign', array_merge($sessionData, ['campaign_page' => $newPage]));
-            return $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+            $menuText = $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Campaigns',
+                'input',
+                'text',
+                'select_station_campaign'
+            );
+            return;
         }
         
         if ($input == '6') {
-            // Previous page
             $newPage = max(1, $currentPage - 1);
             $this->sessionService->updateSession($sessionId, 'select_station_campaign', array_merge($sessionData, ['campaign_page' => $newPage]));
-            return $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+            $menuText = $this->menuService->buildStationCampaignMenu($stationId, $newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Campaigns',
+                'input',
+                'text',
+                'select_station_campaign'
+            );
+            return;
         }
         
         // Check if user selected "Filter by Programme" option (option 7)
         if ($input == '7') {
-            // User wants to filter by programme
             $this->sessionService->updateSession($sessionId, 'select_programme', [
                 'station_id' => $stationId,
                 'station_name' => $sessionData['station_name'],
                 'programme_page' => 1
             ]);
-            return $this->menuService->buildProgrammeMenu($stationId, 1);
+            $menuText = $this->menuService->buildProgrammeMenu($stationId, 1);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Programme',
+                'input',
+                'text',
+                'select_programme'
+            );
+            return;
         }
         
         // Get campaigns for current page
@@ -547,8 +584,17 @@ class UssdController extends Controller
         
         // User selected a campaign
         if (!isset($campaigns[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
-                   substr($this->menuService->buildStationCampaignMenu($stationId, $currentPage), 4);
+            $menuText = $this->menuService->buildStationCampaignMenu($stationId, $currentPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
+                'Campaigns',
+                'input',
+                'text',
+                'select_station_campaign'
+            );
+            return;
         }
         
         $selectedCampaign = $campaigns[$index];
@@ -557,46 +603,83 @@ class UssdController extends Controller
             'campaign_name' => $selectedCampaign->name,
             'ticket_price' => $selectedCampaign->ticket_price,
             'station_id' => $stationId,
-            'programme_id' => null, // Station-wide campaign
+            'programme_id' => null,
             'phone_number' => $phoneNumber
         ]));
         
-        return $this->menuService->buildQuantityMenu(
+        $menuText = $this->menuService->buildQuantityMenu(
             $selectedCampaign->name,
             $selectedCampaign->ticket_price
+        );
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4),
+            'Enter Quantity',
+            'input',
+            'number',
+            'select_quantity'
         );
     }
     
     /**
      * Handle programme selection with pagination
      */
-    private function handleProgrammeSelection($sessionId, $input, $sessionData)
+    private function handleProgrammeSelection($sessionId, $input, $sessionData, $platform)
     {
         $currentPage = $sessionData['programme_page'] ?? 1;
         $stationId = $sessionData['station_id'];
         
         if ($input == '0') {
-            // Go back to station campaigns
             $this->sessionService->updateSession($sessionId, 'select_station_campaign', [
                 'station_id' => $stationId,
-                'station_name' => $sessionData['station_name'] ?? ''
+                'station_name' => $sessionData['station_name'] ?? '',
+                'campaign_page' => 1
             ]);
-            return $this->menuService->buildStationCampaignMenu($stationId);
+            $menuText = $this->menuService->buildStationCampaignMenu($stationId);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Campaigns',
+                'input',
+                'text',
+                'select_station_campaign'
+            );
+            return;
         }
         
         // Handle pagination
         if ($input == '5') {
-            // Next page
             $newPage = $currentPage + 1;
             $this->sessionService->updateSession($sessionId, 'select_programme', array_merge($sessionData, ['programme_page' => $newPage]));
-            return $this->menuService->buildProgrammeMenu($stationId, $newPage);
+            $menuText = $this->menuService->buildProgrammeMenu($stationId, $newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Programme',
+                'input',
+                'text',
+                'select_programme'
+            );
+            return;
         }
         
         if ($input == '6') {
-            // Previous page
             $newPage = max(1, $currentPage - 1);
             $this->sessionService->updateSession($sessionId, 'select_programme', array_merge($sessionData, ['programme_page' => $newPage]));
-            return $this->menuService->buildProgrammeMenu($stationId, $newPage);
+            $menuText = $this->menuService->buildProgrammeMenu($stationId, $newPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Programme',
+                'input',
+                'text',
+                'select_programme'
+            );
+            return;
         }
         
         // Get programmes for current page
@@ -606,8 +689,17 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($programmes[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
-                   substr($this->menuService->buildProgrammeMenu($stationId, $currentPage), 4);
+            $menuText = $this->menuService->buildProgrammeMenu($stationId, $currentPage);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
+                'Select Programme',
+                'input',
+                'text',
+                'select_programme'
+            );
+            return;
         }
         
         $selectedProgramme = $programmes[$index];
@@ -616,13 +708,22 @@ class UssdController extends Controller
             'programme_name' => $selectedProgramme->name
         ]));
         
-        return $this->menuService->buildCampaignMenu($stationId, $selectedProgramme->id);
+        $menuText = $this->menuService->buildCampaignMenu($stationId, $selectedProgramme->id);
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4),
+            $selectedProgramme->name . ' - Campaigns',
+            'input',
+            'text',
+            'select_campaign'
+        );
     }
     
     /**
      * Handle campaign selection
      */
-    private function handleCampaignSelection($sessionId, $input, $sessionData, $phoneNumber)
+    private function handleCampaignSelection($sessionId, $input, $sessionData, $phoneNumber, $platform)
     {
         if ($input == '0') {
             $this->sessionService->updateSession($sessionId, 'select_programme', [
@@ -630,7 +731,17 @@ class UssdController extends Controller
                 'station_name' => $sessionData['station_name'] ?? '',
                 'programme_page' => 1
             ]);
-            return $this->menuService->buildProgrammeMenu($sessionData['station_id'], 1);
+            $menuText = $this->menuService->buildProgrammeMenu($sessionData['station_id'], 1);
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                substr($menuText, 4),
+                'Select Programme',
+                'input',
+                'text',
+                'select_programme'
+            );
+            return;
         }
         
         $campaigns = $this->menuService->getCampaignsArray(
@@ -640,11 +751,20 @@ class UssdController extends Controller
         $index = (int)$input - 1;
         
         if (!isset($campaigns[$index])) {
-            return "CON Invalid selection. Please try again.\n" . 
-                   substr($this->menuService->buildCampaignMenu(
-                       $sessionData['station_id'],
-                       $sessionData['programme_id']
-                   ), 4);
+            $menuText = $this->menuService->buildCampaignMenu(
+                $sessionData['station_id'],
+                $sessionData['programme_id']
+            );
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                "Invalid selection. Please try again.\n\n" . substr($menuText, 4),
+                'Select Campaign',
+                'input',
+                'text',
+                'select_campaign'
+            );
+            return;
         }
         
         $selectedCampaign = $campaigns[$index];
@@ -655,27 +775,45 @@ class UssdController extends Controller
             'phone_number' => $phoneNumber
         ]));
         
-        return $this->menuService->buildQuantityMenu(
+        $menuText = $this->menuService->buildQuantityMenu(
             $selectedCampaign->name,
             $selectedCampaign->ticket_price
+        );
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4),
+            'Enter Quantity',
+            'input',
+            'number',
+            'select_quantity'
         );
     }
     
     /**
      * Handle quantity selection (direct number input)
      */
-    private function handleQuantitySelection($sessionId, $input, $sessionData)
+    private function handleQuantitySelection($sessionId, $input, $sessionData, $platform)
     {
         $quantity = (int)$input;
         $ticketPrice = $sessionData['ticket_price'];
         
         // Validate quantity
         if ($quantity < 1 || $quantity > 1000) {
-            return "CON Invalid quantity. Enter 1-1000:\n" .
-                   substr($this->menuService->buildQuantityMenu(
-                       $sessionData['campaign_name'],
-                       $ticketPrice
-                   ), 4);
+            $menuText = $this->menuService->buildQuantityMenu(
+                $sessionData['campaign_name'],
+                $ticketPrice
+            );
+            $this->sendResponse(
+                $sessionId,
+                'response',
+                "Invalid quantity. Enter 1-1000:\n\n" . substr($menuText, 4),
+                'Enter Quantity',
+                'input',
+                'number',
+                'select_quantity'
+            );
+            return;
         }
         
         $totalAmount = $quantity * $ticketPrice;
@@ -685,10 +823,19 @@ class UssdController extends Controller
             'total_amount' => $totalAmount
         ]));
         
-        return $this->menuService->buildPaymentConfirmation(
+        $menuText = $this->menuService->buildPaymentConfirmation(
             $quantity,
             $totalAmount,
             $this->formatPhoneForDisplay($sessionData['phone_number'] ?? '')
+        );
+        $this->sendResponse(
+            $sessionId,
+            'response',
+            substr($menuText, 4),
+            'Confirm Payment',
+            'input',
+            'text',
+            'confirm_payment'
         );
     }
     
@@ -1003,7 +1150,7 @@ class UssdController extends Controller
     /**
      * Handle ticket list navigation (next/previous page)
      */
-    private function handleTicketNavigation($sessionId, $input, $sessionData, $phoneNumber)
+    private function handleTicketNavigation($sessionId, $input, $sessionData, $phoneNumber, $platform)
     {
         $currentPage = $sessionData['ticket_page'] ?? 1;
         
@@ -1011,19 +1158,58 @@ class UssdController extends Controller
             case '1': // Next Page
                 $newPage = $currentPage + 1;
                 $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => $newPage]);
-                return $this->menuService->buildTicketList($phoneNumber, $newPage);
+                $menuText = $this->menuService->buildTicketList($phoneNumber, $newPage);
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'My Tickets',
+                    'input',
+                    'text',
+                    'view_tickets'
+                );
+                break;
                 
             case '2': // Previous Page
                 $newPage = max(1, $currentPage - 1);
                 $this->sessionService->updateSession($sessionId, 'view_tickets', ['ticket_page' => $newPage]);
-                return $this->menuService->buildTicketList($phoneNumber, $newPage);
+                $menuText = $this->menuService->buildTicketList($phoneNumber, $newPage);
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'My Tickets',
+                    'input',
+                    'text',
+                    'view_tickets'
+                );
+                break;
                 
             case '0': // Back to Main Menu
                 $this->sessionService->updateSession($sessionId, 'main_menu', []);
-                return $this->menuService->buildMainMenu();
+                $menuText = $this->menuService->buildMainMenu();
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'Main Menu',
+                    'input',
+                    'text',
+                    'main_menu'
+                );
+                break;
                 
             default:
-                return $this->menuService->buildTicketList($phoneNumber, $currentPage);
+                $menuText = $this->menuService->buildTicketList($phoneNumber, $currentPage);
+                $this->sendResponse(
+                    $sessionId,
+                    'response',
+                    substr($menuText, 4),
+                    'My Tickets',
+                    'input',
+                    'text',
+                    'view_tickets'
+                );
         }
     }
     
@@ -1230,7 +1416,7 @@ class UssdController extends Controller
      */
     private function sendServiceFulfillmentCallback($sessionId, $orderId, $serviceStatus, $metadata = null)
     {
-        $callbackUrl = 'https://gs-callback.hubtel.com:9055/callback';
+        $callbackUrl = 'https://gs-callback.hubtel.com/callback';
         
         $payload = [
             'SessionId' => $sessionId,
