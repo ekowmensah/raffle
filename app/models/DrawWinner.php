@@ -57,11 +57,14 @@ class DrawWinner extends Model
                          p.phone as player_phone,
                          p.name as player_name,
                          d.draw_date,
-                         d.draw_type
+                         d.draw_type,
+                         c.campaign_type,
+                         c.item_name as campaign_item_name
                          FROM {$this->table} dw
                          LEFT JOIN tickets t ON dw.ticket_id = t.id
                          LEFT JOIN players p ON dw.player_id = p.id
                          LEFT JOIN draws d ON dw.draw_id = d.id
+                         LEFT JOIN raffle_campaigns c ON d.campaign_id = c.id
                          WHERE d.campaign_id = :campaign_id
                          ORDER BY dw.created_at DESC");
         $this->db->bind(':campaign_id', $campaignId);

@@ -72,8 +72,8 @@
                                 <th>Player</th>
                                 <th>Draw Date</th>
                                 <th>Draw Type</th>
-                                <th><?= $campaign && $campaign->campaign_type === 'item' ? 'Prize/Value' : 'Prize Amount' ?></th>
-                                <th><?= $campaign && $campaign->campaign_type === 'item' ? 'Delivery Status' : 'Prize Status' ?></th>
+                                <th>Prize/Value</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -96,11 +96,11 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if ($campaign && $campaign->campaign_type === 'item'): ?>
-                                            <strong><?= htmlspecialchars($campaign->item_name) ?></strong><br>
-                                            <small class="text-muted">Value: GHS <?= number_format($winner->prize_amount, 2) ?></small>
+                                        <?php if (isset($winner->campaign_type) && $winner->campaign_type === 'item'): ?>
+                                            <i class="fas fa-gift text-success"></i> <strong><?= htmlspecialchars($winner->item_name ?? $winner->campaign_item_name ?? 'Item Prize') ?></strong><br>
+                                            <small class="text-muted">Value: GHS <?= number_format($winner->item_value ?? $winner->prize_amount, 2) ?></small>
                                         <?php else: ?>
-                                            <strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong>
+                                            <i class="fas fa-money-bill-wave text-success"></i> <strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -114,10 +114,11 @@
                                         $color = $statusColors[$winner->prize_paid_status] ?? 'secondary';
                                         
                                         // Different labels for item vs cash
+                                        $isItemCampaign = isset($winner->campaign_type) && $winner->campaign_type === 'item';
                                         $statusLabels = [
-                                            'pending' => $campaign && $campaign->campaign_type === 'item' ? 'PENDING DELIVERY' : 'PENDING',
+                                            'pending' => $isItemCampaign ? 'PENDING DELIVERY' : 'PENDING',
                                             'processing' => 'PROCESSING',
-                                            'paid' => $campaign && $campaign->campaign_type === 'item' ? 'DELIVERED' : 'PAID',
+                                            'paid' => $isItemCampaign ? 'DELIVERED' : 'PAID',
                                             'failed' => 'CANCELLED'
                                         ];
                                         $statusLabel = $statusLabels[$winner->prize_paid_status] ?? strtoupper($winner->prize_paid_status);
@@ -131,13 +132,15 @@
                                         <form method="POST" action="<?= url('draw/updatePrizeStatus/' . $winner->id) ?>" style="display: inline;">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="status" value="paid">
+                                            <?php $isItem = isset($winner->campaign_type) && $winner->campaign_type === 'item'; ?>
                                             <button type="submit" class="btn btn-success btn-sm" 
-                                                    onclick="return confirm('<?= $campaign && $campaign->campaign_type === 'item' ? 'Mark this item as delivered?' : 'Mark this prize as paid?' ?>')">
-                                                <i class="fas fa-check"></i> <?= $campaign && $campaign->campaign_type === 'item' ? 'Mark Delivered' : 'Mark Paid' ?>
+                                                    onclick="return confirm('<?= $isItem ? 'Mark this item as delivered?' : 'Mark this prize as paid?' ?>')">
+                                                <i class="fas fa-<?= $isItem ? 'truck' : 'check' ?>"></i> <?= $isItem ? 'Mark Delivered' : 'Mark Paid' ?>
                                             </button>
                                         </form>
                                         <?php else: ?>
-                                            <span class="text-success"><i class="fas fa-check-circle"></i> <?= $campaign && $campaign->campaign_type === 'item' ? 'Delivered' : 'Paid' ?></span>
+                                            <?php $isItem = isset($winner->campaign_type) && $winner->campaign_type === 'item'; ?>
+                                            <span class="text-success"><i class="fas fa-check-circle"></i> <?= $isItem ? 'Delivered' : 'Paid' ?></span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
