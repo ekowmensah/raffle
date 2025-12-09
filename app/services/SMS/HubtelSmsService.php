@@ -84,6 +84,20 @@ class HubtelSmsService
     }
     
     /**
+     * Send prize paid notification SMS
+     */
+    public function sendPrizePaidNotification($phoneNumber, $ticketCode, $prizeAmount, $campaignName)
+    {
+        $message = "PRIZE PAID!\n";
+        $message .= "Campaign: {$campaignName}\n";
+        $message .= "Ticket: {$ticketCode}\n";
+        $message .= "Amount: GHS " . number_format($prizeAmount, 2) . "\n";
+        $message .= "Your prize has been credited. Thank you for playing!";
+        
+        return $this->send($phoneNumber, $message, 'prize_paid');
+    }
+    
+    /**
      * Send draw results notification SMS
      */
     public function sendDrawResultsNotification($phoneNumber, $campaignName, $drawDate, $drawType, $hasWon = false)

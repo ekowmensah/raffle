@@ -557,7 +557,8 @@ class DrawController extends Controller
                     $campaign = $campaignModel->findById($draw->campaign_id);
                     
                     if ($player && $ticket && $campaign) {
-                        $smsService = new \App\Services\HubtelSmsService();
+                        require_once '../app/services/SMS/HubtelSmsService.php';
+                        $smsService = new \App\Services\SMS\HubtelSmsService();
                         $smsService->sendPrizePaidNotification(
                             $player->phone,
                             $ticket->ticket_code,
