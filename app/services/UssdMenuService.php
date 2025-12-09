@@ -309,9 +309,6 @@ class UssdMenuService
         
         // Add navigation options if multiple pages
         if ($totalPages > 1) {
-            $menu .= "---\n";
-            $menu .= "Total: {$totalTickets} tickets\n\n";
-            
             if ($page < $totalPages) {
                 $menu .= "1. Next Page\n";
             }
