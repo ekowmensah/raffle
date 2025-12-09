@@ -771,7 +771,7 @@ $('#stationSelect').on('change', function() {
             
             programmeSelect.prop('disabled', false);
         } else {
-            programmeSelect.html('<option value="">No active programmes for this station</option>');
+            programmeSelect.html('<option value="">No active shows for this platform</option>');
         }
     });
     
@@ -838,7 +838,7 @@ $('#programmeSelect').on('change', function() {
             
             campaignSelect.prop('disabled', false);
         } else {
-            campaignSelect.html('<option value="">No active campaigns for this programme</option>');
+            campaignSelect.html('<option value="">No active campaigns for this show</option>');
         }
     });
 });

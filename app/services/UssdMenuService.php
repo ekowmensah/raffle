@@ -40,7 +40,7 @@ class UssdMenuService
         $totalStations = $countResult->total ?? 0;
         
         if ($totalStations == 0) {
-            return "END No active stations available.";
+            return "END No active platforms available.";
         }
         
         // Get stations for current page
@@ -88,7 +88,7 @@ class UssdMenuService
         $totalProgrammes = $countResult->total ?? 0;
         
         if ($totalProgrammes == 0) {
-            return "END No active programmes available for this station.";
+            return "END No active shows available for this platform.";
         }
         
         // Get programmes for current page
@@ -141,7 +141,7 @@ class UssdMenuService
         $totalCampaigns = $countResult->total ?? 0;
         
         if ($totalCampaigns == 0) {
-            return "END No active campaigns available for this station.";
+            return "END No active Games available for this platform.";
         }
         
         // Get campaigns for current page
@@ -202,7 +202,7 @@ class UssdMenuService
         $campaigns = $this->db->resultSet();
         
         if (empty($campaigns)) {
-            return "END No active campaigns available.";
+            return "END No active Games available.";
         }
         
         $menu = "CON Select Campaign:\n";
