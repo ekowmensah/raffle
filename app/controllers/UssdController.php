@@ -13,6 +13,7 @@ class UssdController extends Controller
     private $playerModel;
     private $ticketModel;
     private $paymentModel;
+    private $campaignModel;
     
     public function __construct()
     {
@@ -21,6 +22,7 @@ class UssdController extends Controller
         $this->playerModel = $this->model('Player');
         $this->ticketModel = $this->model('Ticket');
         $this->paymentModel = $this->model('Payment');
+        $this->campaignModel = $this->model('Campaign');
     }
     
     /**
