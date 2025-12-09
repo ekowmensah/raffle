@@ -63,6 +63,7 @@
                                         <span class="badge badge-<?= $color ?>"><?= strtoupper($draw->status) ?></span>
                                     </td>
                                 </tr>
+                                <?php if ($draw->campaign_type !== 'item'): ?>
                                 <tr>
                                     <th>Prize Pool</th>
                                     <td>
@@ -75,6 +76,7 @@
                                         <?php endif; ?>
                                     </td>
                                 </tr>
+                                <?php endif; ?>
                                 <?php if ($draw->updated_at && $draw->status == 'completed'): ?>
                                 <tr>
                                     <th>Completed At</th>
@@ -97,12 +99,13 @@
                                         <th>Rank</th>
                                         <th>Ticket Code</th>
                                         <th>Player</th>
-                                        <th>Prize Amount</th>
+                                        <th>Prize</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($winners as $winner): ?>
+                                        <?php $isItemPrize = !empty($winner->item_name); ?>
                                         <tr>
                                             <td>
                                                 <?php if ($winner->prize_rank == 1): ?>
@@ -113,10 +116,25 @@
                                             </td>
                                             <td><strong><?= htmlspecialchars($winner->ticket_code) ?></strong></td>
                                             <td><?= htmlspecialchars($winner->player_phone) ?></td>
-                                            <td><strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong></td>
                                             <td>
+                                                <?php if ($isItemPrize): ?>
+                                                    <i class="fas fa-gift text-success"></i> <strong><?= htmlspecialchars($winner->item_name) ?></strong><br>
+                                                    <small class="text-muted">Value: GHS <?= number_format($winner->item_value ?? 0, 2) ?></small>
+                                                <?php else: ?>
+                                                    <i class="fas fa-money-bill-wave text-success"></i> <strong>GHS <?= number_format($winner->prize_amount, 2) ?></strong>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $statusLabel = $winner->prize_paid_status;
+                                                if ($isItemPrize) {
+                                                    $statusLabel = $winner->prize_paid_status == 'paid' ? 'DELIVERED' : 'PENDING DELIVERY';
+                                                } else {
+                                                    $statusLabel = strtoupper($winner->prize_paid_status);
+                                                }
+                                                ?>
                                                 <span class="badge badge-<?= $winner->prize_paid_status == 'paid' ? 'success' : 'warning' ?>">
-                                                    <?= strtoupper($winner->prize_paid_status) ?>
+                                                    <?= $statusLabel ?>
                                                 </span>
                                             </td>
                                         </tr>

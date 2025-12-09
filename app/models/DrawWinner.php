@@ -14,7 +14,10 @@ class DrawWinner extends Model
                          t.ticket_code,
                          p.phone as player_phone,
                          p.name as player_name,
-                         c.name as campaign_name
+                         c.name as campaign_name,
+                         c.campaign_type,
+                         dw.item_name,
+                         dw.item_value
                          FROM {$this->table} dw
                          LEFT JOIN tickets t ON dw.ticket_id = t.id
                          LEFT JOIN players p ON dw.player_id = p.id
