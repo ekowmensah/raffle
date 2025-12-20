@@ -63,7 +63,7 @@ class HubtelSmsService
         
         $message = "Successful! GHS " . number_format($totalAmount, 2) . "\n";
         $message .= "Campaign: {$campaignName}\n";
-        $message .= "Tickets ({$ticketCount}): {$codesList}\n";
+        $message .= "Entries ({$ticketCount}): {$codesList}\n";
         $message .= "Good luck!";
         
         return $this->send($phoneNumber, $message, 'ticket');
