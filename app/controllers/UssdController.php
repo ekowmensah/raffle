@@ -1402,7 +1402,7 @@ class UssdController extends Controller
                 error_log("Phone: $playerPhone");
                 error_log("Tickets: " . count($tickets));
                 error_log("Campaign: " . ($campaign->name ?? $sessionData['campaign_name']));
-                error_log("Amount: $amountAfterCharges");
+                error_log("Amount: $expectedAmount");
                 
                 if (empty($tickets)) {
                     error_log("WARNING: No tickets found in result, cannot send SMS");
@@ -1411,7 +1411,7 @@ class UssdController extends Controller
                         $playerPhone,
                         $tickets,
                         $campaign->name ?? $sessionData['campaign_name'],
-                        $amountAfterCharges
+                        $expectedAmount  // Show what customer paid, not what we received after fees
                     );
                     
                     if ($smsResult['success']) {
