@@ -22,8 +22,8 @@ class PublicController extends Controller
         // Get all active stations
         $stations = $this->stationModel->getAll();
         
-        // Get all active campaigns with details
-        $campaigns = $this->campaignModel->getAllWithDetails();
+        // Get only active campaigns for public display
+        $campaigns = $this->campaignModel->getByStatus('active');
         
         // Get stats for homepage
         $winnerModel = $this->model('DrawWinner');
