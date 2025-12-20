@@ -1346,21 +1346,22 @@ class UssdController extends Controller
             $ticketService = new \App\Services\TicketGeneratorService();
             $revenueService = new \App\Services\RevenueAllocationService();
             
-            // Use original quantity from session since customer paid fees
-            // AmountAfterCharges should match the expected total_amount
+            // Use original amount from session since merchant absorbs fees
+            // Customer paid the full amount, but Hubtel deducted fees from merchant
             $expectedAmount = $sessionData['total_amount'] ?? 0;
             $actualQuantity = $sessionData['quantity'] ?? 1;
             
             error_log("Ticket generation - Expected: $expectedAmount, Received: $amountAfterCharges, Quantity: $actualQuantity");
             
             // Prepare payment data for services
+            // Use expectedAmount (what customer paid) not amountAfterCharges (what we received)
             $paymentData = [
                 'payment_id' => $paymentId,
                 'player_id' => $sessionData['player_id'] ?? null,
                 'campaign_id' => $sessionData['campaign_id'],
                 'station_id' => $sessionData['station_id'],
                 'programme_id' => $sessionData['programme_id'] ?? null,
-                'amount' => $amountAfterCharges,
+                'amount' => $expectedAmount,  // Use full amount customer paid, not amount after fees
                 'quantity' => $actualQuantity
             ];
             
