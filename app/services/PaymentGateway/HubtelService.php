@@ -84,7 +84,7 @@ class HubtelService
             'PrimaryCallbackUrl' => $data['callback_url'] ?? $this->getDefaultCallbackUrl(),
             'Description' => $data['description'] ?? 'Raffle Ticket Purchase',
             'ClientReference' => $data['reference'],
-            'FeesOnCustomer' => true // Customer pays transaction fees
+            'FeesOnCustomer' => false // Merchant absorbs transaction fees
         ];
         
         try {

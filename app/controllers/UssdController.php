@@ -234,40 +234,28 @@ class UssdController extends Controller
      * Hubtel actually charges the Price field directly as the total amount.
      * Therefore, we send total amount in Price field and Qty as 1.
      * 
-     * Transaction fees (2%) are added to the total, so customer pays fees.
+     * Merchant absorbs transaction fees - customer pays base amount only.
      * 
      * Item must contain:
      * - ItemName: string (campaign name with quantity)
      * - Qty: integer (always 1)
-     * - Price: float (total amount to charge including fees)
+     * - Price: float (total amount to charge)
      */
     private function sendAddToCartResponse($sessionId, $campaignName, $quantity, $unitPrice, $totalAmount)
     {
-        // Calculate amount including transaction fees
-        // Hubtel charges approximately 2% transaction fee
-        $transactionFeeRate = 0.02; // 2%
-        $amountWithFees = $totalAmount / (1 - $transactionFeeRate);
-        $amountWithFees = round($amountWithFees, 2); // Round to 2 decimal places
-        $transactionFee = $amountWithFees - $totalAmount;
+        error_log("AddToCart - Amount: $totalAmount (merchant absorbs fees)");
         
-        error_log("AddToCart - Base Amount: $totalAmount, Transaction Fee: $transactionFee, Total with Fees: $amountWithFees");
-        
-        // Build Item according to actual Hubtel behavior
-        // Price = total amount including fees
-        // Qty = 1 (to avoid confusion)
         $item = [
             'ItemName' => $campaignName,
             'Qty' => 1,
-            'Price' => (float)$amountWithFees
+            'Price' => (float)$totalAmount
         ];
         
         $message = "Confirm:\n\n" .
                    "Item: {$campaignName}\n" .
                    "Entries: {$quantity}\n" .
                    "Price: GHS " . number_format($unitPrice, 2) . "\n" .
-                   "Subtotal: GHS " . number_format($totalAmount, 2) . "\n" .
-                   "Fee: GHS " . number_format($transactionFee, 2) . "\n" .
-                   "Total: GHS " . number_format($amountWithFees, 2) . "\n\n" .
+                   "Total: GHS " . number_format($totalAmount, 2) . "\n\n" .
                    "Approve prompt or Dial *170#";
         
         $this->sendResponse(
