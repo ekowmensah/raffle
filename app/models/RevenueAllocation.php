@@ -110,8 +110,11 @@ class RevenueAllocation extends Model
         error_log("RevenueAllocation: Allocation created with ID: " . ($allocationId ?: 'FAILED'));
         
         // Credit station wallet if allocation was successful
-        if ($allocationId && $stationAmount > 0) {
-            error_log("RevenueAllocation: Crediting station wallet for station {$paymentData['station_id']} with amount {$stationAmount}");
+        // Station wallet gets both station and programme amounts
+        $totalStationShare = $stationAmount + $programmeAmount;
+        
+        if ($allocationId && $totalStationShare > 0) {
+            error_log("RevenueAllocation: Crediting station wallet for station {$paymentData['station_id']} with amount {$totalStationShare} (Station: {$stationAmount} + Programme: {$programmeAmount})");
             require_once '../app/models/StationWallet.php';
             require_once '../app/models/StationWalletTransaction.php';
             
@@ -121,16 +124,16 @@ class RevenueAllocation extends Model
             // Get or create station wallet
             $wallet = $walletModel->getOrCreate($paymentData['station_id']);
             
-            // Credit the wallet
-            $walletModel->credit($wallet->id, round($stationAmount, 2));
+            // Credit the wallet with total station share (station + programme)
+            $walletModel->credit($wallet->id, round($totalStationShare, 2));
             
             // Record transaction
             $transactionModel->recordCredit(
                 $wallet->id,
-                round($stationAmount, 2),
+                round($totalStationShare, 2),
                 $paymentData['campaign_id'],
                 $paymentData['payment_id'],
-                'Commission from ticket sale - ' . $campaign->name
+                'Commission from ticket sale - ' . $campaign->name . ' (Station: ' . round($stationAmount, 2) . ' + Programme: ' . round($programmeAmount, 2) . ')'
             );
         }
         

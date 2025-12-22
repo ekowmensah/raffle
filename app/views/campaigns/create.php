@@ -425,33 +425,37 @@
                         <h3 class="card-title">Revenue Sharing Configuration</h3>
                     </div>
                     <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Platform and Prize Pool percentages are fixed. You can adjust Station and Programme percentages, ensuring the total equals 100%.
+                        </div>
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="platform_percent">Platform %</label>
+                                    <label for="platform_percent">Platform % <span class="badge badge-secondary">Fixed</span></label>
                                     <input type="number" class="form-control revenue-percent" id="platform_percent" name="platform_percent" 
-                                           value="<?= old('platform_percent', 25) ?>" step="0.01" min="0" max="100" required>
+                                           value="<?= old('platform_percent', 30) ?>" step="0.01" min="0" max="100" required readonly>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="station_percent">Station %</label>
                                     <input type="number" class="form-control revenue-percent" id="station_percent" name="station_percent" 
-                                           value="<?= old('station_percent', 25) ?>" step="0.01" min="0" max="100" required>
+                                           value="<?= old('station_percent', 20) ?>" step="0.01" min="0" max="100" required>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="programme_percent">Programme %</label>
                                     <input type="number" class="form-control revenue-percent" id="programme_percent" name="programme_percent" 
-                                           value="<?= old('programme_percent', 10) ?>" step="0.01" min="0" max="100" required>
+                                           value="<?= old('programme_percent', 0) ?>" step="0.01" min="0" max="100" required>
+                                    <small class="form-text text-muted">Set to 0 for station-wide campaigns</small>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="prize_pool_percent">Prize Pool %</label>
+                                    <label for="prize_pool_percent">Prize Pool % <span class="badge badge-secondary">Fixed</span></label>
                                     <input type="number" class="form-control revenue-percent" id="prize_pool_percent" name="prize_pool_percent" 
-                                           value="<?= old('prize_pool_percent', 40) ?>" step="0.01" min="0" max="100" required>
+                                           value="<?= old('prize_pool_percent', 50) ?>" step="0.01" min="0" max="100" required readonly>
                                 </div>
                             </div>
                         </div>
@@ -535,8 +539,8 @@ function toggleCampaignType() {
         $('#item-fields').slideUp();
         // Make item fields not required
         $('#item_name, #item_value').attr('required', false);
-        // Restore prize pool % for cash campaigns
-        $('#prize_pool_percent').val(40).prop('readonly', false);
+        // Restore prize pool % for cash campaigns (always readonly and 50%)
+        $('#prize_pool_percent').val(50).prop('readonly', true);
     }
     validateRevenueSharing();
 }

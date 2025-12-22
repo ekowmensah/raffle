@@ -116,6 +116,7 @@
                                 <th>Status</th>
                                 <th>Tickets</th>
                                 <th>Revenue</th>
+                                <th>Prize Pool</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -162,7 +163,26 @@
                                             </span>
                                         </td>
                                         <td><?= $campaign->total_tickets ?? 0 ?></td>
-                                        <td><?= formatMoney($campaign->total_revenue ?? 0, $campaign->currency) ?></td>
+                                        <td>
+                                            <?php
+                                            if (hasRole('station_admin')) {
+                                                // Show actual allocated revenue from revenue_allocations table
+                                                $stationRevenue = floatval($campaign->station_allocated_revenue ?? 0);
+                                                echo formatMoney($stationRevenue, $campaign->currency ?? 'GHS');
+                                            } else {
+                                                // Show total revenue for super admins
+                                                $totalRevenue = floatval($campaign->total_revenue ?? 0);
+                                                echo formatMoney($totalRevenue, $campaign->currency ?? 'GHS');
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            // Show actual allocated prize pool amount
+                                            $prizePoolAmount = floatval($campaign->prize_pool_allocated ?? 0);
+                                            echo formatMoney($prizePoolAmount, $campaign->currency ?? 'GHS');
+                                            ?>
+                                        </td>
                                         <td>
                                             <a href="<?= url('campaign/show/' . $campaign->id) ?>" class="btn btn-info btn-sm" title="View">
                                                 <i class="fas fa-eye"></i>
@@ -210,7 +230,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="9" class="text-center">No campaigns found</td>
+                                    <td colspan="11" class="text-center">No campaigns found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

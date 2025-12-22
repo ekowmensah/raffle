@@ -176,9 +176,16 @@ class Campaign extends Model
 
     public function getByStation($stationId)
     {
-        $this->db->query("SELECT c.*, s.name as sponsor_name
+        $this->db->query("SELECT c.*, 
+                         s.name as sponsor_name,
+                         st.name as station_name,
+                         (SELECT COUNT(*) FROM tickets WHERE campaign_id = c.id) as total_tickets,
+                         (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE campaign_id = c.id AND status = 'success') as total_revenue,
+                         (SELECT COALESCE(SUM(station_amount + programme_amount), 0) FROM revenue_allocations WHERE campaign_id = c.id) as station_allocated_revenue,
+                         (SELECT COALESCE(SUM(winner_pool_amount_total), 0) FROM revenue_allocations WHERE campaign_id = c.id) as prize_pool_allocated
                          FROM {$this->table} c
                          LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         LEFT JOIN stations st ON c.station_id = st.id
                          WHERE c.station_id = :station_id
                          ORDER BY c.created_at DESC");
         $this->db->bind(':station_id', $stationId);
@@ -187,9 +194,14 @@ class Campaign extends Model
 
     public function getByProgramme($programmeId)
     {
-        $this->db->query("SELECT c.*, s.name as sponsor_name
+        $this->db->query("SELECT c.*, 
+                         s.name as sponsor_name,
+                         st.name as station_name,
+                         (SELECT COUNT(*) FROM tickets WHERE campaign_id = c.id) as total_tickets,
+                         (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE campaign_id = c.id AND status = 'success') as total_revenue
                          FROM {$this->table} c
                          LEFT JOIN sponsors s ON c.sponsor_id = s.id
+                         LEFT JOIN stations st ON c.station_id = st.id
                          LEFT JOIN campaign_programme_access cpa ON c.id = cpa.campaign_id
                          WHERE cpa.programme_id = :programme_id
                          ORDER BY c.created_at DESC");
