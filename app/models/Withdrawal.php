@@ -134,4 +134,9 @@ class Withdrawal extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function getTotalCompletedByStation($stationId)
+    {
+        return $this->getTotalByStation($stationId, 'completed');
+    }
 }

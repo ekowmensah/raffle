@@ -250,4 +250,15 @@ class Player extends Model
         $this->db->bind(':programme_id2', $programmeId);
         return $this->db->resultSet();
     }
+
+    public function countByStation($stationId)
+    {
+        $this->db->query("SELECT COUNT(DISTINCT p.id) as count 
+                         FROM {$this->table} p
+                         INNER JOIN tickets t ON p.id = t.player_id
+                         WHERE t.station_id = :station_id");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

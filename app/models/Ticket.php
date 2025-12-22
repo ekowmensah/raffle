@@ -224,4 +224,14 @@ class Ticket extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function countByStation($stationId)
+    {
+        $this->db->query("SELECT COALESCE(SUM(quantity), 0) as count 
+                         FROM {$this->table} 
+                         WHERE station_id = :station_id");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

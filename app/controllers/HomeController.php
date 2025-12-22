@@ -113,10 +113,27 @@ class HomeController extends Controller
         $campaignModel = $this->model('Campaign');
         $userModel = $this->model('User');
         $paymentModel = $this->model('Payment');
+        $walletModel = $this->model('StationWallet');
+        $ticketModel = $this->model('Ticket');
+        $playerModel = $this->model('Player');
+        $drawModel = $this->model('Draw');
+        $withdrawalModel = $this->model('Withdrawal');
+        $revenueModel = $this->model('RevenueAllocation');
+        
+        // Get or create wallet
+        $wallet = $walletModel->getOrCreate($stationId);
+        
+        // Get station revenue from revenue allocations
+        $revenueData = $revenueModel->getStationRevenue($stationId);
+        $stationRevenue = ($revenueData->total_station ?? 0) + ($revenueData->total_programme ?? 0);
+        
+        // Get total withdrawn
+        $totalWithdrawn = $withdrawalModel->getTotalCompletedByStation($stationId);
         
         $data = [
             'title' => 'Station Dashboard',
             'station' => $stationModel->findById($stationId),
+            'wallet' => $wallet,
             'programmes' => $programmeModel->getByStation($stationId),
             'campaigns' => $campaignModel->getByStation($stationId),
             'users' => $userModel->getByStation($stationId),
@@ -125,7 +142,11 @@ class HomeController extends Controller
                 'total_programmes' => $programmeModel->countByStation($stationId),
                 'active_campaigns' => $campaignModel->countActiveByStation($stationId),
                 'total_users' => $userModel->countByStation($stationId),
-                'station_revenue' => $paymentModel->getRevenueByStation($stationId)
+                'station_revenue' => $stationRevenue,
+                'total_tickets' => $ticketModel->countByStation($stationId),
+                'total_players' => $playerModel->countByStation($stationId),
+                'pending_draws' => $drawModel->countPendingByStation($stationId),
+                'total_withdrawn' => $totalWithdrawn
             ]
         ];
         

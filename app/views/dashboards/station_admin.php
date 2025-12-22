@@ -25,63 +25,122 @@
         <div class="container-fluid">
             <!-- Stats Row -->
             <div class="row">
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h3><?= $data['stats']['total_programmes'] ?? 0 ?></h3>
-                            <p>Total Programmes</p>
+                <!-- Station Wallet Card -->
+                <div class="col-lg-4 col-12">
+                    <div class="card bg-gradient-success">
+                        <div class="card-header border-0">
+                            <h3 class="card-title">
+                                <i class="fas fa-wallet"></i> Station Wallet
+                            </h3>
                         </div>
-                        <div class="icon">
-                            <i class="fas fa-broadcast-tower"></i>
+                        <div class="card-body">
+                            <div class="text-center">
+                                <h2 class="display-4 text-white">
+                                    GHS <?= number_format($data['wallet']->balance ?? 0, 2) ?>
+                                </h2>
+                                <p class="text-white-50">Available Balance</p>
+                            </div>
+                            <hr class="bg-white">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="text-white">
+                                        <small>Total Earned</small>
+                                        <h5>GHS <?= number_format($data['stats']['station_revenue'] ?? 0, 2) ?></h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-white">
+                                        <small>Withdrawn</small>
+                                        <h5>GHS <?= number_format($data['stats']['total_withdrawn'] ?? 0, 2) ?></h5>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <a href="<?= url('programme') ?>" class="small-box-footer">
-                            View Programmes <i class="fas fa-arrow-circle-right"></i>
-                        </a>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="<?= url('withdrawal/create') ?>" class="btn btn-light btn-block">
+                                <i class="fas fa-money-bill-wave"></i> Request Withdrawal
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h3><?= $data['stats']['active_campaigns'] ?? 0 ?></h3>
-                            <p>Active Campaigns</p>
+                <!-- Other Stats -->
+                <div class="col-lg-8 col-12">
+                    <div class="row">
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3><?= $data['stats']['total_programmes'] ?? 0 ?></h3>
+                                    <p>Programmes</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-broadcast-tower"></i>
+                                </div>
+                                <a href="<?= url('programme') ?>" class="small-box-footer">
+                                    View <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="icon">
-                            <i class="fas fa-bullhorn"></i>
-                        </div>
-                        <a href="<?= url('campaign') ?>" class="small-box-footer">
-                            View Campaigns <i class="fas fa-arrow-circle-right"></i>
-                        </a>
-                    </div>
-                </div>
 
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-warning">
-                        <div class="inner">
-                            <h3>GHS <?= number_format($data['stats']['station_revenue'] ?? 0, 2) ?></h3>
-                            <p>Total Revenue</p>
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3><?= $data['stats']['active_campaigns'] ?? 0 ?></h3>
+                                    <p>Active Campaigns</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <a href="<?= url('campaign') ?>" class="small-box-footer">
+                                    View <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                        <a href="<?= url('payment') ?>" class="small-box-footer">
-                            View Payments <i class="fas fa-arrow-circle-right"></i>
-                        </a>
-                    </div>
-                </div>
 
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
-                        <div class="inner">
-                            <h3><?= $data['stats']['total_users'] ?? 0 ?></h3>
-                            <p>Station Users</p>
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-primary">
+                                <div class="inner">
+                                    <h3><?= $data['stats']['total_tickets'] ?? 0 ?></h3>
+                                    <p>Tickets Sold</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <a href="<?= url('ticket') ?>" class="small-box-footer">
+                                    View <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="icon">
-                            <i class="fas fa-users"></i>
+
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3><?= $data['stats']['total_players'] ?? 0 ?></h3>
+                                    <p>Players</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <a href="<?= url('player') ?>" class="small-box-footer">
+                                    View <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
                         </div>
-                        <a href="<?= url('user') ?>" class="small-box-footer">
-                            View Users <i class="fas fa-arrow-circle-right"></i>
-                        </a>
+
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-secondary">
+                                <div class="inner">
+                                    <h3><?= $data['stats']['pending_draws'] ?? 0 ?></h3>
+                                    <p>Pending Draws</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <a href="<?= url('draw/pending') ?>" class="small-box-footer">
+                                    View <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -150,6 +209,64 @@
 
                 <!-- Programme Revenue Breakdown -->
                 <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-trophy"></i> Campaign Prize Pools
+                            </h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <?php if (!empty($data['campaigns'])): ?>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Campaign</th>
+                                            <th class="text-right">Prize Pool</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $totalPrizePool = 0;
+                                        foreach ($data['campaigns'] as $campaign): 
+                                            $prizePool = floatval($campaign->prize_pool_allocated ?? 0);
+                                            $totalPrizePool += $prizePool;
+                                        ?>
+                                            <tr>
+                                                <td>
+                                                    <?= htmlspecialchars(substr($campaign->name, 0, 25)) ?><?= strlen($campaign->name) > 25 ? '...' : '' ?>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <?php if ($campaign->status === 'active'): ?>
+                                                            <span class="badge badge-success badge-sm">Active</span>
+                                                        <?php else: ?>
+                                                            <span class="badge badge-secondary badge-sm"><?= ucfirst($campaign->status) ?></span>
+                                                        <?php endif; ?>
+                                                    </small>
+                                                </td>
+                                                <td class="text-right">
+                                                    <strong>GHS <?= number_format($prizePool, 2) ?></strong>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-light">
+                                            <th>Total Prize Pool</th>
+                                            <th class="text-right">
+                                                <strong>GHS <?= number_format($totalPrizePool, 2) ?></strong>
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            <?php else: ?>
+                                <div class="p-3 text-center text-muted">
+                                    <p>No campaigns yet</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Revenue by Programme -->
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">
@@ -224,37 +341,6 @@
                             <?php else: ?>
                                 <div class="p-3 text-center text-muted">
                                     <p>No campaigns yet</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <!-- Station Users -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-users"></i> Station Users
-                            </h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <?php if (!empty($data['users'])): ?>
-                                <ul class="list-group list-group-flush">
-                                    <?php foreach (array_slice($data['users'], 0, 5) as $user): ?>
-                                        <li class="list-group-item">
-                                            <strong><?= htmlspecialchars($user->name) ?></strong>
-                                            <br>
-                                            <small class="text-muted"><?= htmlspecialchars($user->email) ?></small>
-                                            <br>
-                                            <span class="badge badge-info"><?= htmlspecialchars($user->role_name ?? 'User') ?></span>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                                <div class="card-footer text-center">
-                                    <a href="<?= url('user') ?>">View All Users</a>
-                                </div>
-                            <?php else: ?>
-                                <div class="p-3 text-center text-muted">
-                                    <p>No users found</p>
                                 </div>
                             <?php endif; ?>
                         </div>

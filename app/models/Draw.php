@@ -268,4 +268,17 @@ class Draw extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function countPendingByStation($stationId)
+    {
+        $this->db->query("SELECT COUNT(DISTINCT d.id) as count
+                         FROM {$this->table} d
+                         INNER JOIN raffle_campaigns c ON d.campaign_id = c.id
+                         WHERE c.station_id = :station_id 
+                         AND d.status = 'pending'
+                         AND d.draw_date <= NOW()");
+        $this->db->bind(':station_id', $stationId);
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }
