@@ -202,7 +202,9 @@ class PaymentController extends Controller
             $this->smsService->sendTicketNotification(
                 $player->phone,
                 $ticketResult['tickets'],
-                $campaign->name
+                $campaign->name,
+                $payment->amount,
+                $campaign->currency
             );
 
             flash('success', 'Payment successful! ' . $ticketResult['ticket_count'] . ' tickets generated.');

@@ -15,7 +15,7 @@ class SmsNotificationService
         $this->senderId = getenv('SMS_SENDER_ID') ?: 'RAFFLE';
     }
 
-    public function sendTicketNotification($phone, $tickets, $campaignName)
+    public function sendTicketNotification($phone, $tickets, $campaignName, $amount = null, $currency = 'GHS')
     {
         $ticketCodes = array_column($tickets, 'ticket_code');
         $ticketList = implode(', ', array_slice($ticketCodes, 0, 3));
@@ -24,15 +24,15 @@ class SmsNotificationService
             $ticketList .= '...';
         }
         
-        // Calculate total entries across all tickets
+        // Get total entries from quantity field (each ticket has a quantity)
         $totalEntries = 0;
         foreach ($tickets as $ticket) {
             $quantity = is_array($ticket) ? ($ticket['quantity'] ?? 1) : ($ticket->quantity ?? 1);
             $totalEntries += $quantity;
         }
 
-        $message = "Ticket for {$campaignName}: {$ticketList}. "
-                 . "Entries: {$totalEntries}. Good luck!";
+        $message = "Successful! {$currency} " . number_format($amount, 2) . " Campaign: {$campaignName} "
+                 . "Entries ({$totalEntries}): {$ticketList} Good luck!";
 
         return $this->sendSms($phone, $message);
     }
