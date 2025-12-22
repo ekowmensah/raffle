@@ -234,4 +234,13 @@ class Ticket extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function countToday()
+    {
+        $this->db->query("SELECT COALESCE(SUM(quantity), 0) as count 
+                         FROM {$this->table} 
+                         WHERE DATE(created_at) = CURDATE()");
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
 }

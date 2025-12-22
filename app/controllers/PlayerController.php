@@ -29,17 +29,43 @@ class PlayerController extends Controller
         
         if ($role === 'super_admin' || $role === 'auditor') {
             $players = $this->playerModel->getWithStats();
+            $station = null;
         } elseif ($role === 'station_admin') {
             $players = $this->playerModel->getByStation($user->station_id);
+            $stationModel = $this->model('Station');
+            $station = $stationModel->findById($user->station_id);
         } elseif ($role === 'programme_manager') {
             $players = $this->playerModel->getByProgramme($user->programme_id);
+            $station = null;
         } else {
             $players = [];
+            $station = null;
+        }
+
+        // Calculate stats
+        $totalPlayers = count($players);
+        $totalTickets = 0;
+        $totalSpent = 0;
+        $totalWinners = 0;
+        
+        foreach ($players as $player) {
+            $totalTickets += ($player->total_tickets ?? 0);
+            $totalSpent += ($player->total_spent ?? 0);
+            if (($player->total_wins ?? 0) > 0) {
+                $totalWinners++;
+            }
         }
 
         $data = [
             'title' => 'Players',
-            'players' => $players
+            'players' => $players,
+            'station' => $station,
+            'stats' => [
+                'total_players' => $totalPlayers,
+                'total_tickets' => $totalTickets,
+                'total_spent' => $totalSpent,
+                'total_winners' => $totalWinners
+            ]
         ];
 
         $this->view('players/index', $data);

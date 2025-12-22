@@ -54,4 +54,27 @@ class Station extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function count()
+    {
+        $this->db->query("SELECT COUNT(*) as count FROM {$this->table}");
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
+
+    public function getTopByRevenue($limit = 5)
+    {
+        $this->db->query("SELECT s.id, s.name,
+                         (SELECT COALESCE(SUM(ra.station_amount + ra.programme_amount), 0)
+                          FROM revenue_allocations ra
+                          WHERE ra.station_id = s.id) as revenue,
+                         (SELECT COALESCE(SUM(t.quantity), 0)
+                          FROM tickets t
+                          WHERE t.station_id = s.id) as ticket_count
+                         FROM {$this->table} s
+                         ORDER BY revenue DESC
+                         LIMIT :limit");
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
 }

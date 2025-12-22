@@ -69,7 +69,8 @@ class Campaign extends Model
                          u.name as created_by_name,
                          (SELECT COUNT(*) FROM tickets WHERE campaign_id = c.id) as total_tickets,
                          (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE campaign_id = c.id AND status = 'success') as total_revenue,
-                         (SELECT COUNT(*) FROM campaign_programme_access WHERE campaign_id = c.id) as programme_count
+                         (SELECT COUNT(*) FROM campaign_programme_access WHERE campaign_id = c.id) as programme_count,
+                         (SELECT COALESCE(SUM(winner_pool_amount_total), 0) FROM revenue_allocations WHERE campaign_id = c.id) as prize_pool_allocated
                          FROM {$this->table} c
                          LEFT JOIN sponsors s ON c.sponsor_id = s.id
                          LEFT JOIN stations st ON c.station_id = st.id
@@ -445,6 +446,23 @@ class Campaign extends Model
                          AND c.status = :status
                          ORDER BY c.start_date DESC");
         $this->db->bind(':status', $status);
+        return $this->db->resultSet();
+    }
+
+    public function getTopByRevenue($limit = 5)
+    {
+        $this->db->query("SELECT c.id, c.name, st.name as station_name,
+                         (SELECT COALESCE(SUM(p.amount), 0)
+                          FROM payments p
+                          WHERE p.campaign_id = c.id AND p.status = 'success') as revenue,
+                         (SELECT COALESCE(SUM(t.quantity), 0)
+                          FROM tickets t
+                          WHERE t.campaign_id = c.id) as ticket_count
+                         FROM {$this->table} c
+                         LEFT JOIN stations st ON c.station_id = st.id
+                         ORDER BY revenue DESC
+                         LIMIT :limit");
+        $this->db->bind(':limit', $limit);
         return $this->db->resultSet();
     }
 }

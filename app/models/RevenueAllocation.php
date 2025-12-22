@@ -247,4 +247,44 @@ class RevenueAllocation extends Model
         $this->db->bind(':end_date', $endDate);
         return $this->db->resultSet();
     }
+
+    public function getGlobalRevenue()
+    {
+        $this->db->query("SELECT 
+                         COALESCE(SUM(gross_amount), 0) as gross_revenue,
+                         COALESCE(SUM(platform_amount), 0) as platform_revenue,
+                         COALESCE(SUM(station_amount), 0) as station_revenue,
+                         COALESCE(SUM(programme_amount), 0) as programme_revenue,
+                         COALESCE(SUM(winner_pool_amount_total), 0) as prize_pool
+                         FROM {$this->table}");
+        return $this->db->single();
+    }
+
+    public function getPrizePoolBreakdown()
+    {
+        $this->db->query("SELECT 
+                         COALESCE(SUM(winner_pool_amount_total), 0) as total,
+                         COALESCE(SUM(winner_pool_amount_daily), 0) as daily,
+                         COALESCE(SUM(winner_pool_amount_final), 0) as final,
+                         COALESCE(SUM(winner_pool_amount_bonus), 0) as bonus,
+                         (SELECT COALESCE(SUM(prize_amount), 0) FROM draw_winners) as paid_out,
+                         COALESCE(SUM(winner_pool_amount_total), 0) - (SELECT COALESCE(SUM(prize_amount), 0) FROM draw_winners) as remaining,
+                         CASE 
+                            WHEN SUM(winner_pool_amount_total) > 0 
+                            THEN ROUND((SUM(winner_pool_amount_daily) / SUM(winner_pool_amount_total)) * 100, 2)
+                            ELSE 0 
+                         END as daily_percent,
+                         CASE 
+                            WHEN SUM(winner_pool_amount_total) > 0 
+                            THEN ROUND((SUM(winner_pool_amount_final) / SUM(winner_pool_amount_total)) * 100, 2)
+                            ELSE 0 
+                         END as final_percent,
+                         CASE 
+                            WHEN SUM(winner_pool_amount_total) > 0 
+                            THEN ROUND((SUM(winner_pool_amount_bonus) / SUM(winner_pool_amount_total)) * 100, 2)
+                            ELSE 0 
+                         END as bonus_percent
+                         FROM {$this->table}");
+        return $this->db->single();
+    }
 }

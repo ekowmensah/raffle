@@ -115,7 +115,11 @@
                                 <th>Period</th>
                                 <th>Status</th>
                                 <th>Tickets</th>
-                                <th>Revenue</th>
+                                <?php if (hasRole('super_admin')): ?>
+                                    <th>Gross Revenue</th>
+                                <?php else: ?>
+                                    <th>Station Revenue</th>
+                                <?php endif; ?>
                                 <th>Prize Pool</th>
                                 <th>Actions</th>
                             </tr>
@@ -230,7 +234,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="11" class="text-center">No campaigns found</td>
+                                    <td colspan="<?= hasRole('super_admin') ? 13 : 11 ?>" class="text-center">No campaigns found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

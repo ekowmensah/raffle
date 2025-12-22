@@ -56,44 +56,75 @@ class HomeController extends Controller
         $ticketModel = $this->model('Ticket');
         $drawModel = $this->model('Draw');
         $stationModel = $this->model('Station');
+        $revenueModel = $this->model('RevenueAllocation');
+        $withdrawalModel = $this->model('Withdrawal');
         
-        // Get statistics with caching (5 minutes TTL)
-        $stats = $this->cache->remember('dashboard_stats', function() use ($campaignModel, $playerModel, $paymentModel, $ticketModel, $drawModel, $stationModel) {
-            return [
-                'active_campaigns' => $campaignModel->countByStatus('active'),
-                'total_players' => $playerModel->count(),
-                'total_tickets' => $ticketModel->count(),
-                'total_revenue' => $paymentModel->getTotalRevenue(),
-                'pending_draws' => $drawModel->countByStatus('pending'),
-                'completed_draws' => $drawModel->countByStatus('completed'),
-                'active_stations' => $stationModel->countActive(),
-                'total_campaigns' => $campaignModel->count()
-            ];
-        }, 300); // 5 minutes
-        
-        // Get recent activity with caching (2 minutes TTL)
-        $recentPayments = $this->cache->remember('recent_payments', function() use ($paymentModel) {
-            return $paymentModel->getRecent(5);
-        }, 120);
-        
-        $recentTickets = $this->cache->remember('recent_tickets', function() use ($ticketModel) {
-            return $ticketModel->getRecent(5);
-        }, 120);
-        
-        $upcomingDraws = $this->cache->remember('upcoming_draws', function() use ($drawModel) {
-            return $drawModel->getUpcoming(5);
-        }, 120);
-        
-        $data = [
-            'title' => 'Dashboard',
-            'user' => $this->getUser(),
-            'stats' => $stats,
-            'recentPayments' => $recentPayments,
-            'recentTickets' => $recentTickets,
-            'upcomingDraws' => $upcomingDraws
+        // Get revenue breakdown
+        $revenueData = $revenueModel->getGlobalRevenue();
+        $revenue = [
+            'gross_revenue' => floatval($revenueData->gross_revenue ?? 0),
+            'platform_revenue' => floatval($revenueData->platform_revenue ?? 0),
+            'station_revenue' => floatval($revenueData->station_revenue ?? 0),
+            'programme_revenue' => floatval($revenueData->programme_revenue ?? 0),
+            'prize_pool' => floatval($revenueData->prize_pool ?? 0),
+            'platform_percent' => 30,
+            'station_percent' => 20,
+            'programme_percent' => 0,
+            'prize_pool_percent' => 50
         ];
         
-        $this->view('dashboard/index', $data);
+        // Get prize pool breakdown
+        $prizePoolData = $revenueModel->getPrizePoolBreakdown();
+        $prizePool = [
+            'total' => floatval($prizePoolData->total ?? 0),
+            'daily' => floatval($prizePoolData->daily ?? 0),
+            'final' => floatval($prizePoolData->final ?? 0),
+            'bonus' => floatval($prizePoolData->bonus ?? 0),
+            'paid_out' => floatval($prizePoolData->paid_out ?? 0),
+            'remaining' => floatval($prizePoolData->remaining ?? 0),
+            'daily_percent' => floatval($prizePoolData->daily_percent ?? 0),
+            'final_percent' => floatval($prizePoolData->final_percent ?? 0),
+            'bonus_percent' => floatval($prizePoolData->bonus_percent ?? 0)
+        ];
+        
+        // Get statistics
+        $stats = [
+            'total_stations' => $stationModel->count(),
+            'active_stations' => $stationModel->countActive(),
+            'total_campaigns' => $campaignModel->count(),
+            'active_campaigns' => $campaignModel->countByStatus('active'),
+            'total_tickets' => $ticketModel->count(),
+            'tickets_today' => $ticketModel->countToday(),
+            'total_players' => $playerModel->count(),
+            'new_players_today' => $playerModel->countToday(),
+            'completed_draws' => $drawModel->countByStatus('completed'),
+            'pending_draws' => $drawModel->countByStatus('pending'),
+            'pending_withdrawals' => $withdrawalModel->countPending()
+        ];
+        
+        // Get top performers
+        $topStations = $stationModel->getTopByRevenue(5);
+        $topCampaigns = $campaignModel->getTopByRevenue(5);
+        $topPlayers = $playerModel->getTopBySpending(5);
+        
+        // Get recent activity
+        $recentPayments = $paymentModel->getSuccessfulPayments();
+        $pendingWithdrawals = $withdrawalModel->getPending();
+        
+        $data = [
+            'title' => 'Super Admin Dashboard',
+            'user' => $this->getUser(),
+            'revenue' => $revenue,
+            'prizePool' => $prizePool,
+            'stats' => $stats,
+            'topStations' => $topStations,
+            'topCampaigns' => $topCampaigns,
+            'topPlayers' => $topPlayers,
+            'recentPayments' => $recentPayments,
+            'pendingWithdrawals' => $pendingWithdrawals
+        ];
+        
+        $this->view('dashboard/super_admin', $data);
     }
 
     /**

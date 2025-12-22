@@ -261,4 +261,30 @@ class Player extends Model
         $result = $this->db->single();
         return $result->count ?? 0;
     }
+
+    public function countToday()
+    {
+        $this->db->query("SELECT COUNT(*) as count 
+                         FROM {$this->table} 
+                         WHERE DATE(created_at) = CURDATE()");
+        $result = $this->db->single();
+        return $result->count ?? 0;
+    }
+
+    public function getTopBySpending($limit = 5)
+    {
+        $this->db->query("SELECT p.id, p.phone, p.loyalty_level,
+                         (SELECT COALESCE(SUM(pay.amount), 0)
+                          FROM payments pay
+                          WHERE pay.player_id = p.id AND pay.status = 'success') as total_spent,
+                         (SELECT COALESCE(SUM(t.quantity), 0)
+                          FROM tickets t
+                          WHERE t.player_id = p.id) as total_tickets
+                         FROM {$this->table} p
+                         WHERE (SELECT COUNT(*) FROM payments WHERE player_id = p.id AND status = 'success') > 0
+                         ORDER BY total_spent DESC
+                         LIMIT :limit");
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
 }
